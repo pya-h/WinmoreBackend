@@ -1,6 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -29,7 +30,7 @@ export class UserController {
     const currentUser = { id: -1 }; // Convert this to decorator.
     if (+id == currentUser.id) return currentUser;
 
-    return this.userService.getSingleUser(+id);
+    return this.userService.getUserById(+id);
   }
 
   @ApiOperation({
@@ -38,5 +39,15 @@ export class UserController {
   @Get('balance/:token')
   getBalance(@Param('token') token: string) {
     return this.userService.getUserBalance(token);
+  }
+
+  @ApiOperation({
+    description: 'Completed user registration.',
+  })
+  // Requires JwtGuard
+  @Post('register')
+  completeRegistration(@Body() completeUserData: CompleteRegistrationDto) {
+    const userId = 0; // TODO: extract from jwt/provided by CurrentUser Decorator.
+    return this.userService.completeUserData(userId, completeUserData);
   }
 }

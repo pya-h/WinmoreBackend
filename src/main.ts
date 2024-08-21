@@ -19,9 +19,9 @@ async function bootstrap() {
       forbidUnknownValues: true,
       transform: true,
       enableDebugMessages: appIsInDebugMode,
-      exceptionFactory: (validationErrors: ValidationError[]) => {
-        // TODO: Complete this validation exception manager
-      },
+      // exceptionFactory: (validationErrors: ValidationError[]) => {
+      //   // TODO: Complete this validation exception manager
+      // },
     }),
   );
 

@@ -1,0 +1,17 @@
+@host = http://localhost:8000
+
+### Send verificaiton code
+POST {{host}}/auth/verification-code
+Content-Type: application/json
+
+{
+    "email": "sss"
+}
+
+### Send verificaiton code
+POST {{host}}/user/register
+Content-Type: application/json
+
+{
+    "email": "sss"
+}

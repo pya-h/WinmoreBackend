@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthenticationDto } from './dto/auth.dto';
 import { WalletAddressDto } from './dto/wallet-address.dto';
+import { VerificationCodeDto } from './dto/verification-code.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -26,5 +27,16 @@ export class AuthController {
   @Post('nonce')
   generateNonce(@Body() walletAddressDto: WalletAddressDto) {
     return this.authService.generateNonce(walletAddressDto.address);
+  }
+
+  @ApiOperation({
+    description:
+      'Generates and sends the verification code for the email user has entered, that then can use it in complete user data endpoint.',
+  })
+  @Post('verification-code')
+  // TODO: add JwtAuthGuard Here?
+  sendVerificationCode(@Body() verificationCodeDto: VerificationCodeDto) {
+    console.log(verificationCodeDto)
+    return this.authService.sendVerificationCode(verificationCodeDto.email);
   }
 }

@@ -62,23 +62,32 @@ export class AuthService {
         'Please first request nonce from the server',
       );
 
-    if (!(await this.verifySignature(address, message, nonce, signature))) {
+    if (!this.verifySignature(address, message, nonce, signature))
       throw new UnauthorizedException('Invalid signature.');
-    }
 
     this.clearNonce(address);
 
-    // TODO: Generate a JWT token or return a success message
-    // TODO: then login if the wallet address exists in db, register if not.
-    const user = await this.userService.getByWalletAddress(address);
+    const user = await this.userService.getUserByWalletAddress(address);
     if (!user) {
-      // TODO: register the new user.
+      // TODO:
+      // 1 create the user with no data,
+      // 2 create the user wallet with this address.
+      // 3 log in the user and return the jwt
+      // 4 return 201, so that front goes to complete user data page, then makes a request to /user/register with jwt.
+      const user = await this.userService.createUser();
       return {
-        user: this.userService.createUser(address),
+        user,
         status: HttpStatus.CREATED,
       };
     }
-
+    // TODO: if wallet address exists from before then login and return jwt and user data.
     return { user, status: HttpStatus.OK };
+  }
+
+  sendVerificationCode(email: string) {
+    // TODO:
+    // 1 Generate a 6 digit code.
+    // 2 Add it to verification codes model
+    // 3  sent to user email.
   }
 }

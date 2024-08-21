@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @default(autoincrement()) @id
+  email String? @unique
+  name String? @default("")
+  admin Boolean @default(false)
+}
+
+model UserSetting {
+  id Int @default(autoincrement()) @id
+  userId Int
+  receiveNotifications Boolean @default(false)
+  // Other settings
+}
+// TODO: Add relations:
+model Wallet {
+  id Int @default(autoincrement()) @id
+  address String @unique
+  // ownerId
+}
+
+model Transaction {
+  id Int @default(autoincrement()) @id
+  sourceId Int
+  destinationId Int
+  status String @default("pending")  // TODO: Convert to Enum
+  remarks Json? // Default Null
+}
