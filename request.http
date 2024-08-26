@@ -13,5 +13,9 @@ POST {{host}}/user/register
 Content-Type: application/json
 
 {
-    "email": "sss"
+    "email": "myemasil@gmail.com",
+    "name": "Whasr"
 }
+
+### Get users
+GET {{host}}/user/111

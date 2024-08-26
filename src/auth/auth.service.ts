@@ -85,6 +85,7 @@ export class AuthService {
   }
 
   sendVerificationCode(email: string) {
+    console.log(email); // These logs are for skipping interpreter errors, for now.
     // TODO:
     // 1 Generate a 6 digit code.
     // 2 Add it to verification codes model

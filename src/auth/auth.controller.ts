@@ -1,9 +1,10 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthenticationDto } from './dto/auth.dto';
 import { WalletAddressDto } from './dto/wallet-address.dto';
 import { VerificationCodeDto } from './dto/verification-code.dto';
+import { Response } from 'express';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -15,9 +16,14 @@ export class AuthController {
       'Verifies the user input data and Registers/Logs in the user in the server. Returns 200 for login, and 201 for register.',
   })
   @Post()
-  async authenticate(@Body() authData: AuthenticationDto) {
-    const { user, status } = await this.authService.verifyAndLogin(authData);
-    // return the data as expected for StandardResponseInterceptor, and also set the status manually here.
+  async authenticate(
+    @Body() authData: AuthenticationDto,
+    @Res() res: Response,
+  ) {
+    const { status, user } = await this.authService.verifyAndLogin(authData);
+
+    res.status(status).json(user);
+    // TODO: return the data as expected for StandardResponseInterceptor, and also set the status manually here.
   }
 
   @ApiOperation({
@@ -36,7 +42,7 @@ export class AuthController {
   @Post('verification-code')
   // TODO: add JwtAuthGuard Here?
   sendVerificationCode(@Body() verificationCodeDto: VerificationCodeDto) {
-    console.log(verificationCodeDto)
+    console.log(verificationCodeDto);
     return this.authService.sendVerificationCode(verificationCodeDto.email);
   }
 }

@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -17,20 +27,30 @@ export class UserController {
     return null;
   }
 
+  @ApiOperation({
+    description: 'Get users',
+  })
+  // Requires JwtGuard
+  @Get('all')
+  getUsers() {
+    return this.userService.getUsers();
+  }
+
   // TODO: Implement the serialize user data INTERCEPTOR.
   @ApiOperation({
     description: 'Get the current user data.',
   })
   @Get(':id')
-  getUser(@Param('id') id: string) {
-    // TODO: Implement the Id param validator.
+  async getUser(@Param('id', ParseIntPipe) id: string) {
     // TODO: Implement the user data serialization for current user ad other users.
     // returns the full displayable data if the id === currentId, o.w. return the serialized data.
 
     const currentUser = { id: -1 }; // Convert this to decorator.
     if (+id == currentUser.id) return currentUser;
 
-    return this.userService.getUserById(+id);
+    const user = await this.userService.getUserById(+id);
+    if (!user) throw new NotFoundException('User Not Found!');
+    return user;
   }
 
   @ApiOperation({
@@ -38,6 +58,7 @@ export class UserController {
   })
   @Get('balance/:token')
   getBalance(@Param('token') token: string) {
+    // TODO: Define Token Enum
     return this.userService.getUserBalance(token);
   }
 
@@ -49,5 +70,15 @@ export class UserController {
   completeRegistration(@Body() completeUserData: CompleteRegistrationDto) {
     const userId = 0; // TODO: extract from jwt/provided by CurrentUser Decorator.
     return this.userService.completeUserData(userId, completeUserData);
+  }
+
+  @ApiOperation({
+    description: 'Completed user registration.',
+  })
+  // Requires JwtGuard
+  @Patch('modify')
+  updateUserData(@Body() updateUserData: UpdateUserDto) {
+    const userId = 0; // TODO: Current User
+    return this.userService.updateUser(userId, updateUserData);
   }
 }
