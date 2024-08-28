@@ -26,24 +26,30 @@ model User {
 }
 
 model UserSetting {
-  id     Int  @id @default(autoincrement())
-  user   User @relation(fields: [userId], references: [id])
-  userId Int  @unique
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   // Other settings
 }
 
 // TODO: Add relations:
 model Wallet {
-  id      Int    @id @default(autoincrement())
-  address String @unique
-  owner   User   @relation(fields: [ownerId], references: [id])
-  ownerId Int    @unique
+  id        Int      @id @default(autoincrement())
+  address   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id])
+  ownerId   Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
 }
 
 model Transaction {
-  id            Int    @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   sourceId      Int
   destinationId Int
-  status        String @default("pending") // TODO: Convert to Enum
+  status        String   @default("pending") // TODO: Convert to Enum
   remarks       Json? // Default Null
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
 }
