@@ -29,7 +29,7 @@ export class AuthService {
     this.validNonces.delete(address.toLowerCase());
   }
 
-  messageToSign(message: string, nonce: string) {
+  getMessageToSign(message: string, nonce: string) {
     return `${nonce};${message};`;
   }
 
@@ -42,7 +42,7 @@ export class AuthService {
     try {
       const recoveredAddress = ethers.verifyMessage(
         signedMessage,
-        this.messageToSign(actualMessage, nonce),
+        this.getMessageToSign(actualMessage, nonce),
       );
 
       return recoveredAddress.toLowerCase() === address.toLowerCase();
@@ -74,9 +74,9 @@ export class AuthService {
       // 2 create the user wallet with this address.
       // 3 log in the user and return the jwt
       // 4 return 201, so that front goes to complete user data page, then makes a request to /user/register with jwt.
-      const user = await this.userService.createUser();
+      const user = await this.userService.createUser(address);
       return {
-        user,
+        user, // Needs filtering some data
         status: HttpStatus.CREATED,
       };
     }

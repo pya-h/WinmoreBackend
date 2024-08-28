@@ -24,28 +24,53 @@ export class UserService {
     return null;
   }
 
+  get commonUserIncludeConfig() {
+    // TODO: This needs updating based ion the user requesting: The user itself must receive more detailed data.
+    return {
+      settings: true,
+      wallet: {
+        select: { ownerId: true },
+      },
+    };
+  }
   getUserById(id: number) {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: this.commonUserIncludeConfig,
+    });
   }
 
   getUserBy(identifier: { id?: number; email?: string }) {
     const { id, email } = identifier;
 
-    if (id != null) return this.prisma.user.findUnique({ where: { id } });
+    if (id != null)
+      return this.prisma.user.findUnique({
+        where: { id },
+        include: this.commonUserIncludeConfig,
+      });
 
-    if (email) return this.prisma.user.findUnique({ where: { email } });
+    if (email)
+      return this.prisma.user.findUnique({
+        where: { email },
+        include: this.commonUserIncludeConfig,
+      });
 
     throw new BadRequestException('Invalid arguments for finding a user');
   }
 
-  createUser(userData?: Prisma.UserCreateInput) {
+  createUser(walletAddress: string, userData?: Prisma.UserCreateInput) {
     return this.prisma.user.create({
-      data: userData
-        ? {
-            name: userData.name,
-            email: userData.email,
-          }
-        : null,
+      data: {
+        wallet: {
+          create: {
+            address: walletAddress,
+          },
+        },
+        email: userData?.email,
+        name: userData?.name,
+        admin: false,
+        settings: { create: {} },
+      },
     });
   }
 
@@ -73,6 +98,9 @@ export class UserService {
   }
 
   getUsers() {
-    return this.prisma.user.findMany({ where: { admin: false } });
+    return this.prisma.user.findMany({
+      where: { admin: false },
+      include: this.commonUserIncludeConfig,
+    });
   }
 }
