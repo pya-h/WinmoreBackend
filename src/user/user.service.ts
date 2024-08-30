@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
@@ -15,24 +16,47 @@ export class UserService {
     private readonly walletService: WalletService,
   ) {}
 
+  get commonUserIncludeConfig() {
+    return {
+      profile: {
+        select: {
+          id: true,
+          userId: true,
+          avatar: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      wallet: {
+        select: {
+          id: true,
+          ownerId: true,
+          address: true,
+          updatedAt: true,
+          createdAt: true,
+        },
+      },
+    };
+  }
+
   getUserBalance(token: string) {
     return this.walletService.getBalance(token);
   }
 
   async getUserByWalletAddress(address: string) {
-    console.log(address);
-    return null;
+    return this.prisma.user.findFirst({
+      where: { wallet: { address } },
+      include: this.commonUserIncludeConfig,
+    });
   }
 
-  get commonUserIncludeConfig() {
-    // TODO: This needs updating based ion the user requesting: The user itself must receive more detailed data.
-    return {
-      settings: true,
-      wallet: {
-        select: { ownerId: true },
-      },
-    };
+  updateLastLoginDate(userId: number) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+    });
   }
+
   getUserById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
@@ -69,7 +93,11 @@ export class UserService {
         email: userData?.email,
         name: userData?.name,
         admin: false,
-        settings: { create: {} },
+        profile: {
+          create: {
+            avatar: null,
+          },
+        },
       },
     });
   }
@@ -102,5 +130,22 @@ export class UserService {
       where: { admin: false },
       include: this.commonUserIncludeConfig,
     });
+  }
+
+  async updateUserSettings(
+    userId: number,
+    data: Prisma.UserProfileUpdateInput,
+  ) {
+    // TODO: Update this when some profile are added.
+    const user = await this.getUserById(userId);
+    if (!user) throw new NotFoundException('User not found!');
+
+    if (!user.profile) {
+      data['userId'] = userId;
+      user.profile = await this.prisma.userProfile.create({
+        data: data as Prisma.UserProfileCreateInput,
+      });
+    }
+    return this.prisma.userProfile.update({ where: { userId }, data: data });
   }
 }

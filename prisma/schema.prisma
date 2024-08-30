@@ -14,42 +14,51 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  email       String?      @unique
-  name        String?      @default("")
-  admin       Boolean      @default(false)
-  settings    UserSetting?
-  wallet      Wallet?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now())
-  lastLoginAt DateTime     @default(now())
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastLoginAt DateTime @default(now())
+
+  email   String?      @unique @db.VarChar(256)
+  name    String? @db.VarChar(256)
+  admin   Boolean      @default(false)
+  wallet  Wallet?
+  profile UserProfile?
 }
 
-model UserSetting {
+model UserProfile {
   id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
   userId    Int      @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  // Other settings
+  updatedAt DateTime @updatedAt
+
+  avatar String? @db.VarChar(512)
 }
 
-// TODO: Add relations:
 model Wallet {
   id        Int      @id @default(autoincrement())
-  address   String   @unique
-  owner     User     @relation(fields: [ownerId], references: [id])
-  ownerId   Int      @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId Int    @unique
+  address String @unique @db.VarChar(256)
+}
+
+enum TransactionStatus {
+  SUCCESSFUL
+  FAILED
+  REVERTED
+  PENDING
 }
 
 model Transaction {
   id            Int      @id @default(autoincrement())
   sourceId      Int
   destinationId Int
-  status        String   @default("pending") // TODO: Convert to Enum
-  remarks       Json? // Default Null
+  status        TransactionStatus   @default(PENDING)
+  remarks       Json?
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

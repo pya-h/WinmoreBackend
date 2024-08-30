@@ -80,6 +80,7 @@ export class AuthService {
         status: HttpStatus.CREATED,
       };
     }
+    await this.userService.updateLastLoginDate(user.id);
     // TODO: if wallet address exists from before then login and return jwt and user data.
     return { user, status: HttpStatus.OK };
   }
