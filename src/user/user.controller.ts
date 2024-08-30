@@ -7,11 +7,15 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { User } from '@prisma/client';
 
 @ApiTags('User')
 @Controller('user')
@@ -21,16 +25,16 @@ export class UserController {
   @ApiOperation({
     description: 'Get the current user data.',
   })
+  @UseGuards(JwtAuthGuard)
   @Get()
-  getMe() {
-    // TODO: Implement the current user decorator and return its returned value.
-    return null;
+  getMe(@CurrentUser() user: User) {
+    return user;
   }
 
   @ApiOperation({
     description: 'Get users',
   })
-  // Requires JwtGuard
+  @UseGuards(JwtAuthGuard)
   @Get('all')
   getUsers() {
     return this.userService.getUsers();
@@ -40,15 +44,18 @@ export class UserController {
   @ApiOperation({
     description: 'Get the current user data.',
   })
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async getUser(@Param('id', ParseIntPipe) id: string) {
+  async getUser(
+    @CurrentUser() currentUser,
+    @Param('id', ParseIntPipe) id: string,
+  ) {
     // TODO: Implement the user data serialization for current user ad other users.
     // returns the full displayable data if the id === currentId, o.w. return the serialized data.
 
-    const currentUser = { id: -1 }; // Convert this to decorator.
     if (+id == currentUser.id) return currentUser;
 
-    const user = await this.userService.getUserById(+id);
+    const user = await this.userService.getById(+id);
     if (!user) throw new NotFoundException('User Not Found!');
     return user;
   }
@@ -56,29 +63,33 @@ export class UserController {
   @ApiOperation({
     description: 'Returns the balance of a specific token for current user.',
   })
+  @UseGuards(JwtAuthGuard)
   @Get('balance/:token')
-  getBalance(@Param('token') token: string) {
-    // TODO: Define Token Enum
-    return this.userService.getUserBalance(token);
+  getBalance(@CurrentUser() user: User, @Param('token') token: string) {
+    return this.userService.getUserBalance(user.id, token);
   }
 
   @ApiOperation({
     description: 'Completed user registration.',
   })
-  // Requires JwtGuard
+  @UseGuards(JwtAuthGuard)
   @Post('register')
-  completeRegistration(@Body() completeUserData: CompleteRegistrationDto) {
-    const userId = 0; // TODO: extract from jwt/provided by CurrentUser Decorator.
-    return this.userService.completeUserData(userId, completeUserData);
+  completeRegistration(
+    @CurrentUser() user: User,
+    @Body() completeUserData: CompleteRegistrationDto,
+  ) {
+    return this.userService.completeUserData(user.id, completeUserData);
   }
 
   @ApiOperation({
-    description: 'Completed user registration.',
+    description: 'Update/Modify user profile data.',
   })
-  // Requires JwtGuard
-  @Patch('modify')
-  updateUserData(@Body() updateUserData: UpdateUserDto) {
-    const userId = 0; // TODO: Current User
-    return this.userService.updateUser(userId, updateUserData);
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateUserData(
+    @CurrentUser() user: User,
+    @Body() updateUserData: UpdateUserDto,
+  ) {
+    return this.userService.updateUser(user.id, updateUserData);
   }
 }

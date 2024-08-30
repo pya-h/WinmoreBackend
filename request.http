@@ -1,21 +1,41 @@
 @host = http://localhost:8000
 
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImFkZHJlc3MiOiIxZTlkYjNhNC0wOGQ2LTRkMzgtYTVlZC1lNDEwNDYyOWQ5ZTAiLCJpYXQiOjE3MjUwMzI3OTQsImV4cCI6MTcyNTAzOTk5NH0.HvWuJzayJleg625fo6Ry21hD9aB9Lh9FqwRHjTbzVT0
+
+
 ### Send verificaiton code
-POST {{host}}/auth/verification-code
+POST {{host}}/auth
 Content-Type: application/json
 
 {
-    "email": "sss"
-}
-
-### Send verificaiton code
-POST {{host}}/user/register
-Content-Type: application/json
-
-{
-    "email": "myemasil@gmail.com",
-    "name": "Whasr"
+    "message": "myemasilgmail.com",
+    "signature": "Whasr",
+    "address": "0x6662153131313431831416841"
 }
 
 ### Get users
-GET {{host}}/user/111
+GET {{host}}/user
+Authorization: Bearer {{token}}
+
+### dev test auth
+POST {{host}}/auth/test
+
+
+### Complete registeration
+POST {{host}}/user/register
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "myemasil@gmail.com",
+    "name": "Whasr",
+}
+
+### Update user
+PATCH {{host}}/user/profile
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": "WhasrX"
+}

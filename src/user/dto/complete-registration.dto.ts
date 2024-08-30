@@ -11,12 +11,4 @@ export class CompleteRegistrationDto {
   @IsOptional()
   @IsString({ message: 'Your name must be a string.' })
   name: string;
-
-  // @ApiProperty({ description: 'Email verification code' })
-  // @IsNotEmpty({
-  //   message: 'Please provide the verification code sent to your email.',
-  // })
-  // @IsString()
-  // @Length(6, 6)
-  // verificationCode: string;
 }

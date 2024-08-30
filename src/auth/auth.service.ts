@@ -8,10 +8,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { AuthenticationDto } from './dto/auth.dto';
 import { ethers } from 'ethers';
 import { UserService } from 'src/user/user.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   private validNonces: Map<string, string> = new Map();
 
@@ -51,11 +55,14 @@ export class AuthService {
     return false;
   }
 
-  async verifyAndLogin({
-    message,
-    signature,
-    address,
-  }: AuthenticationDto): Promise<{ user: unknown; status: number }> {
+  getJwtToken(user: { id: number; wallet: { address: string } }) {
+    return this.jwtService.sign({
+      sub: user.id,
+      address: user.wallet.address,
+    });
+  }
+
+  async verifyAndLogin({ message, signature, address }: AuthenticationDto) {
     const nonce: string = this.getNonce(address);
     if (!nonce)
       throw new BadRequestException(
@@ -67,29 +74,25 @@ export class AuthService {
 
     this.clearNonce(address);
 
-    const user = await this.userService.getUserByWalletAddress(address);
+    const user = await this.userService.getByWalletAddress(address);
     if (!user) {
-      // TODO:
-      // 1 create the user with no data,
+      // TODO: 1 create the user with no data,
       // 2 create the user wallet with this address.
-      // 3 log in the user and return the jwt
-      // 4 return 201, so that front goes to complete user data page, then makes a request to /user/register with jwt.
       const user = await this.userService.createUser(address);
       return {
-        user, // Needs filtering some data
+        token: this.getJwtToken(user),
         status: HttpStatus.CREATED,
       };
     }
     await this.userService.updateLastLoginDate(user.id);
-    // TODO: if wallet address exists from before then login and return jwt and user data.
-    return { user, status: HttpStatus.OK };
+    return { token: this.getJwtToken(user), status: HttpStatus.OK };
   }
 
-  sendVerificationCode(email: string) {
-    console.log(email); // These logs are for skipping interpreter errors, for now.
-    // TODO:
-    // 1 Generate a 6 digit code.
-    // 2 Add it to verification codes model
-    // 3  sent to user email.
+  async testAuth() {
+    const user = await this.userService.createUser(uuidv4());
+    return {
+      token: this.getJwtToken(user),
+      status: HttpStatus.CREATED,
+    };
   }
 }

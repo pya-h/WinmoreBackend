@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { Prisma } from '@prisma/client';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -39,13 +40,13 @@ export class UserService {
     };
   }
 
-  getUserBalance(token: string) {
+  getUserBalance(userId: number, token: string) {
     return this.walletService.getBalance(token);
   }
 
-  async getUserByWalletAddress(address: string) {
+  async getByWalletAddress(address: string) {
     return this.prisma.user.findFirst({
-      where: { wallet: { address }, },
+      where: { wallet: { address } },
       include: this.commonUserIncludeConfig,
     });
   }
@@ -57,14 +58,14 @@ export class UserService {
     });
   }
 
-  getUserById(id: number) {
+  getById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
       include: this.commonUserIncludeConfig,
     });
   }
 
-  getUserBy(identifier: { id?: number; email?: string }) {
+  getBy(identifier: { id?: number; email?: string }) {
     const { id, email } = identifier;
 
     if (id != null)
@@ -99,29 +100,34 @@ export class UserService {
           },
         },
       },
+      include: this.commonUserIncludeConfig,
     });
   }
 
-  async updateUser(id: number, userData: Prisma.UserUpdateInput) {
-    if (!userData.email && !userData.name)
+  async updateUser(id: number, updateUserData: UpdateUserDto) {
+    if (!updateUserData.email && !updateUserData.name)
       throw new BadRequestException(
         'Provide some new data to continue modifying user data.',
       );
-    if (userData.email) {
-      const user = await this.getUserBy({ email: userData.email.toString() });
+    if (updateUserData.email) {
+      const user = await this.getBy({ email: updateUserData.email.toString() });
       if (user) throw new ConflictException('This email is used before.');
     }
+
+    const { avatar, ...userData } = updateUserData;
+
     return this.prisma.user.update({
       where: { id },
-      data: { email: userData.email, name: userData.name },
+      data: {
+        ...userData,
+        profile: { update: { ...(avatar ? { avatar } : {}) } },
+      },
     });
   }
 
   async completeUserData(userId: number, userData: CompleteRegistrationDto) {
     const { email, name } = userData;
     await this.updateUser(userId, { email, name });
-    // TODO: Verify user verification code.
-
     // TODO: Update user data if everything is right on its place.
   }
 
@@ -137,7 +143,7 @@ export class UserService {
     data: Prisma.UserProfileUpdateInput,
   ) {
     // TODO: Update this when some profile are added.
-    const user = await this.getUserById(userId);
+    const user = await this.getById(userId);
     if (!user) throw new NotFoundException('User not found!');
 
     if (!user.profile) {

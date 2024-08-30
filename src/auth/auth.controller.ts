@@ -3,7 +3,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthenticationDto } from './dto/auth.dto';
 import { WalletAddressDto } from './dto/wallet-address.dto';
-import { VerificationCodeDto } from './dto/verification-code.dto';
 import { Response } from 'express';
 
 @ApiTags('Auth')
@@ -20,9 +19,9 @@ export class AuthController {
     @Body() authData: AuthenticationDto,
     @Res() res: Response,
   ) {
-    const { status, user } = await this.authService.verifyAndLogin(authData);
+    const { status, token } = await this.authService.verifyAndLogin(authData);
 
-    res.status(status).json(user);
+    res.status(status).json(token);
     // TODO: return the data as expected for StandardResponseInterceptor, and also set the status manually here.
   }
 
@@ -36,13 +35,10 @@ export class AuthController {
   }
 
   @ApiOperation({
-    description:
-      'Generates and sends the verification code for the email user has entered, that then can use it in complete user data endpoint.',
+    description: 'Test route for creating user as fast as possible.',
   })
-  @Post('verification-code')
-  // TODO: add JwtAuthGuard Here?
-  sendVerificationCode(@Body() verificationCodeDto: VerificationCodeDto) {
-    console.log(verificationCodeDto);
-    return this.authService.sendVerificationCode(verificationCodeDto.email);
+  @Post('test')
+  async devAuth() {
+    return await this.authService.testAuth();
   }
 }
