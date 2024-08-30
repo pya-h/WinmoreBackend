@@ -45,7 +45,7 @@ export class UserService {
 
   async getUserByWalletAddress(address: string) {
     return this.prisma.user.findFirst({
-      where: { wallet: { address } },
+      where: { wallet: { address }, },
       include: this.commonUserIncludeConfig,
     });
   }

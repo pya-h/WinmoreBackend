@@ -18,35 +18,39 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   lastLoginAt DateTime @default(now())
+  softDeleted Boolean  @default(false)
 
-  email   String?      @unique @db.VarChar(256)
-  name    String? @db.VarChar(256)
-  admin   Boolean      @default(false)
-  wallet  Wallet?
-  profile UserProfile?
+  email            String?            @unique @db.VarChar(256)
+  name             String?            @db.VarChar(256)
+  admin            Boolean            @default(false)
+  wallet           Wallet?
+  profile          UserProfile?
+  DreamMineRecords DreamMineRecords[]
 }
 
 model UserProfile {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int      @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  softDeleted Boolean  @default(false)
 
+  user   User    @relation(fields: [userId], references: [id])
+  userId Int     @unique
   avatar String? @db.VarChar(512)
 }
 
 model Wallet {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  softDeleted Boolean  @default(false)
 
   owner   User   @relation(fields: [ownerId], references: [id])
   ownerId Int    @unique
   address String @unique @db.VarChar(256)
 }
 
-enum TransactionStatus {
+enum TransactionStatusEnum {
   SUCCESSFUL
   FAILED
   REVERTED
@@ -54,11 +58,34 @@ enum TransactionStatus {
 }
 
 model Transaction {
-  id            Int      @id @default(autoincrement())
+  id          BigInt   @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  softDeleted Boolean  @default(false)
+
   sourceId      Int
   destinationId Int
-  status        TransactionStatus   @default(PENDING)
+  status        TransactionStatusEnum @default(PENDING)
   remarks       Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+}
+
+enum GameStatusEnum {
+  USER_WON
+  USER_LOST
+  ONGOING
+  NOT_STARTED
+}
+
+model DreamMineRecords {
+  id          BigInt   @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  softDeleted Boolean  @default(false)
+
+  finishedAt DateTime?
+  progress   Int            @default(0)
+  stake      Float          @default(0.0)
+  status     GameStatusEnum @default(NOT_STARTED)
 }
