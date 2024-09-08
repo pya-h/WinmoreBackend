@@ -1,16 +1,22 @@
 -- CreateEnum
+CREATE TYPE "TokensEnum" AS ENUM ('SOLANA', 'ETHEREUM');
+
+-- CreateEnum
 CREATE TYPE "TransactionStatusEnum" AS ENUM ('SUCCESSFUL', 'FAILED', 'REVERTED', 'PENDING');
 
 -- CreateEnum
-CREATE TYPE "GameStatusEnum" AS ENUM ('USER_WON', 'USER_LOST', 'ONGOING', 'NOT_STARTED');
+CREATE TYPE "GameStatusEnum" AS ENUM ('DREAM_WON', 'WITHDRAWN', 'LOST', 'ONGOING', 'NOT_STARTED');
+
+-- CreateEnum
+CREATE TYPE "GameModesEnum" AS ENUM ('EASY', 'MEDIUM', 'HARD');
 
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "deletedAt" TIMESTAMP(3),
     "lastLoginAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "softDeleted" BOOLEAN NOT NULL DEFAULT false,
     "email" VARCHAR(256),
     "name" VARCHAR(256),
     "admin" BOOLEAN NOT NULL DEFAULT false,
@@ -57,18 +63,22 @@ CREATE TABLE "Transaction" (
 );
 
 -- CreateTable
-CREATE TABLE "DreamMineRecords" (
+CREATE TABLE "DreamMineGame" (
     "id" BIGSERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "softDeleted" BOOLEAN NOT NULL DEFAULT false,
-    "finishedAt" TIMESTAMP(3),
-    "progress" INTEGER NOT NULL DEFAULT 0,
+    "initialBet" DOUBLE PRECISION NOT NULL,
+    "betToken" "TokensEnum" NOT NULL DEFAULT 'SOLANA',
+    "mode" "GameModesEnum" NOT NULL DEFAULT 'EASY',
+    "rowsCount" INTEGER NOT NULL DEFAULT 8,
+    "currentRow" INTEGER NOT NULL DEFAULT 0,
     "stake" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
     "status" "GameStatusEnum" NOT NULL DEFAULT 'NOT_STARTED',
+    "finishedAt" TIMESTAMP(3),
 
-    CONSTRAINT "DreamMineRecords_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "DreamMineGame_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -83,9 +93,6 @@ CREATE UNIQUE INDEX "Wallet_ownerId_key" ON "Wallet"("ownerId");
 -- CreateIndex
 CREATE UNIQUE INDEX "Wallet_address_key" ON "Wallet"("address");
 
--- CreateIndex
-CREATE UNIQUE INDEX "DreamMineRecords_userId_key" ON "DreamMineRecords"("userId");
-
 -- AddForeignKey
 ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -93,4 +100,4 @@ ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY (
 ALTER TABLE "Wallet" ADD CONSTRAINT "Wallet_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "DreamMineRecords" ADD CONSTRAINT "DreamMineRecords_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

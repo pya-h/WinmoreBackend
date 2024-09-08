@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { WalletModule } from './wallet/wallet.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
+import { DreamMineModule } from './dream-mine/dream-mine.module';
 
 import appGeneralConfigs from './configs/general';
 import authConfigs from './configs/auth';
@@ -17,6 +18,7 @@ import authConfigs from './configs/auth';
     AuthModule,
     WalletModule,
     PrismaModule,
+    DreamMineModule,
   ],
   controllers: [AppController],
   providers: [AppService],

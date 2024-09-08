@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { WalletModule } from 'src/wallet/wallet.module';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { WalletModule } from '../wallet/wallet.module';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
   imports: [WalletModule, PrismaModule],

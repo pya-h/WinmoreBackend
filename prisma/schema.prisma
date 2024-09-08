@@ -20,12 +20,12 @@ model User {
   lastLoginAt DateTime @default(now())
   softDeleted Boolean  @default(false)
 
-  email            String?            @unique @db.VarChar(256)
-  name             String?            @db.VarChar(256)
-  admin            Boolean            @default(false)
+  email            String?         @unique @db.VarChar(256)
+  name             String?         @db.VarChar(256)
+  admin            Boolean         @default(false)
   wallet           Wallet?
   profile          UserProfile?
-  DreamMineRecords DreamMineRecords[]
+  dreamMineRecords DreamMineGame[]
 }
 
 model UserProfile {
@@ -50,6 +50,11 @@ model Wallet {
   address String @unique @db.VarChar(256)
 }
 
+enum TokensEnum {
+  SOLANA
+  ETHEREUM
+}
+
 enum TransactionStatusEnum {
   SUCCESSFUL
   FAILED
@@ -70,13 +75,20 @@ model Transaction {
 }
 
 enum GameStatusEnum {
-  USER_WON
-  USER_LOST
+  DREAM_WON
+  WITHDRAWN
+  LOST
   ONGOING
   NOT_STARTED
 }
 
-model DreamMineRecords {
+enum GameModesEnum {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model DreamMineGame {
   id          BigInt   @id @default(autoincrement())
   user        User     @relation(fields: [userId], references: [id])
   userId      Int
@@ -84,8 +96,12 @@ model DreamMineRecords {
   updatedAt   DateTime @updatedAt
   softDeleted Boolean  @default(false)
 
-  finishedAt DateTime?
-  progress   Int            @default(0)
+  initialBet  Float
+  betToken   TokensEnum     @default(SOLANA)
+  mode       GameModesEnum  @default(EASY)
+  rowsCount  Int            @default(8)
+  currentRow Int            @default(0)
   stake      Float          @default(0.0)
   status     GameStatusEnum @default(NOT_STARTED)
+  finishedAt DateTime?
 }
