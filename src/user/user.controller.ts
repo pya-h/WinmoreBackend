@@ -15,7 +15,8 @@ import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { User } from '@prisma/client';
+import { UserPopulated } from './types/user-populated.type';
+import { TokensEnum } from '@prisma/client';
 
 @ApiTags('User')
 @Controller('user')
@@ -27,7 +28,7 @@ export class UserController {
   })
   @UseGuards(JwtAuthGuard)
   @Get()
-  getMe(@CurrentUser() user: User) {
+  getMe(@CurrentUser() user: UserPopulated) {
     return user;
   }
 
@@ -65,8 +66,11 @@ export class UserController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('balance/:token')
-  getBalance(@CurrentUser() user: User, @Param('token') token: string) {
-    return this.userService.getUserBalance(user.id, token);
+  getBalance(
+    @CurrentUser() user: UserPopulated,
+    @Param('token') token: string,
+  ) {
+    return this.userService.getTokenBalance(user, token as TokensEnum);
   }
 
   @ApiOperation({
@@ -75,7 +79,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Post('register')
   completeRegistration(
-    @CurrentUser() user: User,
+    @CurrentUser() user: UserPopulated,
     @Body() completeUserData: CompleteRegistrationDto,
   ) {
     return this.userService.completeUserData(user.id, completeUserData);
@@ -87,7 +91,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
   updateUserData(
-    @CurrentUser() user: User,
+    @CurrentUser() user: UserPopulated,
     @Body() updateUserData: UpdateUserDto,
   ) {
     return this.userService.updateUser(user.id, updateUserData);

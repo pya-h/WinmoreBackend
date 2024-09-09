@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "TokensEnum" AS ENUM ('SOLANA', 'ETHEREUM');
+CREATE TYPE "TokensEnum" AS ENUM ('SOL', 'ETH', 'USDC', 'USDT');
 
 -- CreateEnum
 CREATE TYPE "TransactionStatusEnum" AS ENUM ('SUCCESSFUL', 'FAILED', 'REVERTED', 'PENDING');
@@ -56,6 +56,8 @@ CREATE TABLE "Transaction" (
     "softDeleted" BOOLEAN NOT NULL DEFAULT false,
     "sourceId" INTEGER NOT NULL,
     "destinationId" INTEGER NOT NULL,
+    "token" "TokensEnum" NOT NULL DEFAULT 'USDC',
+    "amount" DOUBLE PRECISION NOT NULL,
     "status" "TransactionStatusEnum" NOT NULL DEFAULT 'PENDING',
     "remarks" JSONB,
 
@@ -69,8 +71,9 @@ CREATE TABLE "DreamMineGame" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "softDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "startedAt" TIMESTAMP(3),
     "initialBet" DOUBLE PRECISION NOT NULL,
-    "betToken" "TokensEnum" NOT NULL DEFAULT 'SOLANA',
+    "betToken" "TokensEnum" NOT NULL DEFAULT 'USDC',
     "mode" "GameModesEnum" NOT NULL DEFAULT 'EASY',
     "rowsCount" INTEGER NOT NULL DEFAULT 8,
     "currentRow" INTEGER NOT NULL DEFAULT 0,
@@ -98,6 +101,12 @@ ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Wallet" ADD CONSTRAINT "Wallet_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_sourceId_fkey" FOREIGN KEY ("sourceId") REFERENCES "Wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_destinationId_fkey" FOREIGN KEY ("destinationId") REFERENCES "Wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

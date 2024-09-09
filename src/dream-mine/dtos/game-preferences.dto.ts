@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GameModesEnum } from '@prisma/client';
+import { GameModesEnum, TokensEnum } from '@prisma/client';
 import {
   IsEnum,
   IsNotEmpty,
@@ -11,12 +11,25 @@ import {
 } from 'class-validator';
 import { DM_MAX_ROWS, DM_MIN_ROWS } from '../../configs/constants';
 
-export class DreamMineGamePreferences {
+export class DreamMineGamePreferencesDto {
   @ApiProperty({ description: 'Initial Bet Amount', required: true })
   @IsNotEmpty({ message: 'Bet amount is must be specified.' })
   @IsNumber()
   @IsPositive({ message: 'Bet amount must be a positive value.' })
   betAmount: number;
+
+  @ApiProperty({
+    description: 'The difficulty of the game.',
+    default: TokensEnum.USDC,
+    enum: TokensEnum,
+    enumName: 'TokensEnum',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TokensEnum, {
+    message: 'Available values are: USDC, USDT, SOL, ETH',
+  })
+  betToken?: TokensEnum;
 
   @ApiProperty({
     description: 'The difficulty of the game.',

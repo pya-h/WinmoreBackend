@@ -39,20 +39,11 @@ model UserProfile {
   avatar String? @db.VarChar(512)
 }
 
-model Wallet {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  softDeleted Boolean  @default(false)
-
-  owner   User   @relation(fields: [ownerId], references: [id])
-  ownerId Int    @unique
-  address String @unique @db.VarChar(256)
-}
-
 enum TokensEnum {
-  SOLANA
-  ETHEREUM
+  SOL
+  ETH
+  USDC
+  USDT
 }
 
 enum TransactionStatusEnum {
@@ -62,14 +53,33 @@ enum TransactionStatusEnum {
   PENDING
 }
 
+model Wallet {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  softDeleted Boolean  @default(false)
+
+  owner       User          @relation(fields: [ownerId], references: [id])
+  ownerId     Int           @unique
+  address     String        @unique @db.VarChar(256)
+  withdrawTransactions Transaction[] @relation("TrxSource")
+  despositTransactions Transaction[] @relation("TrxDestination")
+
+}
+
+
 model Transaction {
   id          BigInt   @id @default(autoincrement())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   softDeleted Boolean  @default(false)
 
+  source        Wallet                @relation("TrxSource", fields: [sourceId], references: [id])
   sourceId      Int
+  destination   Wallet                @relation("TrxDestination", fields: [destinationId], references: [id])
   destinationId Int
+  token         TokensEnum            @default(USDC)
+  amount        Float
   status        TransactionStatusEnum @default(PENDING)
   remarks       Json?
 }
@@ -96,8 +106,9 @@ model DreamMineGame {
   updatedAt   DateTime @updatedAt
   softDeleted Boolean  @default(false)
 
-  initialBet  Float
-  betToken   TokensEnum     @default(SOLANA)
+  startedAt  DateTime?
+  initialBet Float
+  betToken   TokensEnum     @default(USDC)
   mode       GameModesEnum  @default(EASY)
   rowsCount  Int            @default(8)
   currentRow Int            @default(0)

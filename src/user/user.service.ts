@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, TokensEnum } from '@prisma/client';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserPopulated } from './types/user-populated.type';
 
 @Injectable()
 export class UserService {
@@ -17,7 +18,7 @@ export class UserService {
     private readonly walletService: WalletService,
   ) {}
 
-  get commonUserIncludeConfig() {
+  get userPopulatedIncludeConfig() {
     return {
       profile: {
         select: {
@@ -40,14 +41,14 @@ export class UserService {
     };
   }
 
-  getUserBalance(userId: number, token: string) {
-    return this.walletService.getBalance(token);
+  getTokenBalance(user: UserPopulated, token: TokensEnum) {
+    return this.walletService.getBalance(user.wallet.id, token);
   }
 
   async getByWalletAddress(address: string) {
     return this.prisma.user.findFirst({
       where: { wallet: { address } },
-      include: this.commonUserIncludeConfig,
+      include: this.userPopulatedIncludeConfig,
     });
   }
 
@@ -61,7 +62,7 @@ export class UserService {
   getById(id: number) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: this.commonUserIncludeConfig,
+      include: this.userPopulatedIncludeConfig,
     });
   }
 
@@ -71,13 +72,13 @@ export class UserService {
     if (id != null)
       return this.prisma.user.findUnique({
         where: { id },
-        include: this.commonUserIncludeConfig,
+        include: this.userPopulatedIncludeConfig,
       });
 
     if (email)
       return this.prisma.user.findUnique({
         where: { email },
-        include: this.commonUserIncludeConfig,
+        include: this.userPopulatedIncludeConfig,
       });
 
     throw new BadRequestException('Invalid arguments for finding a user');
@@ -100,7 +101,7 @@ export class UserService {
           },
         },
       },
-      include: this.commonUserIncludeConfig,
+      include: this.userPopulatedIncludeConfig,
     });
   }
 
@@ -134,7 +135,7 @@ export class UserService {
   getUsers() {
     return this.prisma.user.findMany({
       where: { admin: false },
-      include: this.commonUserIncludeConfig,
+      include: this.userPopulatedIncludeConfig,
     });
   }
 
