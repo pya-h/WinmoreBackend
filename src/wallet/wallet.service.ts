@@ -36,13 +36,23 @@ export class WalletService {
   }
 
   async getBalance(walletId: number, token: TokensEnum) {
-    // FIXME: token must be enum
-    return 0;
+    const result = await this.prisma.$queryRaw<{ balance: number }[]>`SELECT (
+            COALESCE(SUM(CASE WHEN destination_id=${walletId} THEN amount ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN source_id=${walletId} THEN amount ELSE 0 END), 0)
+          ) AS balance
+        FROM transaction WHERE token=${token} AND status=${TransactionStatusEnum.SUCCESSFUL}`;
+    return result[0]?.balance ?? 0;
   }
 
   async getBalanceByUserId(userId: number, token: TokensEnum) {
-    // FIXME: token must be enum
-    return 0;
+    const result = await this.prisma.$queryRaw<{ balance: number }[]>`SELECT (
+          COALESCE(SUM(CASE WHEN t.destination_id = w.id THEN t.amount ELSE 0 END), 0) -
+          COALESCE(SUM(CASE WHEN t.source_id = w.id THEN t.amount ELSE 0 END), 0)
+        ) AS balance
+      FROM transaction t JOIN wallet w ON t.destination_id = w.id OR t.source_id = w.id
+      WHERE w.ownerId=${userId} AND t.token=${token} AND t.status=${TransactionStatusEnum.SUCCESSFUL}`;
+
+    return result[0]?.balance ?? 0;
   }
 
   failTransaction(trx: Transaction) {
