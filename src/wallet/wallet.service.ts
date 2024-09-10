@@ -1,8 +1,9 @@
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   TokensEnum,
@@ -10,6 +11,7 @@ import {
   TransactionStatusEnum,
   Wallet,
 } from '@prisma/client';
+import { WinmoreGameTypes } from 'src/common/types/game.types';
 import { BUSINESSMAN_ID } from 'src/configs/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserPopulated } from 'src/user/types/user-populated.type';
@@ -55,15 +57,16 @@ export class WalletService {
     return result[0]?.balance ?? 0;
   }
 
-  failTransaction(trx: Transaction) {
+  failTransaction(trx: Transaction, include?: { [field: string]: unknown }) {
     trx.status = TransactionStatusEnum.FAILED;
     return this.prisma.transaction.update({
       data: { status: trx.status },
       where: { id: trx.id },
+      ...(include ? { include } : {}),
     });
   }
 
-  revertTransaction(trx: Transaction) {
+  revertTransaction(trx: Transaction, include?: { [field: string]: unknown }) {
     if (trx.status !== TransactionStatusEnum.SUCCESSFUL)
       throw new ConflictException(
         'This transaction was not successful and could not be reverted.',
@@ -72,10 +75,11 @@ export class WalletService {
     return this.prisma.transaction.update({
       data: { status: trx.status },
       where: { id: trx.id },
+      ...(include ? { include } : {}),
     });
   }
 
-  submitTransaction(trx: Transaction) {
+  submitTransaction(trx: Transaction, include?: { [field: string]: unknown }) {
     if (trx.status === TransactionStatusEnum.FAILED)
       throw new ConflictException(
         'Transaction is failed, could not submit such transaction.',
@@ -84,15 +88,21 @@ export class WalletService {
     return this.prisma.transaction.update({
       data: { status: trx.status },
       where: { id: trx.id },
+      ...(include ? { include } : {}),
     });
   }
 
-  addRemarks(trx: Transaction, newRemarks: object) {
+  addRemarks(
+    trx: Transaction,
+    newRemarks: object,
+    include?: { [field: string]: unknown },
+  ) {
     const oldRemarks = trx.remarks ? JSON.parse(trx.remarks.toString()) : {};
     trx.remarks = { ...oldRemarks, ...newRemarks };
     return this.prisma.transaction.update({
-      data: { remarks: newRemarks },
+      data: { remarks: trx.remarks },
       where: { id: trx.id },
+      ...(include ? { include } : {}),
     });
   }
 
@@ -102,32 +112,14 @@ export class WalletService {
     amount: number,
     token: TokensEnum,
     remarks?: object,
+    include?: { [field: string]: unknown },
   ) {
-    const sourceWallet = await this.prisma.wallet.findUnique({
-      where: {
-        ...(typeof source === 'string' ? { address: source } : { id: source }),
-      },
-      include: { owner: true },
-    });
+    const sourceWallet = await this.getWallet(source, 'Transaction Payer');
 
-    if (!sourceWallet?.owner)
-      throw new BadRequestException(
-        'Can not make transaction because of source data mismatch.',
-      );
-
-    const destinationWallet = await this.prisma.wallet.findUnique({
-      where: {
-        ...(typeof destination === 'string'
-          ? { address: destination }
-          : { id: destination }),
-      },
-      include: { owner: true },
-    });
-
-    if (!destinationWallet?.owner)
-      throw new BadRequestException(
-        `Can not transfer ${token}, because of destination data mismatch.`,
-      );
+    const destinationWallet = await this.getWallet(
+      destination,
+      'Transaction receiver',
+    );
 
     const trx = await this.prisma.transaction.create({
       data: {
@@ -147,16 +139,61 @@ export class WalletService {
     }
 
     // if everything falls into the place:
-    return this.submitTransaction(trx);
+    return this.submitTransaction(trx, include);
   }
 
-  placeBet(user: UserPopulated, amount: number, token: TokensEnum) {
+  async getWallet(identifier: number | string, ownerTag: string = 'User') {
+    const wallet = await this.prisma.wallet.findUnique({
+      where: {
+        ...(typeof identifier === 'string'
+          ? { address: identifier }
+          : { id: identifier }),
+      },
+      include: { owner: true },
+    });
+
+    if (!wallet)
+      throw new UnauthorizedException(`${ownerTag} does not have any wallet!`);
+    if (!wallet.owner) throw new NotFoundException(`${ownerTag} not found!`);
+    return wallet;
+  }
+
+  placeBet(
+    user: UserPopulated,
+    amount: number,
+    token: TokensEnum,
+    include?: { [field: string]: unknown },
+  ) {
     return this.transact(
       user.wallet.id,
       this.businessWallet.id,
       amount,
       token,
       { description: `Place Bet Transaction` },
+      include,
+    );
+  }
+
+  async rewardTheWinner(
+    winnerId: number,
+    prize: number,
+    game: WinmoreGameTypes,
+    include?: { [field: string]: unknown },
+  ) {
+    const winnerWallet = await this.getWallet(winnerId, 'Winner'); // TODO: If the user does not have wallet [wallet data cleaned], this transaction must wait(?)
+
+    return this.transact(
+      this.businessWallet.id,
+      winnerWallet.id,
+      prize,
+      game.betToken,
+      {
+        description: `Win Game Reward Transaction`,
+        winnerId: winnerWallet.owner.id,
+        winnerName: winnerWallet.owner.name,
+        game,
+      },
+      include,
     );
   }
 }

@@ -1,17 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { GameStatusEnum, TransactionStatusEnum } from '@prisma/client';
+import {
+  DreamMineGame,
+  GameStatusEnum,
+  TransactionStatusEnum,
+} from '@prisma/client';
 import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { DM_MIN_ROWS } from 'src/configs/constants';
-import { UserService } from 'src/user/user.service';
 import { WalletService } from 'src/wallet/wallet.service';
 import { UserPopulated } from 'src/user/types/user-populated.type';
+import { WinmoreGameTypes } from 'src/common/types/game.types';
 
 @Injectable()
 export class DreamMineService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly userService: UserService,
     private readonly walletService: WalletService,
   ) {}
 
@@ -37,6 +40,7 @@ export class DreamMineService {
         mode,
         rowsCount: rows || DM_MIN_ROWS,
         status: GameStatusEnum.ONGOING,
+        stake: betAmount,
       },
       include: {
         user: true,
@@ -47,5 +51,24 @@ export class DreamMineService {
       gameId: game.id,
       type: 'Dream Mine',
     });
+  }
+
+  async payReward(game: DreamMineGame, withdrawn: boolean = true) {
+    game = await this.prisma.dreamMineGame.update({
+      data: {
+        status: withdrawn ? GameStatusEnum.WITHDRAWN : GameStatusEnum.DREAM_WON,
+      },
+      where: { id: game.id },
+      include: { user: true },
+    });
+    return this.walletService.rewardTheWinner(game.userId, game.stake, {
+      ...game,
+      id: Number(game.id),
+      name: 'Dream Mine',
+    } as WinmoreGameTypes);
+  }
+
+  mineNext(user: UserPopulated, gameId: number) {
+    // this calls payReward or lose.
   }
 }

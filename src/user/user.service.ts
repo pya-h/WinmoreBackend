@@ -20,15 +20,7 @@ export class UserService {
 
   get userPopulatedIncludeConfig() {
     return {
-      profile: {
-        select: {
-          id: true,
-          userId: true,
-          avatar: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      },
+      profile: true,
       wallet: {
         select: {
           id: true,
