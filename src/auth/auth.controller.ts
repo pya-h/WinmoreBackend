@@ -5,7 +5,7 @@ import { AuthenticationDto } from './dto/auth.dto';
 import { WalletAddressDto } from './dto/wallet-address.dto';
 import { Response } from 'express';
 
-@ApiTags('Auth')
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

@@ -7,13 +7,14 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../user/decorators/current-user.decorator';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { DreamMineService } from './dream-mine.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 
+@ApiTags('Dream Mine Game')
 @Controller('dream-mine')
 export class DreamMineController {
   constructor(private readonly dreamMineService: DreamMineService) {}
@@ -31,7 +32,8 @@ export class DreamMineController {
   }
 
   @ApiOperation({
-    description: 'Place bet and start a new dream mine game.',
+    description:
+      'Mine current row, the row which user is currently on in the game.',
   })
   @UseGuards(JwtAuthGuard)
   @Post('mine/:id')

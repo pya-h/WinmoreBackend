@@ -15,10 +15,10 @@ import {
   TransactionStatusEnum,
 } from '@prisma/client';
 import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
-import { DM_MIN_ROWS } from 'src/configs/constants';
-import { WalletService } from 'src/wallet/wallet.service';
-import { UserPopulated } from 'src/user/types/user-populated.type';
-import { WinmoreGameTypes } from 'src/common/types/game.types';
+import { DM_MIN_ROWS } from '../configs/constants';
+import { WalletService } from '../wallet/wallet.service';
+import { UserPopulated } from '../user/types/user-populated.type';
+import { WinmoreGameTypes } from '../common/types/game.types';
 
 @Injectable()
 export class DreamMineService {
