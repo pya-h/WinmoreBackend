@@ -23,13 +23,10 @@ export class AuthService {
   private validNonces: Map<string, ValidNonceType> = new Map();
 
   getMessageTemplate(walletAddress: string) {
-    const domain = this.configService.getOrThrow<string>('general.domain');
     return {
       address: walletAddress,
       nonce: this.newNonce(walletAddress),
-      domain,
-      uri: `https://${domain}`,
-      version: this.configService.getOrThrow<string>('general.appVersion'),
+      version: this.configService.getOrThrow<string>('auth.siweMsgVersion'),
       statement: this.configService.getOrThrow<string>('auth.siweStatement'),
     };
   }

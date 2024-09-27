@@ -1,9 +1,8 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthenticationDto } from './dto/auth.dto';
 import { WalletAddressDto } from './dto/wallet-address.dto';
-import { Response } from 'express';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -15,14 +14,8 @@ export class AuthController {
       'Verifies the user input data and Registers/Logs In the user in the server. Returns 200 for login, and 201 for register. Throws 400 if client requires to get a new nonce,',
   })
   @Post()
-  async authenticate(
-    @Body() authData: AuthenticationDto,
-    @Res() res: Response,
-  ) {
-    const { status, token } = await this.authService.verifyAndLogin(authData);
-
-    res.status(status).json(token);
-    // TODO: return the data as expected for ResponseTemplateInterceptor, and also set the status manually here.
+  async authenticate(@Body() authData: AuthenticationDto) {
+    return this.authService.verifyAndLogin(authData);
   }
 
   @ApiOperation({

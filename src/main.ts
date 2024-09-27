@@ -18,9 +18,9 @@ async function bootstrap() {
   const appPort = configService.getOrThrow<number>('general.appPort'),
     appIsInDebugMode = configService.get<boolean>('general.debug');
 
-  app.useGlobalInterceptors(new ResponseTemplateInterceptor());
-
   app.useGlobalFilters(new ExceptionTemplateFilter());
+
+  app.useGlobalInterceptors(new ResponseTemplateInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({
