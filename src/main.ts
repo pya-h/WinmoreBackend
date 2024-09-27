@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { setupSwagger } from './configs';
 import { ValidationPipe } from '@nestjs/common';
+import { StandardResponseInterceptor } from './common/interceptors/standard-response.interceptor';
 // import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
@@ -16,6 +17,7 @@ async function bootstrap() {
   const appPort = configService.getOrThrow<number>('general.appPort'),
     appIsInDebugMode = configService.get<boolean>('general.debug');
 
+  app.useGlobalInterceptors(new StandardResponseInterceptor());
   app.useGlobalPipes(
     new ValidationPipe({
       forbidUnknownValues: true,
