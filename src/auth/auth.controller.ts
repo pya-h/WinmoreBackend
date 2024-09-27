@@ -12,7 +12,7 @@ export class AuthController {
 
   @ApiOperation({
     description:
-      'Verifies the user input data and Registers/Logs in the user in the server. Returns 200 for login, and 201 for register.',
+      'Verifies the user input data and Registers/Logs In the user in the server. Returns 200 for login, and 201 for register. Throws 400 if client requires to get a new nonce,',
   })
   @Post()
   async authenticate(

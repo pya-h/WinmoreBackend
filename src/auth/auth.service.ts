@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpStatus,
   Injectable,
   NotFoundException,
@@ -14,15 +15,11 @@ import { generateRandomString } from 'src/common/tools';
 
 @Injectable()
 export class AuthService {
-  private nonceExpiry: number;
-
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {
-    this.nonceExpiry = this.configService.get<number>('auth.nonceExpiry');
-  }
+  ) {}
 
   private validNonces: Map<string, ValidNonceType> = new Map();
 
@@ -44,16 +41,21 @@ export class AuthService {
   }
 
   validateMessageNonce(message: SiweMessage): boolean {
-    const expectation = this.getNonce(message.address.toLowerCase());
+    const identifier = message.address.toLowerCase();
+    const expectation = this.getNonce(identifier);
 
     if (!expectation)
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         'Please first request nonce from the server',
       );
-    return (
-      message.nonce === expectation.nonce &&
-      Date.now() <= expectation.timestamp + this.nonceExpiry
-    );
+    const nonceExpiry = +this.configService.get<number>('auth.nonceExpiry');
+    if (Date.now() <= expectation.timestamp + nonceExpiry) {
+      this.clearNonce(identifier);
+      throw new BadRequestException(
+        'Nonce expired. Please request a new nonce.',
+      );
+    }
+    return message.nonce === expectation.nonce;
   }
 
   async verifySignature(
