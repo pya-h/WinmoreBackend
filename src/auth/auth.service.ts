@@ -23,7 +23,19 @@ export class AuthService {
 
   private validNonces: Map<string, ValidNonceType> = new Map();
 
-  generateNonce(address: string): string {
+  getMessageTemplate(walletAddress: string) {
+    const domain = this.configService.getOrThrow<string>('general.domain');
+    return {
+      address: walletAddress,
+      nonce: this.newNonce(walletAddress),
+      domain,
+      uri: `https://${domain}`,
+      version: this.configService.getOrThrow<string>('general.appVersion'),
+      statement: this.configService.getOrThrow<string>('auth.siweStatement'),
+    };
+  }
+
+  newNonce(address: string): string {
     const nonce = generateNonce();
     this.validNonces.set(address.toLowerCase(), {
       nonce,

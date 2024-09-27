@@ -6,6 +6,15 @@
 POST {{host}}/auth/test
 
 
+### Auth sign in info
+POST {{host}}/auth/message
+Content-Type: application/json
+
+{
+    "address": "0x32Be343B94f860124dC4fEe278FDCBD38C102D88"
+}
+
+
 ### Send verificaiton code
 POST {{host}}/auth
 Content-Type: application/json

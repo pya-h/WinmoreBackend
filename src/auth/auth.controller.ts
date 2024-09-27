@@ -29,9 +29,9 @@ export class AuthController {
     description:
       'Generates a new nonce for given address that is valid until its not used, only by the wallet address provided. Call this right after user connects the wallet.',
   })
-  @Post('nonce')
+  @Post('message')
   generateNonce(@Body() walletAddressDto: WalletAddressDto) {
-    return this.authService.generateNonce(walletAddressDto.address);
+    return this.authService.getMessageTemplate(walletAddressDto.address);
   }
 
   @ApiOperation({
