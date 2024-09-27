@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 
-export class StandardResponseInterceptor<T> implements NestInterceptor<T, any> {
+export class ResponseTemplateInterceptor<T> implements NestInterceptor<T, any> {
   intercept(
     context: ExecutionContext,
     next: CallHandler<T>,
@@ -10,8 +10,13 @@ export class StandardResponseInterceptor<T> implements NestInterceptor<T, any> {
       map((data: unknown) => {
         const response = context.switchToHttp().getResponse();
 
+        if (data['message']) {
+          response.message = data['message'];
+          delete data['message'];
+        } else response.message = 'Success!';
+
         return {
-          message: response.message || 'Success!',
+          message: response.message,
           data,
           status: response.statusCode,
         };

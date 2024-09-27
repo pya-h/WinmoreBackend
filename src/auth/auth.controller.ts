@@ -22,7 +22,7 @@ export class AuthController {
     const { status, token } = await this.authService.verifyAndLogin(authData);
 
     res.status(status).json(token);
-    // TODO: return the data as expected for StandardResponseInterceptor, and also set the status manually here.
+    // TODO: return the data as expected for ResponseTemplateInterceptor, and also set the status manually here.
   }
 
   @ApiOperation({

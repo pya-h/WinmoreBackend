@@ -2,7 +2,11 @@
 
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImFkZHJlc3MiOiIxZTlkYjNhNC0wOGQ2LTRkMzgtYTVlZC1lNDEwNDYyOWQ5ZTAiLCJpYXQiOjE3MjUwMzI3OTQsImV4cCI6MTcyNTAzOTk5NH0.HvWuJzayJleg625fo6Ry21hD9aB9Lh9FqwRHjTbzVT0
 
-### test user
+### main route
+GET {{host}}/
+
+
+### test user: Create test user with random wallet address as fast as possible,
 POST {{host}}/auth/test
 
 

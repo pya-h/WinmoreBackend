@@ -9,7 +9,7 @@ export class AppController {
 
   @ApiOperation({ description: 'Home route, empty for now.' })
   @Get()
-  home(): string {
+  home() {
     return this.appService.home();
   }
 }
