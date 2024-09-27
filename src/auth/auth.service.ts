@@ -1,31 +1,41 @@
 import {
-  BadRequestException,
   HttpStatus,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
 import { AuthenticationDto } from './dto/auth.dto';
-import { ethers } from 'ethers';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
+import { SiweMessage, generateNonce } from 'siwe';
+import { ValidNonceType } from './types/valid-nonce.type';
+import { ConfigService } from '@nestjs/config';
+import { generateRandomString } from 'src/common/tools';
 
 @Injectable()
 export class AuthService {
+  private nonceExpiry: number;
+
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.nonceExpiry = this.configService.get<number>('auth.nonceExpiry');
+  }
 
-  private validNonces: Map<string, string> = new Map();
+  private validNonces: Map<string, ValidNonceType> = new Map();
 
   generateNonce(address: string): string {
-    const nonce = `${Date.now()}-${uuidv4()}`;
-    this.validNonces.set(address.toLowerCase(), nonce);
+    const nonce = generateNonce();
+    this.validNonces.set(address.toLowerCase(), {
+      nonce,
+      timestamp: Date.now() / 60,
+    });
     return nonce;
   }
 
-  getNonce(address: string): string | undefined {
+  getNonce(address: string): ValidNonceType | undefined | null {
     return this.validNonces.get(address.toLowerCase());
   }
 
@@ -33,26 +43,36 @@ export class AuthService {
     this.validNonces.delete(address.toLowerCase());
   }
 
-  getMessageToSign(message: string, nonce: string) {
-    return `${nonce};${message};`;
+  validateMessageNonce(message: SiweMessage): boolean {
+    const expectation = this.getNonce(message.address.toLowerCase());
+
+    if (!expectation)
+      throw new UnauthorizedException(
+        'Please first request nonce from the server',
+      );
+    return (
+      message.nonce === expectation.nonce &&
+      Date.now() <= expectation.timestamp + this.nonceExpiry
+    );
   }
 
-  verifySignature(
-    address: string,
-    actualMessage: string,
-    nonce: string,
-    signedMessage: string,
-  ): boolean {
-    try {
-      const recoveredAddress = ethers.verifyMessage(
-        signedMessage,
-        this.getMessageToSign(actualMessage, nonce),
-      );
+  async verifySignature(
+    message: string,
+    signature: string,
+  ): Promise<{ ok: boolean; address?: string }> {
+    const siweMessage = new SiweMessage(message);
 
-      return recoveredAddress.toLowerCase() === address.toLowerCase();
-    } catch (error) {}
+    if (this.validateMessageNonce(siweMessage)) {
+      const verificationResult = await siweMessage.verify({
+        signature,
+      });
 
-    return false;
+      if (verificationResult?.success) {
+        this.clearNonce(siweMessage.address);
+        return { ok: true, address: siweMessage.address };
+      }
+    }
+    return { ok: false };
   }
 
   getJwtToken(user: { id: number; wallet: { address: string } }) {
@@ -62,22 +82,13 @@ export class AuthService {
     });
   }
 
-  async verifyAndLogin({ message, signature, address }: AuthenticationDto) {
-    const nonce: string = this.getNonce(address);
-    if (!nonce)
-      throw new BadRequestException(
-        'Please first request nonce from the server',
-      );
+  async verifyAndLogin({ message, signature }: AuthenticationDto) {
+    const { ok, address } = await this.verifySignature(message, signature);
 
-    if (!this.verifySignature(address, message, nonce, signature))
-      throw new UnauthorizedException('Invalid signature.');
-
-    this.clearNonce(address);
+    if (!ok) throw new UnauthorizedException('Invalid signature!');
 
     const user = await this.userService.getByWalletAddress(address);
     if (!user) {
-      // TODO: 1 create the user with no data,
-      // 2 create the user wallet with this address.
       const user = await this.userService.createUser(address);
       return {
         token: this.getJwtToken(user),
@@ -89,10 +100,24 @@ export class AuthService {
   }
 
   async testAuth() {
-    const user = await this.userService.createUser(uuidv4());
+    if (!this.configService.get<boolean>('general.debug'))
+      throw new NotFoundException('No such route.');
+
+    let randomWalletAddress: string = null;
+    while (
+      !randomWalletAddress ||
+      (await this.userService.getByWalletAddress(randomWalletAddress))
+    )
+      randomWalletAddress = generateRandomString({
+        prefix: '-0X',
+        length: 39,
+      }); // - is for not conflicting with real addresses
+
+    const user = await this.userService.createUser(randomWalletAddress);
     return {
       token: this.getJwtToken(user),
       status: HttpStatus.CREATED,
+      randomWalletAddress,
     };
   }
 }

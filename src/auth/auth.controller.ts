@@ -38,7 +38,7 @@ export class AuthController {
     description: 'Test route for creating user as fast as possible.',
   })
   @Post('test')
-  async devAuth() {
-    return await this.authService.testAuth();
+  devAuth() {
+    return this.authService.testAuth();
   }
 }

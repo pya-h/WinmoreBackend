@@ -1,6 +1,9 @@
-@host = http://localhost:8000
+@host = http://localhost:8000/api
 
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImFkZHJlc3MiOiIxZTlkYjNhNC0wOGQ2LTRkMzgtYTVlZC1lNDEwNDYyOWQ5ZTAiLCJpYXQiOjE3MjUwMzI3OTQsImV4cCI6MTcyNTAzOTk5NH0.HvWuJzayJleg625fo6Ry21hD9aB9Lh9FqwRHjTbzVT0
+
+### test user
+POST {{host}}/auth/test
 
 
 ### Send verificaiton code
