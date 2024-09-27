@@ -3,7 +3,6 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthenticationDto } from './dto/auth.dto';
 import { UserService } from 'src/user/user.service';
@@ -56,7 +55,7 @@ export class AuthService {
     const identifier = message.address.toLowerCase();
     const expectation = this.getNonce(identifier);
 
-    if (!expectation)
+    if (!expectation?.nonce)
       throw new BadRequestException(
         'Please first request nonce from the server',
       );
@@ -73,20 +72,32 @@ export class AuthService {
   async verifySignature(
     message: string,
     signature: string,
-  ): Promise<{ ok: boolean; address?: string }> {
-    const siweMessage = new SiweMessage(message);
+  ): Promise<{ ok: boolean; address?: string; err?: string }> {
+    let siweMessage: SiweMessage;
+    let err: string | null = null;
+
+    try {
+      siweMessage = new SiweMessage(message);
+    } catch (ex) {
+      err = `Invalid Message Format: ${ex.message}`;
+      return { ok: false, err };
+    }
 
     if (this.validateMessageNonce(siweMessage)) {
-      const verificationResult = await siweMessage.verify({
-        signature,
-      });
+      try {
+        const verificationResult = await siweMessage.verify({
+          signature,
+        });
 
-      if (verificationResult?.success) {
-        this.clearNonce(siweMessage.address);
-        return { ok: true, address: siweMessage.address };
+        if (verificationResult?.success) {
+          this.clearNonce(siweMessage.address);
+          return { ok: true, address: siweMessage.address };
+        }
+      } catch (ex) {
+        err = `Invalid Signature!`;
       }
     }
-    return { ok: false };
+    return { ok: false, err };
   }
 
   getJwtToken(user: { id: number; wallet: { address: string } }) {
@@ -97,9 +108,9 @@ export class AuthService {
   }
 
   async verifyAndLogin({ message, signature }: AuthenticationDto) {
-    const { ok, address } = await this.verifySignature(message, signature);
+    const { ok, address, err } = await this.verifySignature(message, signature);
 
-    if (!ok) throw new UnauthorizedException('Invalid signature!');
+    if (!ok) throw new BadRequestException(err);
 
     const user = await this.userService.getByWalletAddress(address);
     if (!user) {

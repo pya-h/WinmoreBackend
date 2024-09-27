@@ -3,7 +3,8 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { setupSwagger } from './configs';
 import { ValidationPipe } from '@nestjs/common';
-import { ResponseTemplateInterceptor } from './common/interceptors/standard-response.interceptor';
+import { ResponseTemplateInterceptor } from './common/interceptors/response-template.interceptor';
+import { ExceptionTemplateFilter } from './common/filters/exception-template.filter';
 // import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
@@ -18,6 +19,9 @@ async function bootstrap() {
     appIsInDebugMode = configService.get<boolean>('general.debug');
 
   app.useGlobalInterceptors(new ResponseTemplateInterceptor());
+
+  app.useGlobalFilters(new ExceptionTemplateFilter());
+
   app.useGlobalPipes(
     new ValidationPipe({
       forbidUnknownValues: true,
