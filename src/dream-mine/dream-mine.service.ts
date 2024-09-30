@@ -15,7 +15,6 @@ import {
   TransactionStatusEnum,
 } from '@prisma/client';
 import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
-import { DM_MIN_ROWS } from '../configs/constants';
 import { WalletService } from '../wallet/wallet.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
@@ -29,17 +28,19 @@ export class DreamMineService {
 
   async newGame(
     user: UserPopulated,
-    { betAmount, betToken, mode, rows }: DreamMineGamePreferencesDto,
+    { betAmount, mode, rows }: DreamMineGamePreferencesDto,
   ) {
-    const placeBetTrx = await this.walletService.placeBet(
-      user,
-      betAmount,
-      betToken,
-    );
+    const placeBetTrx = await this.walletService.placeBet(user, betAmount);
     if (placeBetTrx.status !== TransactionStatusEnum.SUCCESSFUL)
       // for caution:
       throw new BadRequestException(
         'Could not place bet due to some reason! Please try again.',
+      );
+    const rules = await this.getLatestRules();
+    const rowsCount = rows || rules.minRows;
+    if (rowsCount < rules.minRows || rowsCount > rules.maxRows)
+      throw new BadRequestException(
+        `Number of rows must an integer between ${rules.minRows} & ${rules.maxRows}`,
       );
 
     const game = await this.prisma.dreamMineGame.create({
@@ -47,7 +48,7 @@ export class DreamMineService {
         userId: user.id,
         initialBet: betAmount,
         mode,
-        rowsCount: rows || DM_MIN_ROWS,
+        rowsCount,
         status: GameStatusEnum.ONGOING,
         stake: betAmount,
         currentRow: 0,
@@ -194,6 +195,10 @@ export class DreamMineService {
   }
 
   async backoffTheGame(user: UserPopulated, gameId: number) {
-    // TODO: Complete this.
+    const game = await this.prisma.dreamMineGame.findUnique({
+      where: { id: gameId, userId: user.id },
+    });
+    await this.payReward(game, true);
+    return game;
   }
 }

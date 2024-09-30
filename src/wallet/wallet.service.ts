@@ -19,7 +19,7 @@ import { UserPopulated } from 'src/user/types/user-populated.type';
 @Injectable()
 export class WalletService {
   private businessWallet: Wallet;
-
+  // TODO: add chainId to Transaction entity.
   constructor(private readonly prisma: PrismaService) {
     this.loadBusinessWallet().catch((err) => {
       console.log(
@@ -161,14 +161,13 @@ export class WalletService {
   placeBet(
     user: UserPopulated,
     amount: number,
-    token: TokensEnum,
     include?: { [field: string]: unknown },
   ) {
     return this.transact(
       user.wallet.id,
       this.businessWallet.id,
       amount,
-      token,
+      TokensEnum.USDT, // TODO: Think about how in game transactions must be handled.
       { description: `Place Bet Transaction` },
       include,
     );

@@ -53,3 +53,8 @@ Authorization: Bearer {{token}}
     "name": "Whasr",
     "avatar": "https://whatever.com"
 }
+
+
+### Get dream mine game rules
+GET {{host}}/dream-mine/rules
+Authorization: Bearer {{token}}

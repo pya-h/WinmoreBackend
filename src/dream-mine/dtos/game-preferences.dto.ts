@@ -1,35 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GameModesEnum, TokensEnum } from '@prisma/client';
+import { GameModesEnum } from '@prisma/client';
 import {
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
-  Max,
-  Min,
 } from 'class-validator';
-import { DM_MAX_ROWS, DM_MIN_ROWS } from '../../configs/constants';
 
 export class DreamMineGamePreferencesDto {
   @ApiProperty({ description: 'Initial Bet Amount', required: true })
-  @IsNotEmpty({ message: 'Bet amount is must be specified.' })
+  @IsNotEmpty({ message: 'Bet amount must be specified.' })
   @IsNumber()
-  @IsPositive({ message: 'Bet amount must be a positive value.' })
+  @IsPositive({ message: 'Bet amount must be a positive number.' })
   betAmount: number;
-
-  @ApiProperty({
-    description: 'The difficulty of the game.',
-    default: TokensEnum.USDC,
-    enum: TokensEnum,
-    enumName: 'TokensEnum',
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(TokensEnum, {
-    message: 'Available values are: USDC, USDT, SOL, ETH',
-  })
-  betToken?: TokensEnum;
 
   @ApiProperty({
     description: 'The difficulty of the game.',
@@ -46,15 +31,9 @@ export class DreamMineGamePreferencesDto {
   @ApiProperty({
     description: 'Number of rows that could be mined.',
     required: false,
-    default: DM_MIN_ROWS,
   })
   @IsOptional()
-  @IsNumber()
-  @Min(DM_MIN_ROWS, {
-    message: `Number of rows could not be smaller ${DM_MIN_ROWS}.`,
-  })
-  @Max(DM_MAX_ROWS, {
-    message: `Number of rows could not be larger than ${DM_MAX_ROWS}.`,
-  })
+  @IsInt()
+  @IsPositive({ message: 'Number of rows must be a positive integer' })
   rows?: number;
 }
