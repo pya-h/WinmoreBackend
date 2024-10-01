@@ -114,11 +114,11 @@ export class AuthService {
       const user = await this.userService.createUser(address);
       return {
         token: this.getJwtToken(user),
-        status: HttpStatus.CREATED,
+        statusCode: HttpStatus.CREATED,
       };
     }
     await this.userService.updateLastLoginDate(user.id);
-    return { token: this.getJwtToken(user), status: HttpStatus.OK };
+    return { token: this.getJwtToken(user), statusCode: HttpStatus.OK };
   }
 
   async testAuth() {
@@ -138,7 +138,7 @@ export class AuthService {
     const user = await this.userService.createUser(randomWalletAddress);
     return {
       token: this.getJwtToken(user),
-      status: HttpStatus.CREATED,
+      statusCode: HttpStatus.CREATED,
       randomWalletAddress,
     };
   }

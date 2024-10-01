@@ -59,8 +59,7 @@ export class DreamMineService {
       gameId: game.id,
       type: 'Dream Mine',
     });
-
-    return game;
+    return { ...game, id: game.id.toString() };
   }
 
   /**
@@ -79,6 +78,7 @@ export class DreamMineService {
       where: { id: game.id },
       include: { user: true },
     });
+
     return this.walletService.rewardTheWinner(game.userId, game.stake, {
       ...game,
       id: Number(game.id),
@@ -89,6 +89,7 @@ export class DreamMineService {
   async lose(game: DreamMineGame) {
     // TODO: Complete this
     // Also pay attention to the type
+    game.status = GameStatusEnum.LOST;
     return game;
   }
 
@@ -128,16 +129,25 @@ export class DreamMineService {
         game.stake *
         (rule.rowCoefficients[game.currentRow] || 1) *
         difficultyValue;
+
     const playerChance = Math.random() * 100.0;
-    if (playerChance > 100 - probability) {
+    let result: Record<string, unknown>;
+    if (playerChance >= 100 - probability) {
       game.stake += rowIncome;
       if (game.currentRow === game.rowsCount) {
         await this.payReward(game, false);
-      }
-      return { success: true, ...game };
+      } else game.currentRow++;
+      result = { success: true, ...game };
+    } else {
+      game = await this.lose(game);
+      result = { success: false, ...game };
     }
-    game = await this.lose(game);
-    return { success: false, ...game };
+    await this.prisma.dreamMineGame.update({
+      data: game,
+      where: { id: game.id },
+    });
+    result.id = game.id.toString();
+    return result;
   }
 
   async goForCurrentRow(user: UserPopulated, gameId: number) {
@@ -198,6 +208,10 @@ export class DreamMineService {
     const game = await this.prisma.dreamMineGame.findUnique({
       where: { id: gameId, userId: user.id },
     });
+    if (!game.currentRow)
+      throw new ForbiddenException(
+        'You can not withdraw at the start of the game.',
+      );
     await this.payReward(game, true);
     return game;
   }

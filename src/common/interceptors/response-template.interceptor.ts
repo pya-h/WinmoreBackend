@@ -16,7 +16,7 @@ export class ResponseTemplateInterceptor<T> implements NestInterceptor<T, any> {
         const response = context.switchToHttp().getResponse();
         try {
           if (data) {
-            if (data['status']) response.statusCode = data['status'];
+            if (data['statusCode']) response.statusCode = data['statusCode'];
 
             if (data['message']) {
               response.message = data['message'];
