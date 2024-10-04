@@ -28,9 +28,9 @@ model User {
 }
 
 model UserProfile {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user   User    @relation(fields: [userId], references: [id])
   userId Int     @unique
@@ -52,9 +52,9 @@ enum TransactionStatusEnum {
 }
 
 model Wallet {
-  id          Int      @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   owner                User          @relation(fields: [ownerId], references: [id])
   ownerId              Int           @unique
@@ -63,10 +63,20 @@ model Wallet {
   despositTransactions Transaction[] @relation("TrxDestination")
 }
 
+model Chain {
+  id        Int   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name        String
+  providerUrl String
+  transactions Transaction[]
+}
+
 model Transaction {
-  id          BigInt   @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   source        Wallet                @relation("TrxSource", fields: [sourceId], references: [id])
   sourceId      Int
@@ -74,6 +84,8 @@ model Transaction {
   destinationId Int
   token         TokensEnum            @default(USDC)
   amount        Float
+  chainId       Int
+  Chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
   remarks       Json?
 }
@@ -93,11 +105,11 @@ enum GameModesEnum {
 }
 
 model DreamMineGame {
-  id          BigInt   @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        BigInt   @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   startedAt  DateTime?
   initialBet Float
@@ -111,16 +123,25 @@ model DreamMineGame {
 }
 
 model DreamMineRules {
-  id                     Int     @id @default(autoincrement())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  rowCoefficients        Float[]  // Stake multiplier, must be > 1
+  rowCoefficients        Float[] // Stake multiplier, must be > 1
   rowProbabilities       Float[] // as Percentage, in range: (0, 100)
   difficultyCoefficients Float[] // easy coefficient is 1 always. This array contains two coefficients [hard, medium] for medium and hard difficulties. (or only hard if only one value)
   // this coef must be larger than 1, and has effect on both rowCoefficients & probability values.
   minRows                Int     @default(8)
   maxRows                Int     @default(12)
-  minBetAmount            Float?
+  minBetAmount           Float?
   maxBetAmount           Float?
+}
+
+model BlockData {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isFinalized Boolean @default(false)
+  Hash        String
 }

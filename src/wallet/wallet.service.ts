@@ -19,7 +19,6 @@ import { UserPopulated } from 'src/user/types/user-populated.type';
 @Injectable()
 export class WalletService {
   private businessWallet: Wallet;
-  // TODO: add chainId to Transaction entity.
   constructor(private readonly prisma: PrismaService) {
     this.loadBusinessWallet().catch((err) => {
       console.log(
@@ -38,6 +37,7 @@ export class WalletService {
   }
 
   async getBalance(walletId: number, token: TokensEnum) {
+    // TODO: All Get balance methods must consider chinId
     const result = await this.prisma.$queryRaw<{ balance: number }[]>`SELECT (
             COALESCE(SUM(CASE WHEN destination_id=${walletId} THEN amount ELSE 0 END), 0) -
             COALESCE(SUM(CASE WHEN source_id=${walletId} THEN amount ELSE 0 END), 0)

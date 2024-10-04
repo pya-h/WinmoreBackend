@@ -7,6 +7,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { DreamMineModule } from './dream-mine/dream-mine.module';
+import { BlockAnalyzerModule } from './block-analyzer/block-analyzer.module';
 
 import appGeneralConfigs from './configs/general';
 import authConfigs from './configs/auth';
@@ -19,6 +20,7 @@ import authConfigs from './configs/auth';
     WalletModule,
     PrismaModule,
     DreamMineModule,
+    BlockAnalyzerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
