@@ -10,7 +10,6 @@ import { ExceptionTemplateFilter } from './common/filters/exception-template.fil
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api');
   app.enableCors(); // TODO: Temp
   setupSwagger(app);
 

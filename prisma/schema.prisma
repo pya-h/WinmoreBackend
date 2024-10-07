@@ -64,17 +64,18 @@ model Wallet {
 }
 
 model Chain {
-  id        Int   @id
+  id        Int      @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name        String
-  providerUrl String
-  transactions Transaction[]
+  name           String
+  providerUrl    String
+  transactions   Transaction[]
+  dreamMineGames DreamMineGame[]
 }
 
 model Transaction {
-  id        BigInt   @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -85,7 +86,7 @@ model Transaction {
   token         TokensEnum            @default(USDC)
   amount        Float
   chainId       Int
-  Chain         Chain                 @relation(fields: [chainId], references: [id])
+  chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
   remarks       Json?
 }
@@ -105,7 +106,7 @@ enum GameModesEnum {
 }
 
 model DreamMineGame {
-  id        BigInt   @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   createdAt DateTime @default(now())
@@ -113,11 +114,15 @@ model DreamMineGame {
 
   startedAt  DateTime?
   initialBet Float
-  betToken   TokensEnum     @default(USDC)
+  token      TokensEnum     @default(USDC)
+  chainId    Int
+  chain      Chain          @relation(fields: [chainId], references: [id])
   mode       GameModesEnum  @default(EASY)
   rowsCount  Int            @default(8)
   currentRow Int            @default(0)
   stake      Float          @default(0.0)
+  golds      Int[]
+  lastChoice Int?
   status     GameStatusEnum @default(NOT_STARTED)
   finishedAt DateTime?
 }
@@ -143,5 +148,5 @@ model BlockData {
   updatedAt DateTime @updatedAt
 
   isFinalized Boolean @default(false)
-  Hash        String
+  hash        String
 }

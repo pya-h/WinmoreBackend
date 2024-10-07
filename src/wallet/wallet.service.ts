@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -34,6 +35,10 @@ export class WalletService {
       include: { owner: true },
     });
     console.log('Business wallet loaded.');
+  }
+
+  async isChainSupported(chainId: number) {
+    return Boolean(await this.prisma.chain.count({ where: { id: chainId } }));
   }
 
   async getBalance(walletId: number, token: TokensEnum) {
@@ -111,9 +116,14 @@ export class WalletService {
     destination: number | string,
     amount: number,
     token: TokensEnum,
+    chainId: number,
     remarks?: object,
     include?: { [field: string]: unknown },
   ) {
+    if (!this.isChainSupported(chainId))
+      throw new BadRequestException(
+        "Unfortunately we don't support this chain for now.",
+      );
     const sourceWallet = await this.getWallet(source, 'Transaction Payer');
 
     const destinationWallet = await this.getWallet(
@@ -128,6 +138,7 @@ export class WalletService {
         status: TransactionStatusEnum.PENDING,
         amount,
         token,
+        chainId,
         remarks,
       },
     });
@@ -161,13 +172,16 @@ export class WalletService {
   placeBet(
     user: UserPopulated,
     amount: number,
+    token: TokensEnum,
+    chainId: number,
     include?: { [field: string]: unknown },
   ) {
     return this.transact(
       user.wallet.id,
       this.businessWallet.id,
       amount,
-      TokensEnum.USDT, // TODO: Think about how in game transactions must be handled.
+      token,
+      chainId,
       { description: `Place Bet Transaction` },
       include,
     );
@@ -185,7 +199,8 @@ export class WalletService {
       this.businessWallet.id,
       winnerWallet.id,
       prize,
-      game.betToken,
+      game.token,
+      game.chainId,
       {
         description: `Win Game Reward Transaction`,
         winnerId: winnerWallet.owner.id,

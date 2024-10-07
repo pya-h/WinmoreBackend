@@ -28,9 +28,14 @@ export class DreamMineService {
 
   async newGame(
     user: UserPopulated,
-    { betAmount, mode, rows }: DreamMineGamePreferencesDto,
+    { betAmount, token, chainId, mode, rows }: DreamMineGamePreferencesDto,
   ) {
-    const placeBetTrx = await this.walletService.placeBet(user, betAmount);
+    const placeBetTrx = await this.walletService.placeBet(
+      user,
+      betAmount,
+      token,
+      chainId,
+    );
     if (placeBetTrx.status !== TransactionStatusEnum.SUCCESSFUL)
       // for caution:
       throw new BadRequestException(
@@ -47,6 +52,8 @@ export class DreamMineService {
       data: {
         userId: user.id,
         initialBet: betAmount,
+        token,
+        chainId,
         mode,
         rowsCount,
         status: GameStatusEnum.ONGOING,
@@ -59,7 +66,7 @@ export class DreamMineService {
       gameId: game.id,
       type: 'Dream Mine',
     });
-    return { ...game, id: game.id.toString() };
+    return game;
   }
 
   /**
@@ -68,7 +75,7 @@ export class DreamMineService {
    * @param withdrawn: This specifies wether the user has backed off or not. The true value mens user is requesting the stake withdraw in the game.
    * @returns the reward transaction.
    */
-  async payReward(game: DreamMineGame, withdrawn: boolean = true) {
+  async finalizeGame(game: DreamMineGame, withdrawn: boolean = true) {
     game.status = withdrawn
       ? GameStatusEnum.WITHDRAWN
       : GameStatusEnum.DREAM_WON;
@@ -81,16 +88,8 @@ export class DreamMineService {
 
     return this.walletService.rewardTheWinner(game.userId, game.stake, {
       ...game,
-      id: Number(game.id),
       name: 'Dream Mine',
     } as WinmoreGameTypes);
-  }
-
-  async lose(game: DreamMineGame) {
-    // TODO: Complete this
-    // Also pay attention to the type
-    game.status = GameStatusEnum.LOST;
-    return game;
   }
 
   matchGameModeWithDifficultyCoefficient(
@@ -135,18 +134,17 @@ export class DreamMineService {
     if (playerChance >= 100 - probability) {
       game.stake += rowIncome;
       if (game.currentRow === game.rowsCount) {
-        await this.payReward(game, false);
+        await this.finalizeGame(game, false);
       } else game.currentRow++;
       result = { success: true, ...game };
     } else {
-      game = await this.lose(game);
+      game.status = GameStatusEnum.LOST;
       result = { success: false, ...game };
     }
     await this.prisma.dreamMineGame.update({
       data: game,
       where: { id: game.id },
     });
-    result.id = game.id.toString();
     return result;
   }
 
@@ -212,7 +210,7 @@ export class DreamMineService {
       throw new ForbiddenException(
         'You can not withdraw at the start of the game.',
       );
-    await this.payReward(game, true);
+    await this.finalizeGame(game, true);
     return game;
   }
 }

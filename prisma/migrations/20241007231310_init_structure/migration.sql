@@ -16,7 +16,6 @@ CREATE TABLE "User" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "lastLoginAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "softDeleted" BOOLEAN NOT NULL DEFAULT false,
     "email" VARCHAR(256),
     "name" VARCHAR(256),
     "admin" BOOLEAN NOT NULL DEFAULT false,
@@ -29,7 +28,6 @@ CREATE TABLE "UserProfile" (
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "softDeleted" BOOLEAN NOT NULL DEFAULT false,
     "userId" INTEGER NOT NULL,
     "avatar" VARCHAR(512),
 
@@ -41,7 +39,6 @@ CREATE TABLE "Wallet" (
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "softDeleted" BOOLEAN NOT NULL DEFAULT false,
     "ownerId" INTEGER NOT NULL,
     "address" VARCHAR(256) NOT NULL,
 
@@ -49,15 +46,26 @@ CREATE TABLE "Wallet" (
 );
 
 -- CreateTable
-CREATE TABLE "Transaction" (
-    "id" BIGSERIAL NOT NULL,
+CREATE TABLE "Chain" (
+    "id" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "softDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "name" TEXT NOT NULL,
+    "providerUrl" TEXT NOT NULL,
+
+    CONSTRAINT "Chain_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Transaction" (
+    "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "sourceId" INTEGER NOT NULL,
     "destinationId" INTEGER NOT NULL,
     "token" "TokensEnum" NOT NULL DEFAULT 'USDC',
     "amount" DOUBLE PRECISION NOT NULL,
+    "chainId" INTEGER NOT NULL,
     "status" "TransactionStatusEnum" NOT NULL DEFAULT 'PENDING',
     "remarks" JSONB,
 
@@ -66,18 +74,20 @@ CREATE TABLE "Transaction" (
 
 -- CreateTable
 CREATE TABLE "DreamMineGame" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "softDeleted" BOOLEAN NOT NULL DEFAULT false,
     "startedAt" TIMESTAMP(3),
     "initialBet" DOUBLE PRECISION NOT NULL,
     "betToken" "TokensEnum" NOT NULL DEFAULT 'USDC',
+    "chainId" INTEGER NOT NULL,
     "mode" "GameModesEnum" NOT NULL DEFAULT 'EASY',
     "rowsCount" INTEGER NOT NULL DEFAULT 8,
     "currentRow" INTEGER NOT NULL DEFAULT 0,
     "stake" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+    "golds" INTEGER[],
+    "lastChoice" INTEGER,
     "status" "GameStatusEnum" NOT NULL DEFAULT 'NOT_STARTED',
     "finishedAt" TIMESTAMP(3),
 
@@ -87,15 +97,28 @@ CREATE TABLE "DreamMineGame" (
 -- CreateTable
 CREATE TABLE "DreamMineRules" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "rowCoefficients" DOUBLE PRECISION[],
-    "rowProbabilities" INTEGER[],
+    "rowProbabilities" DOUBLE PRECISION[],
     "difficultyCoefficients" DOUBLE PRECISION[],
     "minRows" INTEGER NOT NULL DEFAULT 8,
     "maxRows" INTEGER NOT NULL DEFAULT 12,
-    "minBetAmont" DOUBLE PRECISION,
+    "minBetAmount" DOUBLE PRECISION,
     "maxBetAmount" DOUBLE PRECISION,
 
     CONSTRAINT "DreamMineRules_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BlockData" (
+    "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isFinalized" BOOLEAN NOT NULL DEFAULT false,
+    "hash" TEXT NOT NULL,
+
+    CONSTRAINT "BlockData_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -123,4 +146,10 @@ ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_sourceId_fkey" FOREIGN KEY
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_destinationId_fkey" FOREIGN KEY ("destinationId") REFERENCES "Wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

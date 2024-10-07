@@ -4,7 +4,8 @@ export type WinmoreGameTypes = {
   id: number;
   name: string;
   initialBet: number;
-  betToken: TokensEnum;
+  token: TokensEnum;
+  chainId: number,
   mode: GameModesEnum;
   status: GameStatusEnum;
   startedAt: Date;
