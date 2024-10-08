@@ -62,12 +62,12 @@ Authorization: Bearer {{token}}
 
 
 ### Place bet on dream mine game
-POST {{host2}}/dream-mine/bet
-Authorization: Bearer {{token2}}
+POST {{host}}/dream-mine/bet
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "betAmount": 50,
+    "betAmount": 100,
     "mode": "EASY",
     "rows": 8,
     "token": "USDT",
@@ -75,8 +75,8 @@ Content-Type: application/json
 }
 
 ### Mine current row
-POST {{host2}}/dream-mine/mine/50
-Authorization: Bearer {{token2}}
+POST {{host}}/dream-mine/mine/9
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -84,6 +84,6 @@ Content-Type: application/json
 }
 
 ### Backoff mining and get the stake
-POST {{host}}/dream-mine/backoff/50
+POST {{host}}/dream-mine/backoff/9
 Authorization: Bearer {{token}}
 Content-Type: application/json
