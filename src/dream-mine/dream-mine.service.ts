@@ -134,12 +134,16 @@ export class DreamMineService {
           rule.rowCoefficients[game.currentRow] *
           difficultyValue;
       game.golds.push(choice);
+      game.currentRow++;
       if (game.currentRow === game.rowsCount) {
         await this.finalizeGame(game, false);
-      } else game.currentRow++;
-      result = { success: true, ...game };
+        result = { success: true, ...game };
+      } else {
+        result = { success: true, ...game };
+      }
     } else {
       game.status = GameStatusEnum.LOST;
+      game.finishedAt = new Date();
       let goldIndex: number = 0;
       while (!goldIndex || goldIndex === choice)
         goldIndex = ((Math.random() * DM_COLUMNS_COUNT) | 0) + 1;
