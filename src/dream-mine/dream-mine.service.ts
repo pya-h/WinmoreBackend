@@ -165,19 +165,19 @@ export class DreamMineService {
     const game = await this.prisma.dreamMineGame.findUnique({
       where: { id: gameId, userId: user.id },
     });
-    if (!game) throw new NotFoundException('You are not playing such game.');
+    if (!game) throw new NotFoundException('Game not found.');
     if (game.status === GameStatusEnum.NOT_STARTED)
       throw new ForbiddenException(
         'This game has not started yet! First place your bet.',
-      );
-    if (game.status !== GameStatusEnum.ONGOING)
-      throw new ForbiddenException(
-        'This game seems not playable. It may have finished before. Try a new game.',
       );
     if (game.finishedAt && game.finishedAt <= new Date()) {
       // await this.finishTheGame(game); // FIXME: Add method to handle situations like this.
       throw new ForbiddenException('This game is finished.');
     }
+    if (game.status !== GameStatusEnum.ONGOING)
+      throw new ForbiddenException(
+        'Mining not allowed here. Game is not open.',
+      );
     return this.mine(game, userChoice);
   }
 
@@ -219,6 +219,9 @@ export class DreamMineService {
     const game = await this.prisma.dreamMineGame.findUnique({
       where: { id: gameId, userId: user.id },
     });
+    if (!game) throw new NotFoundException('Game not found.');
+    if (game.status !== GameStatusEnum.ONGOING)
+      throw new ForbiddenException('Backing off not allowed here.');
     if (!game.currentRow)
       throw new ForbiddenException(
         'You can not withdraw at the start of the game.',
