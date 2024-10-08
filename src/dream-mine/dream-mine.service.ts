@@ -18,6 +18,7 @@ import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { WalletService } from '../wallet/wallet.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
+import { DM_COLUMNS_COUNT } from 'src/configs/constants';
 
 @Injectable()
 export class DreamMineService {
@@ -110,7 +111,7 @@ export class DreamMineService {
     }
   }
 
-  async mine(game: DreamMineGame) {
+  async mine(game: DreamMineGame, choice: number) {
     const rule = await this.getLatestRules();
     if (!rule)
       throw new MethodNotAllowedException(
@@ -131,14 +132,20 @@ export class DreamMineService {
 
     const playerChance = Math.random() * 100.0;
     let result: Record<string, unknown>;
+    game.lastChoice = choice;
     if (playerChance >= 100 - probability) {
       game.stake += rowIncome;
+      game.golds.push(choice);
       if (game.currentRow === game.rowsCount) {
         await this.finalizeGame(game, false);
       } else game.currentRow++;
       result = { success: true, ...game };
     } else {
       game.status = GameStatusEnum.LOST;
+      let goldIndex: number = 0;
+      while (!goldIndex || goldIndex === choice)
+        goldIndex = ((Math.random() * DM_COLUMNS_COUNT) | 0) + 1;
+      game.golds.push(goldIndex);
       result = { success: false, ...game };
     }
     await this.prisma.dreamMineGame.update({
@@ -148,7 +155,11 @@ export class DreamMineService {
     return result;
   }
 
-  async goForCurrentRow(user: UserPopulated, gameId: number) {
+  async goForCurrentRow(
+    user: UserPopulated,
+    gameId: number,
+    userChoice: number,
+  ) {
     const game = await this.prisma.dreamMineGame.findUnique({
       where: { id: gameId, userId: user.id },
     });
@@ -165,7 +176,7 @@ export class DreamMineService {
       // await this.finishTheGame(game); // FIXME: Add method to handle situations like this.
       throw new ForbiddenException('This game is finished.');
     }
-    return this.mine(game);
+    return this.mine(game, userChoice);
   }
 
   async getLatestRules() {

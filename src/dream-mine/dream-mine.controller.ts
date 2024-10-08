@@ -13,6 +13,7 @@ import { UserPopulated } from '../user/types/user-populated.type';
 import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { DreamMineService } from './dream-mine.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { DoMineDto } from './dtos/do-mine.dto';
 
 @ApiTags('Dream Mine Game')
 @Controller('dream-mine')
@@ -40,8 +41,9 @@ export class DreamMineController {
   mineNext(
     @CurrentUser() user: UserPopulated,
     @Param('id', ParseIntPipe) id: string,
+    @Body() { choice }: DoMineDto,
   ) {
-    return this.dreamMineService.goForCurrentRow(user, +id);
+    return this.dreamMineService.goForCurrentRow(user, +id, choice);
   }
 
   @ApiOperation({

@@ -19,10 +19,8 @@ export const setupSwagger = (app: INestApplication) => {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
-    console.log(`Swagger docs: http://localhost:${appPort}/api/docs`);
-    console.log(
-      `Swagger docs as JSON: http://localhost:${appPort}/api/docs-json`,
-    );
+    SwaggerModule.setup('docs', app, document);
+    console.log(`Swagger docs: http://localhost:${appPort}/docs`);
+    console.log(`Swagger docs as JSON: http://localhost:${appPort}/docs-json`);
   }
 };
