@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -69,8 +70,13 @@ export class UserController {
   getBalance(
     @CurrentUser() user: UserPopulated,
     @Param('token') token: string,
+    @Query('chain', new ParseIntPipe()) chainId: string,
   ) {
-    return this.userService.getTokenBalance(user, token as TokensEnum);
+    return this.userService.getTokenBalance(
+      user,
+      token as TokensEnum,
+      +chainId,
+    );
   }
 
   @ApiOperation({

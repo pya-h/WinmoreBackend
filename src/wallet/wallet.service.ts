@@ -45,23 +45,23 @@ export class WalletService {
     return Boolean(await this.prisma.chain.count({ where: { id: chainId } }));
   }
 
-  async getBalance(walletId: number, token: TokensEnum) {
+  async getBalance(walletId: number, token: TokensEnum, chainId: number) {
     // TODO: All Get balance methods must consider chinId
     const result = await this.prisma.$queryRaw<{ balance: number }[]>`SELECT (
-            COALESCE(SUM(CASE WHEN destination_id=${walletId} THEN amount ELSE 0 END), 0) -
-            COALESCE(SUM(CASE WHEN source_id=${walletId} THEN amount ELSE 0 END), 0)
+            COALESCE(SUM(CASE WHEN "destinationId"=${walletId} THEN "amount" ELSE 0 END), 0) -
+            COALESCE(SUM(CASE WHEN "sourceId"=${walletId} THEN "amount" ELSE 0 END), 0)
           ) AS balance
-        FROM transaction WHERE token=${token} AND status=${TransactionStatusEnum.SUCCESSFUL}`;
+        FROM public."Transaction" WHERE "token" = ${token}::"TokensEnum" AND "chainId"=${chainId} AND "status"=${TransactionStatusEnum.SUCCESSFUL}::"TransactionStatusEnum" `;
     return result[0]?.balance ?? 0;
   }
 
-  async getBalanceByUserId(userId: number, token: TokensEnum) {
+  async getBalanceByUserId(userId: number, token: TokensEnum, chainId: number) {
     const result = await this.prisma.$queryRaw<{ balance: number }[]>`SELECT (
-          COALESCE(SUM(CASE WHEN t.destination_id = w.id THEN t.amount ELSE 0 END), 0) -
-          COALESCE(SUM(CASE WHEN t.source_id = w.id THEN t.amount ELSE 0 END), 0)
+          COALESCE(SUM(CASE WHEN t."destinationId" = w."id" THEN t."amount" ELSE 0 END), 0) -
+          COALESCE(SUM(CASE WHEN t."sourceId" = w."id" THEN t."amount" ELSE 0 END), 0)
         ) AS balance
-      FROM transaction t JOIN wallet w ON t.destination_id = w.id OR t.source_id = w.id
-      WHERE w.ownerId=${userId} AND t.token=${token} AND t.status=${TransactionStatusEnum.SUCCESSFUL}`;
+      FROM public."Transaction" t JOIN wallet w ON t."destinationId" = w."id" OR t."sourceId" = w."id"
+      WHERE w.ownerId=${userId} AND t."token" = ${token}:"TokensEnum" AND "chainId"=${chainId} AND t."status"=${TransactionStatusEnum.SUCCESSFUL}::"TransactionStatusEnum" `;
 
     return result[0]?.balance ?? 0;
   }
@@ -150,7 +150,11 @@ export class WalletService {
     });
 
     if (!this.configService.get<boolean>('general.debug')) {
-      const sourceBalance = await this.getBalance(trx.sourceId, trx.token);
+      const sourceBalance = await this.getBalance(
+        trx.sourceId,
+        trx.token,
+        chainId,
+      );
       if (sourceBalance < trx.amount) {
         await this.failTransaction(trx);
         throw new ForbiddenException(`Not enough ${trx.token} balance.`);

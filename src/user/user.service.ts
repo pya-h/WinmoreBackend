@@ -33,8 +33,8 @@ export class UserService {
     };
   }
 
-  getTokenBalance(user: UserPopulated, token: TokensEnum) {
-    return this.walletService.getBalance(user.wallet.id, token);
+  getTokenBalance(user: UserPopulated, token: TokensEnum, chainId: number) {
+    return this.walletService.getBalance(user.wallet.id, token, chainId);
   }
 
   async getByWalletAddress(address: string) {

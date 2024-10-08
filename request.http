@@ -31,7 +31,7 @@ Content-Type: application/json
 }
 
 ### Get users
-GET {{host}}/user
+GET {{host}}/user/balance/USDT?chain=137
 Authorization: Bearer {{token}}
 
 ### Complete registeration
@@ -71,7 +71,7 @@ Content-Type: application/json
     "mode": "EASY",
     "rows": 8,
     "token": "USDT",
-    "chainId": 1
+    "chainId": 137
 }
 
 ### Mine current row
