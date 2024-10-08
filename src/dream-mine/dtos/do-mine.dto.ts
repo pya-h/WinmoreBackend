@@ -7,10 +7,10 @@ export class DoMineDto {
   @IsNotEmpty({ message: 'You must specify which stone you are mining.' })
   @IsInt()
   @Min(1, {
-    message: `Choice must be an integer in [1, ${DM_COLUMNS_COUNT}] range.`,
+    message: `choice must be an integer in [1, ${DM_COLUMNS_COUNT}] range.`,
   })
   @Max(DM_COLUMNS_COUNT, {
-    message: `Choice must be an integer in [1, ${DM_COLUMNS_COUNT}] range.`,
+    message: `choice must be an integer in [1, ${DM_COLUMNS_COUNT}] range.`,
   })
   choice: number;
 }

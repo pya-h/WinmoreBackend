@@ -25,7 +25,7 @@ async function main() {
   // 2 INSERT GAME RULES
   await prisma.dreamMineRules.create({
     data: {
-      rowCoefficients: [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233],
+      rowCoefficients: [2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377],
       rowProbabilities: [
         0.8, 0.7, 0.6, 0.3, 0.1, 0.09, 0.05, 0.01, 0.009, 0.005, 0.001, 0.0001,
       ],
@@ -36,6 +36,28 @@ async function main() {
     },
   });
   console.info('Game rules inserted.');
+
+  // 3 CREATE BUSINESS MAN USER
+  await prisma.user.create({
+    data: {
+      admin: true,
+      id: 0,
+      name: 'Winmore',
+      email: 'winmore@mail.com',
+      profile: {
+        create: {
+          avatar: null,
+        },
+      },
+      wallet: {
+        create: {
+          id: 0,
+          address: '0x32Be343B94f860124dC4fEe278FDCBD38C102D88',
+        },
+      },
+    },
+  });
+  console.info('Business man user & wallet created.');
 }
 
 main()

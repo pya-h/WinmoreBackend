@@ -122,19 +122,17 @@ export class DreamMineService {
       game.mode,
       rule.difficultyCoefficients,
     );
-
     const probability =
-        (rule.rowProbabilities[game.currentRow] || 0) / difficultyValue,
-      rowIncome =
-        game.stake *
-        (rule.rowCoefficients[game.currentRow] || 1) *
-        difficultyValue;
-
+      (100 * (rule.rowProbabilities[game.currentRow] || 0)) / difficultyValue;
     const playerChance = Math.random() * 100.0;
     let result: Record<string, unknown>;
     game.lastChoice = choice;
-    if (playerChance >= 100 - probability) {
-      game.stake += rowIncome;
+    if (playerChance <= probability) {
+      if (rule.rowCoefficients[game.currentRow])
+        game.stake =
+          game.initialBet *
+          rule.rowCoefficients[game.currentRow] *
+          difficultyValue;
       game.golds.push(choice);
       if (game.currentRow === game.rowsCount) {
         await this.finalizeGame(game, false);

@@ -1,7 +1,7 @@
-@host2 = http://143.198.187.60/api
-@host  = http://localhost:8000/api
+@host2 = http://143.198.187.60
+@host  = http://localhost:8000
 @token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImFkZHJlc3MiOiItMFg5YjY3d3BiOHA3cWc5OXdqODUyNjgzOHMwNTh0Nm04dmVlZDRqMzEiLCJpYXQiOjE3Mjc3MzgyOTcsImV4cCI6MTcyNzc0NTQ5N30.UeXw0Uk4VCmSbIN2dJLpRuJPKEDQOoiis5Wk--SJio0
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEwLCJhZGRyZXNzIjoiLTBYMXIyM2w3OXR1bnkzOTExbzUybzhlOGpjbDgxdDhkNmRiMzYwNTFsIiwiaWF0IjoxNzI3NzM5MzEyLCJleHAiOjE3Mjc3NDY1MTJ9.wxi4Ef79VnadOnhXTFlJOJHgF1gooZgj95g8yYRdDi0
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiItMFg2anM3eDUxNzk3anliMnFneTd0aDUxZTZkMjZqcjMzMjd2dTQ4cHMiLCJpYXQiOjE3MjgzNDgzMDMsImV4cCI6MTcyODM1NTUwM30.HzD45_UagvJM0GgR2Stj4rJCZNGZ3m5iDMrXkJK1qzQ
 
 ### main route
 GET {{host}}/
@@ -69,10 +69,16 @@ Content-Type: application/json
 {
     "betAmount": 10,
     "mode": "EASY",
-    "rows": 8
+    "rows": 8,
+    "token": "USDT",
+    "chainId": 1
 }
 
 ### Mine current row
-POST {{host}}/dream-mine/mine/16
+POST {{host}}/dream-mine/mine/12
 Authorization: Bearer {{token}}
 Content-Type: application/json
+
+{
+    "choice": 2
+}

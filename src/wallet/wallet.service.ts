@@ -6,6 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   TokensEnum,
   Transaction,
@@ -20,7 +21,10 @@ import { UserPopulated } from 'src/user/types/user-populated.type';
 @Injectable()
 export class WalletService {
   private businessWallet: Wallet;
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
     this.loadBusinessWallet().catch((err) => {
       console.log(
         'Can not load app business wallet, this may cause serious problems.',
@@ -102,10 +106,12 @@ export class WalletService {
     newRemarks: object,
     include?: { [field: string]: unknown },
   ) {
-    const oldRemarks = trx.remarks ? JSON.parse(trx.remarks.toString()) : {};
-    trx.remarks = { ...oldRemarks, ...newRemarks };
+    for (const [key, value] of Object.entries(trx.remarks))
+      newRemarks[key] = value;
     return this.prisma.transaction.update({
-      data: { remarks: trx.remarks },
+      data: {
+        remarks: newRemarks,
+      },
       where: { id: trx.id },
       ...(include ? { include } : {}),
     });
@@ -120,7 +126,7 @@ export class WalletService {
     remarks?: object,
     include?: { [field: string]: unknown },
   ) {
-    if (!this.isChainSupported(chainId))
+    if (!(await this.isChainSupported(chainId)))
       throw new BadRequestException(
         "Unfortunately we don't support this chain for now.",
       );
@@ -143,12 +149,13 @@ export class WalletService {
       },
     });
 
-    const sourceBalance = await this.getBalance(trx.sourceId, trx.token);
-    if (sourceBalance < trx.amount) {
-      await this.failTransaction(trx);
-      throw new ForbiddenException(`Not enough ${trx.token} balance.`);
+    if (!this.configService.get<boolean>('general.debug')) {
+      const sourceBalance = await this.getBalance(trx.sourceId, trx.token);
+      if (sourceBalance < trx.amount) {
+        await this.failTransaction(trx);
+        throw new ForbiddenException(`Not enough ${trx.token} balance.`);
+      }
     }
-
     // if everything falls into the place:
     return this.submitTransaction(trx, include);
   }
@@ -182,7 +189,7 @@ export class WalletService {
       amount,
       token,
       chainId,
-      { description: `Place Bet Transaction` },
+      { description: 'Place Bet Transaction' },
       include,
     );
   }

@@ -24,7 +24,7 @@ export class DreamMineGamePreferencesDto {
     required: true,
   })
   @IsEnum(TokensEnum, {
-    message: 'Available values are: USDC, USDT',
+    message: 'Available token values are: USDC, USDT',
   })
   token: TokensEnum;
 
@@ -32,9 +32,11 @@ export class DreamMineGamePreferencesDto {
     description: 'Id of the chain bet resources are in.',
     required: true,
   })
-  @IsOptional()
+  @IsNotEmpty({
+    message: 'You must specify from which chain you want to put money',
+  })
   @IsInt()
-  @IsPositive({ message: 'chainId must be a positive integer.' })
+  @IsPositive({ message: 'chainId must be positive.' })
   chainId?: number;
 
   @ApiProperty({
@@ -45,7 +47,7 @@ export class DreamMineGamePreferencesDto {
     required: true,
   })
   @IsEnum(GameModesEnum, {
-    message: 'Available values are: EASY, MEDIUM, HARD',
+    message: 'Available mode values are: EASY, MEDIUM, HARD',
   })
   mode: GameModesEnum;
 
