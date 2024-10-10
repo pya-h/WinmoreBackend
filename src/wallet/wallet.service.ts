@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { UserPopulated } from 'src/user/types/user-populated.type';
 
 @Injectable()
 export class WalletService {
+  private readonly logger = new Logger(WalletService.name); // TODO: Test this logger
   private mBusinessWallet: Wallet;
   constructor(
     private readonly prisma: PrismaService,
@@ -64,6 +66,12 @@ export class WalletService {
 
   findChains() {
     return this.prisma.chain.findMany();
+  }
+
+  findContracts(onlyTokenContract: boolean = false) {
+    return this.prisma.contract.findMany({
+      ...(onlyTokenContract ? { where: { isTokenContract: true } } : {}),
+    });
   }
 
   async getBalance(walletId: number, token: TokensEnum, chainId: number) {
@@ -241,5 +249,17 @@ export class WalletService {
       },
       include,
     );
+  }
+
+  async deposit(data: { from: string; token: TokensEnum; amount: number }) {
+    //TODO: Complete this
+
+    this.logger.warn('New deposit trx, : ', data); // TODO: Remove this later
+
+    // 1 Block analyzer will sense the supported tokens and chains deposits, and inform this method from the one is targeting our business wallet.
+
+    // 2 Find the user with 'from' field and via findByWalletAddress [if not found return]
+
+    // 3 Create in app transaction from us to users in app wallet, leading to in app wallet charge.
   }
 }

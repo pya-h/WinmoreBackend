@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient, TokensEnum } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
@@ -58,6 +58,23 @@ async function main() {
     },
   });
   console.info('Business man user & wallet created.');
+
+  // 4 INSERT SPECIAL CONTRACTS
+  await Promise.all(
+    [
+      {
+        title: 'USDT Contract address',
+        identifier: TokensEnum.USDT,
+        address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        isTokenContract: true,
+      },
+    ].map(async ({ title, identifier, address }) =>
+      prisma.contract.create({
+        data: { title, identifier, address, isTokenContract },
+      }),
+    ),
+  );
+  console.info('Supported tokens contracts data inserted.');
 }
 
 main()

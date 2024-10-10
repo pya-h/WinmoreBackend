@@ -63,19 +63,31 @@ model Wallet {
   despositTransactions Transaction[] @relation("TrxDestination")
 }
 
+model Contract {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  address         String  @unique @db.VarChar(256)
+  identifier      String  @unique @db.VarChar(16)
+  title           String? @db.VarChar(128)
+  isTokenContract Boolean @default(true)
+}
+
 model Chain {
   id        Int      @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name           String
-  providerUrl    String
+  name           String          @db.VarChar(64)
+  providerUrl    String          @db.VarChar(256)
   transactions   Transaction[]
   dreamMineGames DreamMineGame[]
+  analyzedBlocks AnalyzedBlock[]
 }
 
 model Transaction {
-  id        Int      @id @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -106,7 +118,7 @@ enum GameModesEnum {
 }
 
 model DreamMineGame {
-  id        Int      @id @default(autoincrement())
+  id        Int      @id @default(autoincrement()) // What to do with id type? Int or BigInt?
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   createdAt DateTime @default(now())
@@ -142,11 +154,14 @@ model DreamMineRules {
   maxBetAmount           Float?
 }
 
-model BlockData {
-  id        Int      @id @default(autoincrement())
+model AnalyzedBlock {
+  id        BigInt   @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   isFinalized Boolean @default(false)
-  hash        String
+  hash        String  @db.VarChar(256)
+  number      BigInt
+  chainId     Int
+  chain       Chain   @relation(fields: [chainId], references: [id])
 }

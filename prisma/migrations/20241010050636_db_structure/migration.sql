@@ -5,7 +5,7 @@ CREATE TYPE "TokensEnum" AS ENUM ('SOL', 'ETH', 'USDC', 'USDT');
 CREATE TYPE "TransactionStatusEnum" AS ENUM ('SUCCESSFUL', 'FAILED', 'REVERTED', 'PENDING');
 
 -- CreateEnum
-CREATE TYPE "GameStatusEnum" AS ENUM ('DREAM_WON', 'WITHDRAWN', 'LOST', 'ONGOING', 'NOT_STARTED');
+CREATE TYPE "GameStatusEnum" AS ENUM ('WON', 'WITHDRAWN', 'LOST', 'ONGOING', 'NOT_STARTED');
 
 -- CreateEnum
 CREATE TYPE "GameModesEnum" AS ENUM ('EASY', 'MEDIUM', 'HARD');
@@ -46,19 +46,31 @@ CREATE TABLE "Wallet" (
 );
 
 -- CreateTable
+CREATE TABLE "Contract" (
+    "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "address" VARCHAR(256) NOT NULL,
+    "identifier" VARCHAR(16) NOT NULL,
+    "title" VARCHAR(128),
+
+    CONSTRAINT "Contract_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Chain" (
     "id" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "name" TEXT NOT NULL,
-    "providerUrl" TEXT NOT NULL,
+    "name" VARCHAR(64) NOT NULL,
+    "providerUrl" VARCHAR(256) NOT NULL,
 
     CONSTRAINT "Chain_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Transaction" (
-    "id" SERIAL NOT NULL,
+    "id" BIGSERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "sourceId" INTEGER NOT NULL,
@@ -80,7 +92,7 @@ CREATE TABLE "DreamMineGame" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "startedAt" TIMESTAMP(3),
     "initialBet" DOUBLE PRECISION NOT NULL,
-    "betToken" "TokensEnum" NOT NULL DEFAULT 'USDC',
+    "token" "TokensEnum" NOT NULL DEFAULT 'USDC',
     "chainId" INTEGER NOT NULL,
     "mode" "GameModesEnum" NOT NULL DEFAULT 'EASY',
     "rowsCount" INTEGER NOT NULL DEFAULT 8,
@@ -111,14 +123,16 @@ CREATE TABLE "DreamMineRules" (
 );
 
 -- CreateTable
-CREATE TABLE "BlockData" (
-    "id" SERIAL NOT NULL,
+CREATE TABLE "AnalyzedBlock" (
+    "id" BIGSERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "isFinalized" BOOLEAN NOT NULL DEFAULT false,
-    "hash" TEXT NOT NULL,
+    "hash" VARCHAR(256) NOT NULL,
+    "number" BIGINT NOT NULL,
+    "chainId" INTEGER NOT NULL,
 
-    CONSTRAINT "BlockData_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "AnalyzedBlock_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -132,6 +146,12 @@ CREATE UNIQUE INDEX "Wallet_ownerId_key" ON "Wallet"("ownerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Wallet_address_key" ON "Wallet"("address");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Contract_address_key" ON "Contract"("address");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Contract_identifier_key" ON "Contract"("identifier");
 
 -- AddForeignKey
 ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -153,3 +173,6 @@ ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_userId_fkey" FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AnalyzedBlock" ADD CONSTRAINT "AnalyzedBlock_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
