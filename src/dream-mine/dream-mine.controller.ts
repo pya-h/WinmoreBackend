@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -14,11 +15,33 @@ import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { DreamMineService } from './dream-mine.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { DoMineDto } from './dtos/do-mine.dto';
+import { GameStatusFilterQuery } from './dtos/game-status-filter.query';
 
 @ApiTags('Dream Mine Game')
 @Controller('dream-mine')
 export class DreamMineController {
   constructor(private readonly dreamMineService: DreamMineService) {}
+
+  @ApiOperation({
+    description: "Returns the list of user's dream mine [specific] games.",
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  getMyGames(
+    @CurrentUser() user: UserPopulated,
+    @Query() filter?: GameStatusFilterQuery,
+  ) {
+    return this.dreamMineService.getUserGames(user.id, filter);
+  }
+
+  @ApiOperation({
+    description: 'Returns the balance of a specific token for current user.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('is-playing')
+  userIsPlaying(@CurrentUser() user: UserPopulated) {
+    return this.dreamMineService.isUserPlaying(user.id);
+  }
 
   @ApiOperation({
     description: 'Place bet and start a new dream mine game.',

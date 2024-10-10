@@ -1,14 +1,11 @@
-@host2 = http://143.198.187.60
 @host  = http://localhost:8000
-@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFg5dTk0NjNmMTBkNDRnYmtzbXYxbTA1b3E4MTkyNGF0ODl4dmo5aDMiLCJpYXQiOjE3MjgzNTM5MzQsImV4cCI6MTcyODM2MTEzNH0.wTeKGd1bBwiikXlS9V7yY4A6zWqacicYU_u6afwvQgw
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiItMFg2anM3eDUxNzk3anliMnFneTd0aDUxZTZkMjZqcjMzMjd2dTQ4cHMiLCJpYXQiOjE3MjgzNDgzMDMsImV4cCI6MTcyODM1NTUwM30.HzD45_UagvJM0GgR2Stj4rJCZNGZ3m5iDMrXkJK1qzQ
-
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImFkZHJlc3MiOiItMFg4OWdveDZiZW41ZjE1Y2QwNTJmYTUwZ283MnJyd21qc3kxNGszNWoiLCJpYXQiOjE3Mjg1MjI2MDgsImV4cCI6MTcyODYwOTAwOH0.5Y037xn-FUZAmfL1EkmFqtL71PkmpMKe9_dRajMuotw
 ### main route
 GET {{host}}/
 
 
 ### test user: Create test user with random wallet address as fast as possible,
-POST {{host2}}/auth/test
+POST {{host}}/auth/test
 
 
 ### Auth sign in info
@@ -31,8 +28,8 @@ Content-Type: application/json
 }
 
 ### Get users
-GET {{host2}}/user/balance/USDT?chain=137
-Authorization: Bearer {{token2}}
+GET {{host}}/user/balance/USDT?chain=137
+Authorization: Bearer {{token}}
 
 ### Complete registeration
 POST {{host}}/user/register
@@ -87,3 +84,14 @@ Content-Type: application/json
 POST {{host}}/dream-mine/backoff/9
 Authorization: Bearer {{token}}
 Content-Type: application/json
+
+
+### Get current user's dream mine game history
+GET {{host}}/dream-mine?status=FINISHED
+Authorization: Bearer {{token}}
+
+
+### Get current user's dream mine game history
+GET {{host}}/dream-mine/is-playing
+Authorization: Bearer {{token}}
+

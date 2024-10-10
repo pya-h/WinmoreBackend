@@ -17,8 +17,12 @@ import {
 import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { WalletService } from '../wallet/wallet.service';
 import { UserPopulated } from '../user/types/user-populated.type';
-import { WinmoreGameTypes } from '../common/types/game.types';
+import {
+  WinmoreGameTypes,
+  ExtraGameStatusEnum,
+} from '../common/types/game.types';
 import { DM_COLUMNS_COUNT } from 'src/configs/constants';
+import { GameStatusFilterQuery } from './dtos/game-status-filter.query';
 
 @Injectable()
 export class DreamMineService {
@@ -77,9 +81,7 @@ export class DreamMineService {
    * @returns the reward transaction.
    */
   async finalizeGame(game: DreamMineGame, withdrawn: boolean = true) {
-    game.status = withdrawn
-      ? GameStatusEnum.WITHDRAWN
-      : GameStatusEnum.DREAM_WON;
+    game.status = withdrawn ? GameStatusEnum.WITHDRAWN : GameStatusEnum.WON;
     game.finishedAt = new Date();
     game = await this.prisma.dreamMineGame.update({
       data: game, // TODO: Check if this works ok
@@ -228,5 +230,37 @@ export class DreamMineService {
       );
     await this.finalizeGame(game, true);
     return game;
+  }
+
+  getUserGames(userId: number, filter?: GameStatusFilterQuery) {
+    return this.prisma.dreamMineGame.findMany({
+      where: {
+        userId: userId,
+        ...(filter && filter.status !== ExtraGameStatusEnum.ALL
+          ? {
+              status:
+                filter.status !== ExtraGameStatusEnum.FINISHED
+                  ? filter.status !== ExtraGameStatusEnum.GAINED
+                    ? filter.status
+                    : { in: [GameStatusEnum.WON, GameStatusEnum.WITHDRAWN] }
+                  : {
+                      notIn: [
+                        GameStatusEnum.NOT_STARTED,
+                        GameStatusEnum.ONGOING, // If any other status added, it must be considered here.
+                      ],
+                    },
+            }
+          : {}),
+      },
+    });
+  }
+
+  async isUserPlaying(userId: number) {
+    return Boolean(
+      await this.prisma.dreamMineGame.findFirst({
+        where: { userId, status: GameStatusEnum.ONGOING },
+        select: { id: true },
+      }),
+    );
   }
 }

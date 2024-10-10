@@ -5,9 +5,17 @@ export type WinmoreGameTypes = {
   name: string;
   initialBet: number;
   token: TokensEnum;
-  chainId: number,
+  chainId: number;
   mode: GameModesEnum;
   status: GameStatusEnum;
   startedAt: Date;
   finishedAt: Date;
 };
+
+export enum ExtraGameStatusEnum {
+  FINISHED = 'FINISHED',
+  GAINED = 'GAINED',
+  ALL = 'ALL',
+}
+
+export type GeneralGameStatus = GameStatusEnum | ExtraGameStatusEnum;

@@ -92,7 +92,7 @@ model Transaction {
 }
 
 enum GameStatusEnum {
-  DREAM_WON
+  WON
   WITHDRAWN
   LOST
   ONGOING
