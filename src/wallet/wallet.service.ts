@@ -20,7 +20,7 @@ import { UserPopulated } from 'src/user/types/user-populated.type';
 
 @Injectable()
 export class WalletService {
-  private businessWallet: Wallet;
+  private mBusinessWallet: Wallet;
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
@@ -33,8 +33,25 @@ export class WalletService {
     });
   }
 
+  get businessWallet() {
+    if (!this.mBusinessWallet)
+      this.loadBusinessWallet()
+        .then(() =>
+          console.warn(
+            'Business wallet value was null in runtime, but re-loaded successfully.',
+          ),
+        )
+        .catch((err) =>
+          console.error(
+            'Tried to reload business wallet, but failed again!',
+            err,
+          ),
+        );
+    return this.mBusinessWallet;
+  }
+
   async loadBusinessWallet() {
-    this.businessWallet = await this.prisma.wallet.findUnique({
+    this.mBusinessWallet = await this.prisma.wallet.findUnique({
       where: { ownerId: BUSINESSMAN_ID },
       include: { owner: true },
     });
@@ -43,6 +60,10 @@ export class WalletService {
 
   async isChainSupported(chainId: number) {
     return Boolean(await this.prisma.chain.count({ where: { id: chainId } }));
+  }
+
+  findChains() {
+    return this.prisma.chain.findMany();
   }
 
   async getBalance(walletId: number, token: TokensEnum, chainId: number) {
@@ -189,7 +210,7 @@ export class WalletService {
   ) {
     return this.transact(
       user.wallet.id,
-      this.businessWallet.id,
+      this.mBusinessWallet.id,
       amount,
       token,
       chainId,
@@ -207,7 +228,7 @@ export class WalletService {
     const winnerWallet = await this.getWallet(winnerId, 'Winner'); // TODO: If the user does not have wallet [wallet data cleaned], this transaction must wait(?)
 
     return this.transact(
-      this.businessWallet.id,
+      this.mBusinessWallet.id,
       winnerWallet.id,
       prize,
       game.token,
