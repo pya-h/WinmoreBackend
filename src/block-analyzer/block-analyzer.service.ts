@@ -26,13 +26,14 @@ export class BlockAnalyzerService {
     for (const chain of await this.walletService.findChains())
       this.chainHistory[chain.id] = {
         provider: new Web3(chain.providerUrl),
-        lastProcessedBlockNumber: undefined,
+        lastProcessedBlockNumber: chain.lastProcessedBlock,
+        chainId: chain.id,
       };
 
     this.tokenContracts = await this.walletService.findContracts(true);
   }
   async processLogsInRange(
-    provider: Web3,
+    { provider, chainId }: ChainHistory,
     fromBlock: bigint,
     toBlock: bigint,
     contract: Contract,
@@ -70,6 +71,7 @@ export class BlockAnalyzerService {
         from: decodedLog.from.toString(),
         token: contract.identifier as TokensEnum,
         amount: +provider.utils.fromWei(+decodedLog.value, 'mwei'), // TODO: Ensure conversion is correct
+        chainId,
       });
     }
   }
@@ -81,7 +83,7 @@ export class BlockAnalyzerService {
     const processLogTasks: Promise<void>[] = [];
 
     for (const chainId in this.chainHistory) {
-      const { provider, lastProcessedBlockNumber } = this.chainHistory[chainId];
+      const { lastProcessedBlockNumber, provider } = this.chainHistory[chainId];
       const latestFinalizedBlock = await provider.eth.getBlock('finalized');
 
       if (
@@ -89,6 +91,10 @@ export class BlockAnalyzerService {
         lastProcessedBlockNumber >= latestFinalizedBlock.number
       )
         continue;
+
+      this.logger.debug(
+        `Processing chain#${chainId} blocks: #${lastProcessedBlockNumber} to ${latestFinalizedBlock.number}`,
+      );
 
       let i: bigint;
       try {
@@ -103,7 +109,7 @@ export class BlockAnalyzerService {
           for (const contract of this.tokenContracts) {
             processLogTasks.push(
               this.processLogsInRange(
-                provider,
+                this.chainHistory[chainId],
                 i,
                 this.endBlock(i + 4n, latestFinalizedBlock.number),
                 contract,
@@ -122,6 +128,9 @@ export class BlockAnalyzerService {
         );
         this.chainHistory[chainId].lastProcessedBlockNumber = i - 1n;
       }
+      await this.walletService.syncChainsLastProcessedBlock(
+        this.chainHistory[chainId],
+      );
     }
   }
 }

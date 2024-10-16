@@ -5,7 +5,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -14,10 +13,12 @@ import {
   TransactionStatusEnum,
   Wallet,
 } from '@prisma/client';
+import { ChainHistory } from 'src/block-analyzer/type/chain-history.type';
 import { WinmoreGameTypes } from 'src/common/types/game.types';
 import { BUSINESSMAN_ID } from 'src/configs/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserPopulated } from 'src/user/types/user-populated.type';
+import { WalletIdentifierType } from './types/wallet-identifier.type';
 
 @Injectable()
 export class WalletService {
@@ -71,6 +72,13 @@ export class WalletService {
   findContracts(onlyTokenContract: boolean = false) {
     return this.prisma.contract.findMany({
       ...(onlyTokenContract ? { where: { isTokenContract: true } } : {}),
+    });
+  }
+
+  syncChainsLastProcessedBlock(chainHistory: ChainHistory) {
+    return this.prisma.chain.update({
+      where: { id: chainHistory.chainId },
+      data: { lastProcessedBlock: chainHistory.lastProcessedBlockNumber },
     });
   }
 
@@ -147,8 +155,8 @@ export class WalletService {
   }
 
   async transact(
-    source: number | string,
-    destination: number | string,
+    source: WalletIdentifierType,
+    destination: WalletIdentifierType,
     amount: number,
     token: TokensEnum,
     chainId: number,
@@ -165,6 +173,9 @@ export class WalletService {
       destination,
       'Transaction receiver',
     );
+
+    remarks['fromUser'] = sourceWallet.ownerId;
+    remarks['toUser'] = destinationWallet.ownerId;
 
     const trx = await this.prisma.transaction.create({
       data: {
@@ -193,19 +204,28 @@ export class WalletService {
     return this.submitTransaction(trx, include);
   }
 
-  async getWallet(identifier: number | string, ownerTag: string = 'User') {
+  async getWallet(identifier: WalletIdentifierType, ownerTag: string = 'User') {
+    const where =
+      identifier?.id != null
+        ? { id: identifier.id }
+        : identifier?.ownerId != null
+          ? { ownerId: identifier.ownerId }
+          : identifier?.address
+            ? { address: identifier.address }
+            : null;
+
+    if (!where)
+      throw new BadRequestException(
+        'Specify at least one identifier to find a wallet',
+      );
     const wallet = await this.prisma.wallet.findUnique({
-      where: {
-        ...(typeof identifier === 'string'
-          ? { address: identifier }
-          : { id: identifier }),
-      },
+      where,
       include: { owner: true },
     });
 
-    if (!wallet)
-      throw new UnauthorizedException(`${ownerTag} does not have any wallet!`);
-    if (!wallet.owner) throw new NotFoundException(`${ownerTag} not found!`);
+    if (!wallet?.owner) {
+      throw new NotFoundException(`${ownerTag} not found!`);
+    }
     return wallet;
   }
 
@@ -217,8 +237,8 @@ export class WalletService {
     include?: { [field: string]: unknown },
   ) {
     return this.transact(
-      user.wallet.id,
-      this.mBusinessWallet.id,
+      { id: user.wallet.id },
+      { id: this.mBusinessWallet.id },
       amount,
       token,
       chainId,
@@ -233,11 +253,11 @@ export class WalletService {
     game: WinmoreGameTypes,
     include?: { [field: string]: unknown },
   ) {
-    const winnerWallet = await this.getWallet(winnerId, 'Winner'); // TODO: If the user does not have wallet [wallet data cleaned], this transaction must wait(?)
+    const winnerWallet = await this.getWallet({ ownerId: winnerId }, 'Winner'); // TODO: If the user does not have wallet [wallet data cleaned], this transaction must wait(?)
 
     return this.transact(
-      this.mBusinessWallet.id,
-      winnerWallet.id,
+      { id: this.mBusinessWallet.id },
+      { id: winnerWallet.id },
       prize,
       game.token,
       game.chainId,
@@ -251,15 +271,23 @@ export class WalletService {
     );
   }
 
-  async deposit(data: { from: string; token: TokensEnum; amount: number }) {
+  async deposit(log: {
+    from: string;
+    token: TokensEnum;
+    amount: number | bigint;
+    chainId: number;
+  }) {
     //TODO: Complete this
 
-    this.logger.warn('New deposit trx, : ', data); // TODO: Remove this later
+    this.logger.warn('New deposit trx, : ', log); // TODO: Remove this later
 
-    // 1 Block analyzer will sense the supported tokens and chains deposits, and inform this method from the one is targeting our business wallet.
-
-    // 2 Find the user with 'from' field and via findByWalletAddress [if not found return]
-
-    // 3 Create in app transaction from us to users in app wallet, leading to in app wallet charge.
+    return this.transact(
+      { id: this.mBusinessWallet.id },
+      { address: log.from },
+      +log.amount.toString(), // FIXME: What to do whit bigint??
+      log.token,
+      log.chainId,
+      { description: 'Deposit', wallet: log.from },
+    );
   }
 }
