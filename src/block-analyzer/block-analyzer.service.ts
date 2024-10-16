@@ -4,8 +4,7 @@ import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ChainHistory } from './type/chain-history.type';
 import { Contract, TokensEnum } from '@prisma/client';
-import { Web3BlockType } from './type/block-transaction.type';
-import { Web3TrxReceiptType } from './type/trx-receipt.type';
+import { Web3TrxLogType } from './type/trx-receipt.type';
 
 @Injectable()
 export class BlockAnalyzerService {
@@ -32,88 +31,97 @@ export class BlockAnalyzerService {
 
     this.tokenContracts = await this.walletService.findContracts(true);
   }
-
-  async processTransactionsReceiptLogs(
+  async processLogsInRange(
     provider: Web3,
-    receipt: Web3TrxReceiptType,
+    fromBlock: bigint,
+    toBlock: bigint,
     contract: Contract,
   ) {
     const contractAddr = contract.address.toLowerCase();
-    for (const log of receipt.logs) {
-      if (log.address?.toLowerCase() === contractAddr) {
-        const decodedLog: DecodedParams = provider.eth.abi.decodeLog(
-          [
-            {
-              type: 'address',
-              name: 'from',
-              indexed: true,
-            },
-            {
-              type: 'address',
-              name: 'to',
-              indexed: true,
-            },
-            {
-              type: 'uint256',
-              name: 'value',
-            },
-          ],
-          log.data,
-          log.topics,
-        );
+    const logs = (await provider.eth.getPastLogs({
+      fromBlock: provider.utils.toHex(fromBlock),
+      toBlock: provider.utils.toHex(toBlock),
+      address: contractAddr,
+    })) as Web3TrxLogType[];
 
-        await this.walletService.deposit({
-          from: decodedLog.from.toString(),
-          token: contract.identifier as TokensEnum,
-          amount: +provider.utils.fromWei(+decodedLog.value, 'mwei'), // FIXME: Check conversion goes ok
-        });
-      }
+    for (const log of logs) {
+      const decodedLog: DecodedParams = provider.eth.abi.decodeLog(
+        [
+          {
+            type: 'address',
+            name: 'from',
+            indexed: true,
+          },
+          {
+            type: 'address',
+            name: 'to',
+            indexed: true,
+          },
+          {
+            type: 'uint256',
+            name: 'value',
+          },
+        ],
+        log.data,
+        log.topics,
+      );
+
+      await this.walletService.deposit({
+        from: decodedLog.from.toString(),
+        token: contract.identifier as TokensEnum,
+        amount: +provider.utils.fromWei(+decodedLog.value, 'mwei'), // TODO: Ensure conversion is correct
+      });
     }
   }
 
-  //TODO: [maybe] It can be more precise, if first check there is such trx [by hash, number or what?] in db or not.
-  async processBlockTransactions(provider: Web3, blockNumber: bigint) {
-    const block = await provider.eth.getBlock(blockNumber, true);
-    const depositTasks: Promise<unknown>[] = [];
-    const businessWallet =
-      this.walletService.businessWallet?.address.toLowerCase();
-
-    for (const trx of (block as Web3BlockType).transactions) {
-      this.logger.debug('New Transaction fetch: ', trx); // TODO: Remove this later
-      if (trx.to?.toLowerCase() !== businessWallet) continue;
-      const receipt = await provider.eth.getTransactionReceipt(trx['hash']);
-      for (const contract of this.tokenContracts)
-        depositTasks.push(
-          this.processTransactionsReceiptLogs(provider, receipt, contract),
-        );
-    }
-
-    await Promise.all(depositTasks);
-  }
+  endBlock = (a: bigint, b: bigint) => (a <= b ? a : b);
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async checkoutLatestBlocks() {
-    const processTrxTasks: Promise<void>[] = [];
+    const processLogTasks: Promise<void>[] = [];
 
     for (const chainId in this.chainHistory) {
       const { provider, lastProcessedBlockNumber } = this.chainHistory[chainId];
-
       const latestFinalizedBlock = await provider.eth.getBlock('finalized');
+
       if (
         lastProcessedBlockNumber &&
         lastProcessedBlockNumber >= latestFinalizedBlock.number
       )
         continue;
-      this.chainHistory[chainId].lastProcessedBlockNumber =
-        latestFinalizedBlock.number;
 
-      for (
-        let i = lastProcessedBlockNumber || latestFinalizedBlock.number;
-        i <= latestFinalizedBlock.number;
-        processTrxTasks.push(this.processBlockTransactions(provider, i)), i++
-      );
+      let i: bigint;
+      try {
+        for (
+          i =
+            lastProcessedBlockNumber != null
+              ? lastProcessedBlockNumber + 1n
+              : latestFinalizedBlock.number;
+          i <= latestFinalizedBlock.number;
+          i += 5n
+        ) {
+          for (const contract of this.tokenContracts) {
+            processLogTasks.push(
+              this.processLogsInRange(
+                provider,
+                i,
+                this.endBlock(i + 4n, latestFinalizedBlock.number),
+                contract,
+              ),
+            );
+          }
+        }
 
-      await Promise.all(processTrxTasks); // process all transactions at once.
+        await Promise.all(processLogTasks); // Process logs for all contracts in parallel
+        this.chainHistory[chainId].lastProcessedBlockNumber =
+          latestFinalizedBlock.number;
+      } catch (ex) {
+        this.logger.error(
+          `Something crashed while processing range with the start block as block#${i}; next time the process will continue from crashed block.`,
+          (ex as Error).stack,
+        );
+        this.chainHistory[chainId].lastProcessedBlockNumber = i - 1n;
+      }
     }
   }
 }

@@ -1,5 +1,34 @@
 import { DataFormat, DEFAULT_RETURN_FORMAT } from 'web3-types';
 
+export type Web3TrxLogType<
+  ReturnFormat extends DataFormat = typeof DEFAULT_RETURN_FORMAT,
+> = {
+  readonly id?: string | undefined;
+  readonly removed?: boolean | undefined;
+  readonly logIndex?:
+    | import('web3-types').NumberTypes[ReturnFormat['number']]
+    | undefined;
+  readonly transactionIndex?:
+    | import('web3-types').NumberTypes[ReturnFormat['number']]
+    | undefined;
+  readonly transactionHash?:
+    | import('web3-types').ByteTypes[ReturnFormat['bytes']]
+    | undefined;
+  readonly blockHash?:
+    | import('web3-types').ByteTypes[ReturnFormat['bytes']]
+    | undefined;
+  readonly blockNumber?:
+    | import('web3-types').NumberTypes[ReturnFormat['number']]
+    | undefined;
+  readonly address?: string | undefined;
+  readonly data?:
+    | import('web3-types').ByteTypes[ReturnFormat['bytes']]
+    | undefined;
+  readonly topics?:
+    | import('web3-types').ByteTypes[ReturnFormat['bytes']][]
+    | undefined;
+};
+
 export type Web3TrxReceiptType<
   ReturnFormat extends DataFormat = typeof DEFAULT_RETURN_FORMAT,
 > = {
@@ -15,32 +44,7 @@ export type Web3TrxReceiptType<
     | import('web3-types').NumberTypes[ReturnFormat['number']]
     | undefined;
   readonly contractAddress?: string | undefined;
-  readonly logs: {
-    readonly id?: string | undefined;
-    readonly removed?: boolean | undefined;
-    readonly logIndex?:
-      | import('web3-types').NumberTypes[ReturnFormat['number']]
-      | undefined;
-    readonly transactionIndex?:
-      | import('web3-types').NumberTypes[ReturnFormat['number']]
-      | undefined;
-    readonly transactionHash?:
-      | import('web3-types').ByteTypes[ReturnFormat['bytes']]
-      | undefined;
-    readonly blockHash?:
-      | import('web3-types').ByteTypes[ReturnFormat['bytes']]
-      | undefined;
-    readonly blockNumber?:
-      | import('web3-types').NumberTypes[ReturnFormat['number']]
-      | undefined;
-    readonly address?: string | undefined;
-    readonly data?:
-      | import('web3-types').ByteTypes[ReturnFormat['bytes']]
-      | undefined;
-    readonly topics?:
-      | import('web3-types').ByteTypes[ReturnFormat['bytes']][]
-      | undefined;
-  }[];
+  readonly logs: Web3TrxLogType[];
   readonly logsBloom: import('web3-types').ByteTypes[ReturnFormat['bytes']];
   readonly root: import('web3-types').ByteTypes[ReturnFormat['bytes']];
   readonly status: import('web3-types').NumberTypes[ReturnFormat['number']];
