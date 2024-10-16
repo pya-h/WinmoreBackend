@@ -10,6 +10,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import {
   DreamMineGame,
+  DreamMineRules,
   GameModesEnum,
   GameStatusEnum,
   TransactionStatusEnum,
@@ -64,6 +65,7 @@ export class DreamMineService {
         status: GameStatusEnum.ONGOING,
         stake: betAmount,
         currentRow: 0,
+        startedAt: new Date(),
       },
     });
 
@@ -113,6 +115,19 @@ export class DreamMineService {
     }
   }
 
+  getRowCharacteristics(rule: DreamMineRules, game: DreamMineGame) {
+    const difficultyValue = this.matchGameModeWithDifficultyCoefficient(
+      game.mode,
+      rule.difficultyCoefficients,
+    );
+    if (!difficultyValue) throw new ConflictException('Invalid game state.'); // TODO: What to do here [though it never happens actually]
+    return {
+      multiplier: rule.rowCoefficients[game.currentRow] * difficultyValue,
+      probability:
+        (100 * (rule.rowProbabilities[game.currentRow] || 0)) / difficultyValue,
+    };
+  }
+
   async mine(game: DreamMineGame, choice: number) {
     const rule = await this.getLatestRules();
     if (!rule)
@@ -120,21 +135,14 @@ export class DreamMineService {
         'It seems that site is not ready for your next mine; wait a little bit.',
       );
 
-    const difficultyValue = this.matchGameModeWithDifficultyCoefficient(
-      game.mode,
-      rule.difficultyCoefficients,
-    );
-    const probability =
-      (100 * (rule.rowProbabilities[game.currentRow] || 0)) / difficultyValue;
+    const { probability, multiplier } = this.getRowCharacteristics(rule, game);
     const playerChance = Math.random() * 100.0;
     let result: Record<string, unknown>;
     game.lastChoice = choice;
     if (playerChance <= probability) {
       if (rule.rowCoefficients[game.currentRow])
-        game.stake =
-          game.initialBet *
-          rule.rowCoefficients[game.currentRow] *
-          difficultyValue;
+        game.stake = game.initialBet * multiplier;
+
       game.golds.push(choice);
       game.currentRow++;
       if (game.currentRow === game.rowsCount) {
@@ -232,8 +240,8 @@ export class DreamMineService {
     return game;
   }
 
-  getUserGames(userId: number, filter?: GameStatusFilterQuery) {
-    return this.prisma.dreamMineGame.findMany({
+  async getUserGames(userId: number, filter?: GameStatusFilterQuery) {
+    const games = await this.prisma.dreamMineGame.findMany({
       where: {
         userId: userId,
         ...(filter && filter.status !== ExtraGameStatusEnum.ALL
@@ -253,14 +261,22 @@ export class DreamMineService {
           : {}),
       },
     });
+    const rules = await this.getLatestRules();
+    return games.map((game) => {
+      const { multiplier } = this.getRowCharacteristics(rules, game);
+      game['multiplier'] = multiplier;
+      game['time'] =
+        ((game.finishedAt?.getTime() || Date.now()) -
+          (game.startedAt || game.createdAt).getTime()) /
+        6000;
+      return game;
+    });
   }
 
-  async isUserPlaying(userId: number) {
-    return Boolean(
-      await this.prisma.dreamMineGame.findFirst({
-        where: { userId, status: GameStatusEnum.ONGOING },
-        select: { id: true },
-      }),
-    );
+  getOnesOngoingGame(userId: number) {
+    return this.prisma.dreamMineGame.findFirst({
+      where: { userId, status: GameStatusEnum.ONGOING },
+      orderBy: { id: 'desc' },
+    });
   }
 }

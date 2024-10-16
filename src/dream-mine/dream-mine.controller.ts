@@ -39,8 +39,8 @@ export class DreamMineController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('is-playing')
-  userIsPlaying(@CurrentUser() user: UserPopulated) {
-    return this.dreamMineService.isUserPlaying(user.id);
+  async getUsersOngoingGame(@CurrentUser() user: UserPopulated) {
+    return this.dreamMineService.getOnesOngoingGame(user.id);
   }
 
   @ApiOperation({
