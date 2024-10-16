@@ -65,7 +65,6 @@ export class DreamMineService {
         status: GameStatusEnum.ONGOING,
         stake: betAmount,
         currentRow: 0,
-        startedAt: new Date(),
       },
     });
 
@@ -267,7 +266,7 @@ export class DreamMineService {
       game['multiplier'] = multiplier;
       game['time'] =
         ((game.finishedAt?.getTime() || Date.now()) -
-          (game.startedAt || game.createdAt).getTime()) /
+          game.createdAt.getTime()) /
         6000;
       return game;
     });

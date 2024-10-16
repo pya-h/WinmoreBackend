@@ -16,6 +16,11 @@ async function main() {
         name: 'Polygon Mainnet',
         providerUrl: 'https://polygon-rpc.com',
       },
+      {
+        id: 11155111,
+        name: 'Sepolia',
+        providerUrl: 'https://rpc2.sepolia.org',
+      },
     ].map(async ({ id, name, providerUrl }) =>
       prisma.chain.create({ data: { id, name, providerUrl } }),
     ),
@@ -66,11 +71,10 @@ async function main() {
         title: 'USDT Contract address',
         identifier: TokensEnum.USDT,
         address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-        isTokenContract: true,
       },
     ].map(async ({ title, identifier, address }) =>
       prisma.contract.create({
-        data: { title, identifier, address, isTokenContract },
+        data: { title, identifier, address },
       }),
     ),
   );

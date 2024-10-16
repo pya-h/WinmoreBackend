@@ -8,7 +8,6 @@ export type WinmoreGameTypes = {
   chainId: number;
   mode: GameModesEnum;
   status: GameStatusEnum;
-  startedAt: Date;
   finishedAt: Date;
 };
 

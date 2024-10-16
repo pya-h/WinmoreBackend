@@ -84,7 +84,6 @@ export class DreamMineController {
   @ApiOperation({
     description: 'Get dream mine public game rules.',
   })
-  @UseGuards(JwtAuthGuard)
   @Get('rules')
   async getLatestRules() {
     const {
