@@ -8,7 +8,7 @@ import { Web3TrxLogType } from './type/trx-receipt.type';
 
 @Injectable()
 export class BlockAnalyzerService {
-  private readonly logger = new Logger(BlockAnalyzerService.name); // TODO: Test this logger
+  private readonly logger = new Logger(BlockAnalyzerService.name);
   private chainHistory: Record<number, ChainHistory> = {};
 
   constructor(private readonly walletService: WalletService) {
@@ -40,7 +40,6 @@ export class BlockAnalyzerService {
                 contract.address,
               ),
             );
-            console.log(contract.decimals);
             await this.walletService.saveContract(contract);
           }
         } catch (ex) {

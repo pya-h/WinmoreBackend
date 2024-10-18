@@ -31,7 +31,7 @@ export class WalletService {
     private readonly configService: ConfigService,
   ) {
     this.loadBusinessWallet().catch((err) => {
-      console.log(
+      this.logger.error(
         'Can not load app business wallet, this may cause serious problems.',
         err,
       );
@@ -42,12 +42,12 @@ export class WalletService {
     if (!this.mBusinessWallet)
       this.loadBusinessWallet()
         .then(() =>
-          console.warn(
+          this.logger.warn(
             'Business wallet value was null in runtime, but re-loaded successfully.',
           ),
         )
         .catch((err) =>
-          console.error(
+          this.logger.error(
             'Tried to reload business wallet, but failed again!',
             err,
           ),
