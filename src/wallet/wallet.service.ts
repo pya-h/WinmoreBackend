@@ -19,6 +19,7 @@ import { BUSINESSMAN_ID } from 'src/configs/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserPopulated } from 'src/user/types/user-populated.type';
 import { WalletIdentifierType } from './types/wallet-identifier.type';
+import { BlockchainLogType } from './types/blockchain-log.type';
 
 @Injectable()
 export class WalletService {
@@ -67,6 +68,10 @@ export class WalletService {
 
   findChains() {
     return this.prisma.chain.findMany();
+  }
+
+  getChainById(id: number) {
+    return this.prisma.chain.findFirst({ where: { id } });
   }
 
   findContracts(onlyTokenContract: boolean = false) {
@@ -194,7 +199,7 @@ export class WalletService {
         trx.sourceId,
         trx.token,
         chainId,
-      );
+      ); // TODO/ask: Is admin wallet required to balance check?
       if (sourceBalance < trx.amount) {
         await this.failTransaction(trx);
         throw new ForbiddenException(`Not enough ${trx.token} balance.`);
@@ -271,23 +276,37 @@ export class WalletService {
     );
   }
 
-  async deposit(log: {
-    from: string;
-    token: TokensEnum;
-    amount: number | bigint;
-    chainId: number;
-  }) {
-    //TODO: Complete this
+  createLog(log: BlockchainLogType, deposit: boolean) {
+    const { walletAddress, ...tokenData } = log;
+    return this.prisma.blockchainLog.create({
+      data: {
+        ...(deposit
+          ? { from: walletAddress, to: this.businessWallet.address }
+          : { to: walletAddress, from: this.businessWallet.address }),
+        ...tokenData,
+      },
+    });
+  }
 
-    this.logger.warn('New deposit trx, : ', log); // TODO: Remove this later
+  async deposit(log: BlockchainLogType) {
+    this.logger.debug(`New deposit trx from ${log.walletAddress}`); // TODO: Remove this later
 
-    return this.transact(
-      { id: this.mBusinessWallet.id },
-      { address: log.from },
-      +log.amount.toString(), // FIXME: What to do whit bigint??
-      log.token,
-      log.chainId,
-      { description: 'Deposit', wallet: log.from },
-    );
+    await this.createLog(log, true);
+    try {
+      return this.transact(
+        { id: this.mBusinessWallet.id },
+        { address: log.walletAddress },
+        log.amount,
+        log.token,
+        log.chainId,
+        { description: 'Deposit', wallet: log.walletAddress },
+      );
+    } catch (ex) {
+      if (ex instanceof NotFoundException)
+        this.logger.warn(
+          `A deposit happened from ${log.walletAddress}, which isn't a user. so it was skipped.`,
+        );
+      else this.logger.error(ex.toString(), ex, JSON.stringify(log));
+    }
   }
 }

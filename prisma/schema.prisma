@@ -79,11 +79,12 @@ model Chain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name               String          @db.VarChar(64)
-  providerUrl        String          @db.VarChar(256)
+  name               String           @db.VarChar(64)
+  providerUrl        String           @db.VarChar(256)
   lastProcessedBlock BigInt?
   transactions       Transaction[]
   dreamMineGames     DreamMineGame[]
+  blockchainLogs     BlockchainLog[]
 }
 
 model Transaction {
@@ -105,7 +106,7 @@ model Transaction {
 
 enum GameStatusEnum {
   WON
-  WITHDRAWN
+  FLAWLESS_WIN
   LOST
   ONGOING
   NOT_STARTED
@@ -118,7 +119,7 @@ enum GameModesEnum {
 }
 
 model DreamMineGame {
-  id        Int      @id @default(autoincrement()) // What to do with id type? Int or BigInt?
+  id        Int      @id @default(autoincrement()) // TODO: What to do with id type? Int or BigInt?
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   createdAt DateTime @default(now())
@@ -151,4 +152,16 @@ model DreamMineRules {
   maxRows                Int     @default(12)
   minBetAmount           Float?
   maxBetAmount           Float?
+}
+
+model BlockchainLog {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  from    String
+  to      String
+  amount  Float
+  token   TokensEnum @default(USDT)
+  chainId Int
+  chain   Chain      @relation(fields: [chainId], references: [id])
 }

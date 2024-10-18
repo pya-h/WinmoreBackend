@@ -78,11 +78,11 @@ export class DreamMineService {
   /**
    * Method for paying the amount at stake to the user, wether by backing off the game or dream won.
    * @param game - DreamWonGame: No need for being populated.
-   * @param withdrawn: This specifies wether the user has backed off or not. The true value mens user is requesting the stake withdraw in the game.
+   * @param backedOff: This specifies wether the user has backed off or not. The true value mens user is requesting the stake withdraw in the game.
    * @returns the reward transaction.
    */
-  async finalizeGame(game: DreamMineGame, withdrawn: boolean = true) {
-    game.status = withdrawn ? GameStatusEnum.WITHDRAWN : GameStatusEnum.WON;
+  async finalizeGame(game: DreamMineGame, backedOff: boolean = true) {
+    game.status = backedOff ? GameStatusEnum.WON : GameStatusEnum.FLAWLESS_WIN;
     game.finishedAt = new Date();
     game = await this.prisma.dreamMineGame.update({
       data: game, // TODO: Check if this works ok
@@ -249,7 +249,7 @@ export class DreamMineService {
                 filter.status !== ExtraGameStatusEnum.FINISHED
                   ? filter.status !== ExtraGameStatusEnum.GAINED
                     ? filter.status
-                    : { in: [GameStatusEnum.WON, GameStatusEnum.WITHDRAWN] }
+                    : { in: [GameStatusEnum.WON, GameStatusEnum.FLAWLESS_WIN] }
                   : {
                       notIn: [
                         GameStatusEnum.NOT_STARTED,

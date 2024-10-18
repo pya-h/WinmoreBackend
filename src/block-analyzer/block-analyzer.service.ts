@@ -32,6 +32,30 @@ export class BlockAnalyzerService {
 
     this.tokenContracts = await this.walletService.findContracts(true);
   }
+
+  async isProviderConnected(provider: Web3): Promise<boolean> {
+    try {
+      return await provider.eth.net.isListening();
+    } catch (err) {
+      this.logger.error('Provider connection error: ', err);
+      return false;
+    }
+  }
+
+  async reconnectProvider(chainId: number) {
+    try {
+      const chain = await this.walletService.getChainById(chainId);
+
+      this.chainHistory[chainId].provider = new Web3(chain.providerUrl);
+
+      this.logger.log(`Reconnected to provider for chain#${chainId}`);
+      return true;
+    } catch (error) {
+      this.logger.error(`Chain#${chainId} Reconnection failed:`, error);
+    }
+    return false;
+  }
+
   async processLogsInRange(
     { provider, chainId }: ChainHistory,
     fromBlock: bigint,
@@ -43,6 +67,16 @@ export class BlockAnalyzerService {
       fromBlock: provider.utils.toHex(fromBlock),
       toBlock: provider.utils.toHex(toBlock),
       address: contractAddr,
+      topics: [
+        provider.eth.abi.encodeEventSignature(
+          'Transfer(address,address,uint256)',
+        ), // Event signature for ERC20 Transfer
+        null,
+        provider.eth.abi.encodeParameter(
+          'address',
+          this.walletService.businessWallet.address,
+        ), // Filter logs for 'to' address
+      ],
     })) as Web3TrxLogType[];
 
     for (const log of logs) {
@@ -67,12 +101,17 @@ export class BlockAnalyzerService {
         log.topics,
       );
 
-      await this.walletService.deposit({
-        from: decodedLog.from.toString(),
-        token: contract.identifier as TokensEnum,
-        amount: +provider.utils.fromWei(+decodedLog.value, 'mwei'), // TODO: Ensure conversion is correct
-        chainId,
-      });
+      this.logger.debug(decodedLog);
+      if (
+        decodedLog.to.toString() === this.walletService.businessWallet.address // double check address
+      ) {
+        await this.walletService.deposit({
+          walletAddress: decodedLog.from.toString(),
+          token: contract.identifier as TokensEnum,
+          amount: +provider.utils.fromWei(decodedLog.value.toString(), 'mwei'), // TODO: Ensure conversion is correct
+          chainId,
+        });
+      }
     }
   }
 
@@ -84,6 +123,14 @@ export class BlockAnalyzerService {
 
     for (const chainId in this.chainHistory) {
       const { lastProcessedBlockNumber, provider } = this.chainHistory[chainId];
+
+      if (
+        !(await this.isProviderConnected(provider)) &&
+        !(await this.reconnectProvider(+chainId))
+      ) {
+        continue;
+      }
+
       const latestFinalizedBlock = await provider.eth.getBlock('finalized');
 
       if (
