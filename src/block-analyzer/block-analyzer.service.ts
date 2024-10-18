@@ -28,6 +28,7 @@ export class BlockAnalyzerService {
         provider: new Web3(chain.providerUrl),
         lastProcessedBlockNumber: chain.lastProcessedBlock,
         chainId: chain.id,
+        blockProcessRange: BigInt(chain.blockProcessRange),
       };
 
     this.tokenContracts = await this.walletService.findContracts(true);
@@ -47,7 +48,9 @@ export class BlockAnalyzerService {
       const chain = await this.walletService.getChainById(chainId);
 
       this.chainHistory[chainId].provider = new Web3(chain.providerUrl);
-
+      this.chainHistory[chainId].blockProcessRange = BigInt(
+        chain.blockProcessRange,
+      );
       this.logger.log(`Reconnected to provider for chain#${chainId}`);
       return true;
     } catch (error) {
@@ -122,62 +125,71 @@ export class BlockAnalyzerService {
     const processLogTasks: Promise<void>[] = [];
 
     for (const chainId in this.chainHistory) {
-      const { lastProcessedBlockNumber, provider } = this.chainHistory[chainId];
-
-      if (
-        !(await this.isProviderConnected(provider)) &&
-        !(await this.reconnectProvider(+chainId))
-      ) {
-        continue;
-      }
-
-      const latestFinalizedBlock = await provider.eth.getBlock('finalized');
-
-      if (
-        lastProcessedBlockNumber &&
-        lastProcessedBlockNumber >= latestFinalizedBlock.number
-      )
-        continue;
-
-      this.logger.debug(
-        `Processing chain#${chainId} blocks: #${lastProcessedBlockNumber} to ${latestFinalizedBlock.number}`,
-      );
-
-      let i: bigint;
       try {
-        for (
-          i =
-            lastProcessedBlockNumber != null
-              ? lastProcessedBlockNumber + 1n
-              : latestFinalizedBlock.number;
-          i <= latestFinalizedBlock.number;
-          i += 5n
+        if (
+          !(await this.isProviderConnected(
+            this.chainHistory[chainId].provider,
+          )) &&
+          !(await this.reconnectProvider(+chainId))
         ) {
-          for (const contract of this.tokenContracts) {
-            processLogTasks.push(
-              this.processLogsInRange(
-                this.chainHistory[chainId],
-                i,
-                this.endBlock(i + 4n, latestFinalizedBlock.number),
-                contract,
-              ),
-            );
-          }
+          continue;
         }
 
-        await Promise.all(processLogTasks); // Process logs for all contracts in parallel
-        this.chainHistory[chainId].lastProcessedBlockNumber =
-          latestFinalizedBlock.number;
-      } catch (ex) {
-        this.logger.error(
-          `Something crashed while processing range with the start block as block#${i}; next time the process will continue from crashed block.`,
-          (ex as Error).stack,
+        const { lastProcessedBlockNumber, provider, blockProcessRange } =
+          this.chainHistory[chainId];
+
+        const latestFinalizedBlock = await provider.eth.getBlock('finalized');
+
+        if (
+          lastProcessedBlockNumber &&
+          lastProcessedBlockNumber >= latestFinalizedBlock.number
+        )
+          continue;
+
+        this.logger.debug(
+          `Processing chain#${chainId} blocks: #${lastProcessedBlockNumber} to ${latestFinalizedBlock.number}`,
         );
-        this.chainHistory[chainId].lastProcessedBlockNumber = i - 1n;
+
+        let i: bigint;
+        try {
+          for (
+            i =
+              lastProcessedBlockNumber != null
+                ? lastProcessedBlockNumber + 1n
+                : latestFinalizedBlock.number;
+            i <= latestFinalizedBlock.number;
+            i += blockProcessRange
+          ) {
+            for (const contract of this.tokenContracts) {
+              processLogTasks.push(
+                this.processLogsInRange(
+                  this.chainHistory[chainId],
+                  i,
+                  this.endBlock(
+                    i + blockProcessRange - 1n,
+                    latestFinalizedBlock.number,
+                  ),
+                  contract,
+                ),
+              );
+            }
+          }
+          await Promise.all(processLogTasks); // Process logs for all contracts in parallel
+          this.chainHistory[chainId].lastProcessedBlockNumber =
+            latestFinalizedBlock.number;
+        } catch (ex) {
+          this.logger.error(
+            `Something crashed while processing range with the start block as block#${i}; next time the process will continue from crashed block.`,
+            (ex as Error).stack,
+          );
+          this.chainHistory[chainId].lastProcessedBlockNumber = i - 1n;
+        }
+        await this.walletService.syncChainsLastProcessedBlock(
+          this.chainHistory[chainId],
+        );
+      } catch (ex) {
+        this.logger.error(`failed trying to process chain#${chainId}`, ex);
       }
-      await this.walletService.syncChainsLastProcessedBlock(
-        this.chainHistory[chainId],
-      );
     }
   }
 }

@@ -4,4 +4,5 @@ export type ChainHistory = {
   provider: Web3;
   lastProcessedBlockNumber: bigint | undefined;
   chainId: number;
+  blockProcessRange: bigint;
 };

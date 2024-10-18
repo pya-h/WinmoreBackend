@@ -79,9 +79,10 @@ model Chain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name               String           @db.VarChar(64)
-  providerUrl        String           @db.VarChar(256)
+  name               String          @db.VarChar(64)
+  providerUrl        String          @db.VarChar(256)
   lastProcessedBlock BigInt?
+  blockProcessRange  Int             @default(5)
   transactions       Transaction[]
   dreamMineGames     DreamMineGame[]
   blockchainLogs     BlockchainLog[]

@@ -9,17 +9,20 @@ async function main() {
       {
         id: 1,
         name: 'Ethereum Mainnet',
-        providerUrl: 'https://cloudflare-eth.com',
+        providerUrl: 'https://cloudflare-eth.com', // https://rpc.ankr.com/eth
+        blockProcessRange: 100,
       },
       {
         id: 137,
         name: 'Polygon Mainnet',
         providerUrl: 'https://polygon-rpc.com',
+        blockProcessRange: 100,
       },
       {
         id: 11155111,
         name: 'Sepolia',
-        providerUrl: 'https://rpc2.sepolia.org',
+        providerUrl: 'https://rpc.sepolia.org',
+        blockProcessRange: 100,
       },
     ].map(async ({ id, name, providerUrl }) =>
       prisma.chain.create({ data: { id, name, providerUrl } }),
