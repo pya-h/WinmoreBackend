@@ -63,17 +63,6 @@ model Wallet {
   despositTransactions Transaction[] @relation("TrxDestination")
 }
 
-model Contract {
-  id        Int      @id @default(autoincrement())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  address         String  @unique @db.VarChar(256)
-  identifier      String  @unique @db.VarChar(16)
-  title           String? @db.VarChar(128)
-  isTokenContract Boolean @default(true)
-}
-
 model Chain {
   id        Int      @id
   createdAt DateTime @default(now())
@@ -86,6 +75,20 @@ model Chain {
   transactions       Transaction[]
   dreamMineGames     DreamMineGame[]
   blockchainLogs     BlockchainLog[]
+  contracts          Contract[]
+}
+
+model Contract {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  address  String      @unique @db.VarChar(256)
+  token    TokensEnum?
+  title    String?     @db.VarChar(128)
+  chainId  Int
+  chain    Chain       @relation(fields: [chainId], references: [id])
+  decimals Int?
 }
 
 model Transaction {

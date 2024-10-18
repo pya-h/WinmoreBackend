@@ -1,3 +1,4 @@
+import { Contract } from '@prisma/client';
 import Web3 from 'web3';
 
 export type ChainHistory = {
@@ -5,4 +6,5 @@ export type ChainHistory = {
   lastProcessedBlockNumber: bigint | undefined;
   chainId: number;
   blockProcessRange: bigint;
+  contracts: Contract[];
 };

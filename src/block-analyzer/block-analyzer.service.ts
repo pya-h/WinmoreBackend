@@ -3,14 +3,13 @@ import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ChainHistory } from './type/chain-history.type';
-import { Contract, TokensEnum } from '@prisma/client';
+import { Contract } from '@prisma/client';
 import { Web3TrxLogType } from './type/trx-receipt.type';
 
 @Injectable()
 export class BlockAnalyzerService {
   private readonly logger = new Logger(BlockAnalyzerService.name); // TODO: Test this logger
   private chainHistory: Record<number, ChainHistory> = {};
-  private tokenContracts: Contract[] = [];
 
   constructor(private readonly walletService: WalletService) {
     this.init().catch((err) =>
@@ -23,15 +22,51 @@ export class BlockAnalyzerService {
   }
 
   async init() {
-    for (const chain of await this.walletService.findChains())
+    for (const chain of await this.walletService.findChains(true)) {
       this.chainHistory[chain.id] = {
         provider: new Web3(chain.providerUrl),
         lastProcessedBlockNumber: chain.lastProcessedBlock,
         chainId: chain.id,
         blockProcessRange: BigInt(chain.blockProcessRange),
+        contracts: chain['contracts'],
       };
 
-    this.tokenContracts = await this.walletService.findContracts(true);
+      for (const contract of this.chainHistory[chain.id].contracts) {
+        try {
+          if (contract.decimals == null) {
+            contract.decimals = Number(
+              await this.getContractDecimals(
+                this.chainHistory[chain.id].provider,
+                contract.address,
+              ),
+            );
+            console.log(contract.decimals);
+            await this.walletService.saveContract(contract);
+          }
+        } catch (ex) {
+          this.logger.error(
+            `Error loading chain#${chain.id} contract#${contract.token} data`,
+            ex,
+          );
+        }
+      }
+    }
+  }
+
+  async getContractDecimals(provider: Web3, contractAddress: string) {
+    const contract = new provider.eth.Contract(
+      [
+        {
+          constant: true,
+          inputs: [],
+          name: 'decimals',
+          outputs: [{ name: '', type: 'uint8' }],
+          type: 'function',
+        },
+      ],
+      contractAddress,
+    );
+    return BigInt(await contract.methods.decimals().call());
   }
 
   async isProviderConnected(provider: Web3): Promise<boolean> {
@@ -65,11 +100,12 @@ export class BlockAnalyzerService {
     toBlock: bigint,
     contract: Contract,
   ) {
-    const contractAddr = contract.address.toLowerCase();
+    const businessWallet =
+      this.walletService.businessWallet.address.toLowerCase();
     const logs = (await provider.eth.getPastLogs({
       fromBlock: provider.utils.toHex(fromBlock),
       toBlock: provider.utils.toHex(toBlock),
-      address: contractAddr,
+      address: contract.address, // TODO: Check if .toLowerCase() is required or not?
       topics: [
         provider.eth.abi.encodeEventSignature(
           'Transfer(address,address,uint256)',
@@ -83,6 +119,8 @@ export class BlockAnalyzerService {
     })) as Web3TrxLogType[];
 
     for (const log of logs) {
+      if (log.removed) continue;
+
       const decodedLog: DecodedParams = provider.eth.abi.decodeLog(
         [
           {
@@ -106,12 +144,12 @@ export class BlockAnalyzerService {
 
       this.logger.debug(decodedLog);
       if (
-        decodedLog.to.toString() === this.walletService.businessWallet.address // double check address
+        decodedLog.to.toString().toLowerCase() === businessWallet // double check address
       ) {
         await this.walletService.deposit({
           walletAddress: decodedLog.from.toString(),
-          token: contract.identifier as TokensEnum,
-          amount: +provider.utils.fromWei(decodedLog.value.toString(), 'mwei'), // TODO: Ensure conversion is correct
+          token: contract.token,
+          amount: Number(decodedLog.value) / 10 ** contract.decimals, // TODO: Ensure conversion is correct
           chainId,
         });
       }
@@ -135,8 +173,12 @@ export class BlockAnalyzerService {
           continue;
         }
 
-        const { lastProcessedBlockNumber, provider, blockProcessRange } =
-          this.chainHistory[chainId];
+        const {
+          lastProcessedBlockNumber,
+          provider,
+          blockProcessRange,
+          contracts,
+        } = this.chainHistory[chainId];
 
         const latestFinalizedBlock = await provider.eth.getBlock('finalized');
 
@@ -147,7 +189,7 @@ export class BlockAnalyzerService {
           continue;
 
         this.logger.debug(
-          `Processing chain#${chainId} blocks: #${lastProcessedBlockNumber} to ${latestFinalizedBlock.number}`,
+          `Processing chain#${chainId} blocks: #${lastProcessedBlockNumber ? lastProcessedBlockNumber + 1n : latestFinalizedBlock.number} to ${latestFinalizedBlock.number}`,
         );
 
         let i: bigint;
@@ -160,7 +202,7 @@ export class BlockAnalyzerService {
             i <= latestFinalizedBlock.number;
             i += blockProcessRange
           ) {
-            for (const contract of this.tokenContracts) {
+            for (const contract of contracts) {
               processLogTasks.push(
                 this.processLogsInRange(
                   this.chainHistory[chainId],

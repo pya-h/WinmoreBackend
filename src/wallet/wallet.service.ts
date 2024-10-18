@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  Contract,
   TokensEnum,
   Transaction,
   TransactionStatusEnum,
@@ -66,17 +67,25 @@ export class WalletService {
     return Boolean(await this.prisma.chain.count({ where: { id: chainId } }));
   }
 
-  findChains() {
-    return this.prisma.chain.findMany();
+  findChains(loadContracts: boolean = false) {
+    return this.prisma.chain.findMany({
+      ...(loadContracts ? { include: { contracts: true } } : {}),
+    });
   }
 
+  saveContract(contract: Contract) {
+    return this.prisma.contract.update({
+      where: { id: contract.id },
+      data: contract,
+    });
+  }
   getChainById(id: number) {
     return this.prisma.chain.findFirst({ where: { id } });
   }
 
   findContracts(onlyTokenContract: boolean = false) {
     return this.prisma.contract.findMany({
-      ...(onlyTokenContract ? { where: { isTokenContract: true } } : {}),
+      ...(onlyTokenContract ? { where: { token: { not: null } } } : {}),
     });
   }
 

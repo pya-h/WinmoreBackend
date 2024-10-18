@@ -4,84 +4,114 @@ const prisma = new PrismaClient();
 
 async function main() {
   // 1 INSERT CHAIN DATA
-  await Promise.all(
-    [
-      {
-        id: 1,
-        name: 'Ethereum Mainnet',
-        providerUrl: 'https://cloudflare-eth.com', // https://rpc.ankr.com/eth
-        blockProcessRange: 100,
-      },
-      {
-        id: 137,
-        name: 'Polygon Mainnet',
-        providerUrl: 'https://polygon-rpc.com',
-        blockProcessRange: 100,
-      },
-      {
-        id: 11155111,
-        name: 'Sepolia',
-        providerUrl: 'https://rpc.sepolia.org',
-        blockProcessRange: 100,
-      },
-    ].map(async ({ id, name, providerUrl }) =>
-      prisma.chain.create({ data: { id, name, providerUrl } }),
-    ),
-  );
-  console.info('Chain data inserted.');
+  try {
+    await Promise.all(
+      [
+        {
+          id: 1,
+          name: 'Ethereum Mainnet',
+          providerUrl: 'https://cloudflare-eth.com', // https://rpc.ankr.com/eth
+          blockProcessRange: 100,
+        },
+        {
+          id: 137,
+          name: 'Polygon Mainnet',
+          providerUrl: 'https://polygon-rpc.com',
+          blockProcessRange: 100,
+        },
+        {
+          id: 11155111,
+          name: 'Sepolia',
+          providerUrl: 'https://rpc.sepolia.org',
+          blockProcessRange: 100,
+        },
+      ].map(async ({ id, name, providerUrl }) =>
+        prisma.chain.create({ data: { id, name, providerUrl } }),
+      ),
+    );
+    console.info('Chain data inserted.');
+  } catch (ex) {
+    console.error('Failed importing chain data:', ex);
+  }
 
   // 2 INSERT GAME RULES
-  await prisma.dreamMineRules.create({
-    data: {
-      rowCoefficients: [2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377],
-      rowProbabilities: [
-        0.8, 0.7, 0.6, 0.3, 0.1, 0.09, 0.05, 0.01, 0.009, 0.005, 0.001, 0.0001,
-      ],
-      difficultyCoefficients: [5, 10],
-      minRows: 8,
-      maxRows: 12,
-      minBetAmount: 1,
-    },
-  });
-  console.info('Game rules inserted.');
+  try {
+    await prisma.dreamMineRules.create({
+      data: {
+        rowCoefficients: [2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377],
+        rowProbabilities: [
+          0.8, 0.7, 0.6, 0.3, 0.1, 0.09, 0.05, 0.01, 0.009, 0.005, 0.001,
+          0.0001,
+        ],
+        difficultyCoefficients: [5, 10],
+        minRows: 8,
+        maxRows: 12,
+        minBetAmount: 1,
+      },
+    });
+    console.info('Game rules inserted.');
+  } catch (ex) {
+    console.error('Failed importing game rules', ex);
+  }
 
   // 3 CREATE BUSINESS MAN USER
-  await prisma.user.create({
-    data: {
-      admin: true,
-      id: 0,
-      name: 'Winmore',
-      email: 'winmore@mail.com',
-      profile: {
-        create: {
-          avatar: null,
+  try {
+    await prisma.user.create({
+      data: {
+        admin: true,
+        id: 0,
+        name: 'Winmore',
+        email: 'winmore@mail.com',
+        profile: {
+          create: {
+            avatar: null,
+          },
+        },
+        wallet: {
+          create: {
+            id: 0,
+            address: '0x32Be343B94f860124dC4fEe278FDCBD38C102D88',
+          },
         },
       },
-      wallet: {
-        create: {
-          id: 0,
-          address: '0x32Be343B94f860124dC4fEe278FDCBD38C102D88',
-        },
-      },
-    },
-  });
-  console.info('Business man user & wallet created.');
+    });
+    console.info('Business man user & wallet created.');
+  } catch (ex) {
+    console.error('Failed importing business wallet:', ex);
+  }
 
   // 4 INSERT SPECIAL CONTRACTS
-  await Promise.all(
-    [
-      {
-        title: 'USDT Contract address',
-        identifier: TokensEnum.USDT,
-        address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-      },
-    ].map(async ({ title, identifier, address }) =>
-      prisma.contract.create({
-        data: { title, identifier, address },
-      }),
-    ),
-  );
-  console.info('Supported tokens contracts data inserted.');
+  try {
+    await Promise.all(
+      [
+        {
+          title: 'USDT Contract on Ethereum Mainnet',
+          token: TokensEnum.USDT,
+          address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+          chainId: 1,
+        },
+        {
+          title: 'USDT Contract on Polygon',
+          token: TokensEnum.USDT,
+          address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+          chainId: 137,
+        },
+        {
+          title: 'USDT Contract on Sepolia',
+          token: TokensEnum.USDT,
+          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0',
+          chainId: 11155111,
+        },
+      ].map(async ({ title, token, address, chainId }) =>
+        prisma.contract.create({
+          data: { title, token, address, chainId },
+        }),
+      ),
+    );
+    console.info('Supported tokens contracts data inserted.');
+  } catch (ex) {
+    console.error('Failed importing contracts:', ex);
+  }
 }
 
 main()
