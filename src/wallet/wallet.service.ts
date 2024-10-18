@@ -14,11 +14,11 @@ import {
   TransactionStatusEnum,
   Wallet,
 } from '@prisma/client';
-import { ChainHistory } from 'src/block-analyzer/type/chain-history.type';
-import { WinmoreGameTypes } from 'src/common/types/game.types';
-import { BUSINESSMAN_ID } from 'src/configs/constants';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { UserPopulated } from 'src/user/types/user-populated.type';
+import { ChainHistory } from '../block-analyzer/type/chain-history.type';
+import { WinmoreGameTypes } from '../common/types/game.types';
+import { BUSINESSMAN_ID } from '../configs/constants';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserPopulated } from '../user/types/user-populated.type';
 import { WalletIdentifierType } from './types/wallet-identifier.type';
 import { BlockchainLogType } from './types/blockchain-log.type';
 

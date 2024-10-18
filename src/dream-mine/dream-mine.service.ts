@@ -22,7 +22,7 @@ import {
   WinmoreGameTypes,
   ExtraGameStatusEnum,
 } from '../common/types/game.types';
-import { DM_COLUMNS_COUNT } from 'src/configs/constants';
+import { DM_COLUMNS_COUNT } from '../configs/constants';
 import { GameStatusFilterQuery } from './dtos/game-status-filter.query';
 
 @Injectable()

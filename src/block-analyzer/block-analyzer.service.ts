@@ -158,7 +158,7 @@ export class BlockAnalyzerService {
 
   endBlock = (a: bigint, b: bigint) => (a <= b ? a : b);
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  // @Cron(CronExpression.EVERY_10_SECONDS)
   async checkoutLatestBlocks() {
     const processLogTasks: Promise<void>[] = [];
 

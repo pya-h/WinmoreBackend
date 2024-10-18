@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty, Max, Min } from 'class-validator';
-import { DM_COLUMNS_COUNT } from 'src/configs/constants';
+import { DM_COLUMNS_COUNT } from '../../configs/constants';
 
 export class DoMineDto {
   @ApiProperty({ description: 'The stone user has selected.', required: true })

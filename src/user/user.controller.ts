@@ -14,7 +14,7 @@ import { UserService } from './user.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';

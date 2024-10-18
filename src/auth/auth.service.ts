@@ -5,12 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AuthenticationDto } from './dto/auth.dto';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { SiweMessage, generateNonce } from 'siwe';
 import { ValidNonceType } from './types/valid-nonce.type';
 import { ConfigService } from '@nestjs/config';
-import { generateRandomString } from 'src/common/tools';
+import { generateRandomString } from '../common/tools';
 
 @Injectable()
 export class AuthService {
