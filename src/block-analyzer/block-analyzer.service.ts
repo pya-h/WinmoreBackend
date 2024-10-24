@@ -101,6 +101,7 @@ export class BlockAnalyzerService {
   ) {
     const businessWallet =
       this.walletService.businessWallet.address.toLowerCase();
+
     const logs = (await provider.eth.getPastLogs({
       fromBlock: provider.utils.toHex(fromBlock),
       toBlock: provider.utils.toHex(toBlock),
@@ -118,8 +119,9 @@ export class BlockAnalyzerService {
     })) as Web3TrxLogType[];
 
     for (const log of logs) {
-      if (log.removed) continue;
-
+      if (log.removed) {
+        continue;
+      }
       const decodedLog: DecodedParams = provider.eth.abi.decodeLog(
         [
           {

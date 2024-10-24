@@ -299,7 +299,11 @@ export class WalletService {
     );
   }
 
-  createLog(log: BlockchainLogType, deposit: boolean) {
+  createLog(
+    log: BlockchainLogType,
+    deposit: boolean,
+    relatedTransactionId?: bigint,
+  ) {
     const { walletAddress, ...tokenData } = log;
     return this.prisma.blockchainLog.create({
       data: {
@@ -307,16 +311,18 @@ export class WalletService {
           ? { from: walletAddress, to: this.businessWallet.address }
           : { to: walletAddress, from: this.businessWallet.address }),
         ...tokenData,
+        ...(relatedTransactionId
+          ? { transactionId: relatedTransactionId }
+          : {}),
       },
     });
   }
 
   async deposit(log: BlockchainLogType) {
     this.logger.debug(`New deposit trx from ${log.walletAddress}`); // TODO: Remove this later
-
-    await this.createLog(log, true);
+    let trx: Transaction;
     try {
-      return this.transact(
+      trx = await this.transact(
         { id: this.mBusinessWallet.id },
         { address: log.walletAddress },
         log.amount,
@@ -331,5 +337,6 @@ export class WalletService {
         );
       else this.logger.error(ex.toString(), ex, JSON.stringify(log));
     }
+    await this.createLog(log, true, trx.id);
   }
 }

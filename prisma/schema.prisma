@@ -107,6 +107,7 @@ model Transaction {
   chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
   remarks       Json?
+  depositLogs   BlockchainLog[]
 }
 
 enum GameStatusEnum {
@@ -163,10 +164,12 @@ model BlockchainLog {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  from    String
-  to      String
-  amount  Float
-  token   TokensEnum @default(USDT)
-  chainId Int
-  chain   Chain      @relation(fields: [chainId], references: [id])
+  from         String
+  to           String
+  amount       Float
+  token        TokensEnum   @default(USDT)
+  chainId      Int
+  chain        Chain        @relation(fields: [chainId], references: [id])
+  transactionId BigInt?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
 }
