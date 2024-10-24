@@ -1,5 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { PrismaClient, TokensEnum } = require('@prisma/client');
+
+const BUSINESSMAN_ID = 0; // must be matched with /src/configs/constants.ts, field: BUSINESSMAN_ID
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -59,7 +62,7 @@ async function main() {
     await prisma.user.create({
       data: {
         admin: true,
-        id: 0,
+        id: BUSINESSMAN_ID,
         name: 'Winmore',
         email: 'winmore@mail.com',
         profile: {
@@ -69,8 +72,8 @@ async function main() {
         },
         wallet: {
           create: {
-            id: 0,
-            address: '0x32Be343B94f860124dC4fEe278FDCBD38C102D88',
+            id: BUSINESSMAN_ID,
+            address: '0xa3fdCBaCd38F97598a71637aEB441adCD6e2C817',
           },
         },
       },
@@ -100,6 +103,12 @@ async function main() {
           title: 'USDT Contract on Sepolia',
           token: TokensEnum.USDT,
           address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0',
+          chainId: 11155111,
+        },
+        {
+          title: 'WUSDC Contract on Sepolia',
+          token: TokensEnum.WUSDC,
+          address: '0x9dfb350c3253386de5e2fec4dcb959b18f6ee2a1',
           chainId: 11155111,
         },
       ].map(async ({ title, token, address, chainId }) =>

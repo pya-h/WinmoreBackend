@@ -28,7 +28,7 @@ export class BlockAnalyzerService {
         lastProcessedBlockNumber: chain.lastProcessedBlock,
         chainId: chain.id,
         blockProcessRange: BigInt(chain.blockProcessRange),
-        contracts: chain['contracts'],
+        contracts: chain.contracts,
       };
 
       for (const contract of this.chainHistory[chain.id].contracts) {

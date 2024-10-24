@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AuthenticationDto } from './dto/auth.dto';
 import { WalletAddressDto } from './dto/wallet-address.dto';
+import { TestAuthWalletAddressDto } from './dto/test-auth-wallet.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -31,7 +32,7 @@ export class AuthController {
     description: 'Test route for creating user as fast as possible.',
   })
   @Post('test')
-  devAuth() {
-    return this.authService.testAuth();
+  devAuth(@Body() optionalWalletAddress: TestAuthWalletAddressDto) {
+    return this.authService.testAuth(optionalWalletAddress?.address);
   }
 }

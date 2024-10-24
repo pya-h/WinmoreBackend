@@ -42,6 +42,7 @@ enum TokensEnum {
   ETH
   USDC
   USDT
+  WUSDC
 }
 
 enum TransactionStatusEnum {
@@ -96,10 +97,10 @@ model Transaction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  source        Wallet                @relation("TrxSource", fields: [sourceId], references: [id])
-  sourceId      Int
-  destination   Wallet                @relation("TrxDestination", fields: [destinationId], references: [id])
-  destinationId Int
+  source        Wallet?               @relation("TrxSource", fields: [sourceId], references: [id])
+  sourceId      Int?
+  destination   Wallet?               @relation("TrxDestination", fields: [destinationId], references: [id])
+  destinationId Int?
   token         TokensEnum            @default(USDC)
   amount        Float
   chainId       Int

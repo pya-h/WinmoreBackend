@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,20 +13,25 @@ import {
   TokensEnum,
   Transaction,
   TransactionStatusEnum,
-  Wallet,
 } from '@prisma/client';
 import { ChainHistory } from '../block-analyzer/type/chain-history.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
 import { BUSINESSMAN_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
-import { WalletIdentifierType } from './types/wallet-identifier.type';
+import { WalletIdentifierType, WalletPopulated } from './types/wallet.types';
 import { BlockchainLogType } from './types/blockchain-log.type';
+import { ChainMayContractsPopulated } from './types/chain.types';
 
+// ********     MAIN TODOS    *****
+// FIXME: All Get balance methods must consider chinId
+// TODO: add Mint & burn methods
+// FIXME: Transactions from admin, must never throw insufficient balance error; Write a method to always mint to admin wallet the sufficient amount,
+// when the balance of admin on specific chain & token is lower than a trx amount
 @Injectable()
 export class WalletService {
-  private readonly logger = new Logger(WalletService.name); // TODO: Test this logger
-  private mBusinessWallet: Wallet;
+  private readonly logger = new Logger(WalletService.name);
+  private mBusinessWallet: WalletPopulated;
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
@@ -60,6 +66,10 @@ export class WalletService {
       where: { ownerId: BUSINESSMAN_ID },
       include: { owner: true },
     });
+    if (!this.mBusinessWallet.owner.admin)
+      throw new InternalServerErrorException(
+        'Business account mismatch! Checkout database for conflicts on business account.',
+      );
     console.log('Business wallet loaded.');
   }
 
@@ -67,7 +77,9 @@ export class WalletService {
     return Boolean(await this.prisma.chain.count({ where: { id: chainId } }));
   }
 
-  findChains(loadContracts: boolean = false) {
+  findChains(
+    loadContracts: boolean = false,
+  ): Promise<ChainMayContractsPopulated[]> {
     return this.prisma.chain.findMany({
       ...(loadContracts ? { include: { contracts: true } } : {}),
     });
@@ -97,7 +109,6 @@ export class WalletService {
   }
 
   async getBalance(walletId: number, token: TokensEnum, chainId: number) {
-    // TODO: All Get balance methods must consider chinId
     const result = await this.prisma.$queryRaw<{ balance: number }[]>`SELECT (
             COALESCE(SUM(CASE WHEN "destinationId"=${walletId} THEN "amount" ELSE 0 END), 0) -
             COALESCE(SUM(CASE WHEN "sourceId"=${walletId} THEN "amount" ELSE 0 END), 0)
@@ -203,7 +214,10 @@ export class WalletService {
       },
     });
 
-    if (!this.configService.get<boolean>('general.debug')) {
+    if (
+      !this.configService.get<boolean>('general.debug') &&
+      source.id !== this.businessWallet.id // TODO: Remove this after the admin recharge mechanism implemented.
+    ) {
       const sourceBalance = await this.getBalance(
         trx.sourceId,
         trx.token,

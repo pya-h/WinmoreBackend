@@ -43,3 +43,9 @@ export type WalletPopulatedNested = Wallet & {
   depositTransactions: (Transaction & { source: Wallet })[];
   withdrawTransactions: (Transaction & { destination: Wallet })[];
 };
+
+export type WalletIdentifierType = {
+  id?: number;
+  address?: string;
+  ownerId?: number;
+};

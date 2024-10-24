@@ -121,11 +121,11 @@ export class AuthService {
     return { token: this.getJwtToken(user), statusCode: HttpStatus.OK };
   }
 
-  async testAuth() {
+  async testAuth(optionalWalletAddress?: string) {
     if (!this.configService.get<boolean>('general.debug'))
       throw new NotFoundException('No such route.');
 
-    let randomWalletAddress: string = null;
+    let randomWalletAddress: string | null = optionalWalletAddress || null;
     while (
       !randomWalletAddress ||
       (await this.userService.getByWalletAddress(randomWalletAddress))

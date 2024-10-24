@@ -1,12 +1,17 @@
-@host  = http://localhost:8000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImFkZHJlc3MiOiItMFg4OWdveDZiZW41ZjE1Y2QwNTJmYTUwZ283MnJyd21qc3kxNGszNWoiLCJpYXQiOjE3Mjg1MjI2MDgsImV4cCI6MTcyODYwOTAwOH0.5Y037xn-FUZAmfL1EkmFqtL71PkmpMKe9_dRajMuotw
+@host  = http://localhost:8080
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3Mjk3MzYwNjIsImV4cCI6MTcyOTgyMjQ2Mn0.WXbYpr5J2gowdSug1eriJjDBn1WxZF0QZtOBWo6rBk8
+@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiItMFg0ZWZmb2k2eTBzajEzNjJiZjViams3aDA1bGs0bnNqa3lmOWZ3emQiLCJpYXQiOjE3Mjk3MzYwMjQsImV4cCI6MTcyOTgyMjQyNH0.BJ2_2bgMRKJPcZAHZvmrvX6SBM2cbOysdQAe5nt_ZaU
 ### main route
 GET {{host}}/
 
 
 ### test user: Create test user with random wallet address as fast as possible,
 POST {{host}}/auth/test
+Content-Type: application/json
 
+{
+    "address": "0x808F086E7cd9e344b4397518067c543A6aF195C1"
+}
 
 ### Auth sign in info
 POST {{host}}/auth/message
@@ -28,7 +33,7 @@ Content-Type: application/json
 }
 
 ### Get users
-GET {{host}}/user/balance/USDT?chain=137
+GET {{host}}/user/balance/WUSDC?chain=11155111
 Authorization: Bearer {{token}}
 
 ### Complete registeration
