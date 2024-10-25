@@ -1,4 +1,4 @@
-import { Contract } from '@prisma/client';
+import { BlockStatus, Contract } from '@prisma/client';
 import Web3 from 'web3';
 
 export type ChainHistory = {
@@ -7,4 +7,5 @@ export type ChainHistory = {
   chainId: number;
   blockProcessRange: bigint;
   contracts: Contract[];
+  acceptedBlockStatus: BlockStatus;
 };

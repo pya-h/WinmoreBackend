@@ -1,14 +1,17 @@
 -- CreateEnum
-CREATE TYPE "TokensEnum" AS ENUM ('SOL', 'ETH', 'USDC', 'USDT');
+CREATE TYPE "TokensEnum" AS ENUM ('SOL', 'ETH', 'USDC', 'USDT', 'WUSDC');
 
 -- CreateEnum
 CREATE TYPE "TransactionStatusEnum" AS ENUM ('SUCCESSFUL', 'FAILED', 'REVERTED', 'PENDING');
 
 -- CreateEnum
-CREATE TYPE "GameStatusEnum" AS ENUM ('WON', 'WITHDRAWN', 'LOST', 'ONGOING', 'NOT_STARTED');
+CREATE TYPE "GameStatusEnum" AS ENUM ('WON', 'FLAWLESS_WIN', 'LOST', 'ONGOING', 'NOT_STARTED');
 
 -- CreateEnum
 CREATE TYPE "GameModesEnum" AS ENUM ('EASY', 'MEDIUM', 'HARD');
+
+-- CreateEnum
+CREATE TYPE "BlockStatus" AS ENUM ('latest', 'safe', 'finalized');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -46,26 +49,30 @@ CREATE TABLE "Wallet" (
 );
 
 -- CreateTable
-CREATE TABLE "Contract" (
-    "id" SERIAL NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "address" VARCHAR(256) NOT NULL,
-    "identifier" VARCHAR(16) NOT NULL,
-    "title" VARCHAR(128),
-
-    CONSTRAINT "Contract_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "Chain" (
     "id" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" VARCHAR(64) NOT NULL,
     "providerUrl" VARCHAR(256) NOT NULL,
+    "lastProcessedBlock" BIGINT,
+    "blockProcessRange" INTEGER NOT NULL DEFAULT 5,
 
     CONSTRAINT "Chain_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Contract" (
+    "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "address" VARCHAR(256) NOT NULL,
+    "token" "TokensEnum",
+    "title" VARCHAR(128),
+    "chainId" INTEGER NOT NULL,
+    "decimals" INTEGER,
+
+    CONSTRAINT "Contract_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -73,8 +80,8 @@ CREATE TABLE "Transaction" (
     "id" BIGSERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "sourceId" INTEGER NOT NULL,
-    "destinationId" INTEGER NOT NULL,
+    "sourceId" INTEGER,
+    "destinationId" INTEGER,
     "token" "TokensEnum" NOT NULL DEFAULT 'USDC',
     "amount" DOUBLE PRECISION NOT NULL,
     "chainId" INTEGER NOT NULL,
@@ -90,7 +97,6 @@ CREATE TABLE "DreamMineGame" (
     "userId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "startedAt" TIMESTAMP(3),
     "initialBet" DOUBLE PRECISION NOT NULL,
     "token" "TokensEnum" NOT NULL DEFAULT 'USDC',
     "chainId" INTEGER NOT NULL,
@@ -123,16 +129,30 @@ CREATE TABLE "DreamMineRules" (
 );
 
 -- CreateTable
-CREATE TABLE "AnalyzedBlock" (
+CREATE TABLE "Block" (
     "id" BIGSERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "isFinalized" BOOLEAN NOT NULL DEFAULT false,
-    "hash" VARCHAR(256) NOT NULL,
     "number" BIGINT NOT NULL,
+    "hash" TEXT NOT NULL,
+    "status" "BlockStatus" NOT NULL,
     "chainId" INTEGER NOT NULL,
 
-    CONSTRAINT "AnalyzedBlock_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Block_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "BlockchainLog" (
+    "id" BIGSERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "from" TEXT NOT NULL,
+    "to" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "token" "TokensEnum" NOT NULL DEFAULT 'USDT',
+    "isReverted" BOOLEAN NOT NULL DEFAULT false,
+    "transactionId" BIGINT,
+
+    CONSTRAINT "BlockchainLog_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -150,9 +170,6 @@ CREATE UNIQUE INDEX "Wallet_address_key" ON "Wallet"("address");
 -- CreateIndex
 CREATE UNIQUE INDEX "Contract_address_key" ON "Contract"("address");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Contract_identifier_key" ON "Contract"("identifier");
-
 -- AddForeignKey
 ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -160,10 +177,13 @@ ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY (
 ALTER TABLE "Wallet" ADD CONSTRAINT "Wallet_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_sourceId_fkey" FOREIGN KEY ("sourceId") REFERENCES "Wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Contract" ADD CONSTRAINT "Contract_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_destinationId_fkey" FOREIGN KEY ("destinationId") REFERENCES "Wallet"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_sourceId_fkey" FOREIGN KEY ("sourceId") REFERENCES "Wallet"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_destinationId_fkey" FOREIGN KEY ("destinationId") REFERENCES "Wallet"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -175,4 +195,7 @@ ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_userId_fkey" FOREIGN K
 ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AnalyzedBlock" ADD CONSTRAINT "AnalyzedBlock_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Block" ADD CONSTRAINT "Block_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BlockchainLog" ADD CONSTRAINT "BlockchainLog_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "Transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;

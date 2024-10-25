@@ -13,6 +13,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums:
+enum TokensEnum {
+  SOL
+  ETH
+  USDC
+  USDT
+  WUSDC
+}
+
+enum TransactionStatusEnum {
+  SUCCESSFUL
+  FAILED
+  REVERTED
+  PENDING
+}
+
+enum BlockStatus {
+  latest
+  safe
+  finalized
+}
+
+// Models:
 model User {
   id          Int      @id @default(autoincrement())
   createdAt   DateTime @default(now())
@@ -37,21 +60,6 @@ model UserProfile {
   avatar String? @db.VarChar(512)
 }
 
-enum TokensEnum {
-  SOL
-  ETH
-  USDC
-  USDT
-  WUSDC
-}
-
-enum TransactionStatusEnum {
-  SUCCESSFUL
-  FAILED
-  REVERTED
-  PENDING
-}
-
 model Wallet {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -69,14 +77,16 @@ model Chain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name               String          @db.VarChar(64)
-  providerUrl        String          @db.VarChar(256)
-  lastProcessedBlock BigInt?
-  blockProcessRange  Int             @default(5)
-  transactions       Transaction[]
-  dreamMineGames     DreamMineGame[]
-  blockchainLogs     BlockchainLog[]
-  contracts          Contract[]
+  name                String          @db.VarChar(64)
+  providerUrl         String          @db.VarChar(256)
+  lastProcessedBlock  BigInt?
+  blockProcessRange   Int             @default(5)
+  acceptedBlockStatus BlockStatus     @default(finalized)
+
+  transactions        Transaction[]
+  dreamMineGames      DreamMineGame[]
+  contracts           Contract[]
+  blocks              Block[]
 }
 
 model Contract {
@@ -107,7 +117,7 @@ model Transaction {
   chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
   remarks       Json?
-  depositLogs   BlockchainLog[]
+  logs          BlockchainLog[]
 }
 
 enum GameStatusEnum {
@@ -160,16 +170,33 @@ model DreamMineRules {
   maxBetAmount           Float?
 }
 
+model Block {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  number BigInt
+  hash   String
+  status BlockStatus
+
+  chainId Int
+  chain   Chain           @relation(fields: [chainId], references: [id])
+  logs    BlockchainLog[]
+}
+
 model BlockchainLog {
-  id        Int      @id @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  from         String
-  to           String
-  amount       Float
-  token        TokensEnum   @default(USDT)
-  chainId      Int
-  chain        Chain        @relation(fields: [chainId], references: [id])
+  from   String
+  to     String
+  amount Float
+  token  TokensEnum @default(USDT)
+
+  isReverted Boolean @default(false)
+
+  blockId       BigInt
+  block         Block        @relation(fields: [blockId], references: [id])
   transactionId BigInt?
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
 }

@@ -3,7 +3,7 @@ import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ChainHistory } from './type/chain-history.type';
-import { Contract } from '@prisma/client';
+import { BlockStatus, Contract } from '@prisma/client';
 import { Web3TrxLogType } from './type/trx-receipt.type';
 
 @Injectable()
@@ -28,6 +28,7 @@ export class BlockAnalyzerService {
         lastProcessedBlockNumber: chain.lastProcessedBlock,
         chainId: chain.id,
         blockProcessRange: BigInt(chain.blockProcessRange),
+        acceptedBlockStatus: chain.acceptedBlockStatus,
         contracts: chain.contracts,
       };
 
@@ -98,6 +99,7 @@ export class BlockAnalyzerService {
     fromBlock: bigint,
     toBlock: bigint,
     contract: Contract,
+    blockStatus: BlockStatus,
   ) {
     const businessWallet =
       this.walletService.businessWallet.address.toLowerCase();
@@ -105,7 +107,7 @@ export class BlockAnalyzerService {
     const logs = (await provider.eth.getPastLogs({
       fromBlock: provider.utils.toHex(fromBlock),
       toBlock: provider.utils.toHex(toBlock),
-      address: contract.address, // TODO: Check if .toLowerCase() is required or not?
+      address: contract.address,
       topics: [
         provider.eth.abi.encodeEventSignature(
           'Transfer(address,address,uint256)',
@@ -122,6 +124,7 @@ export class BlockAnalyzerService {
       if (log.removed) {
         continue;
       }
+
       const decodedLog: DecodedParams = provider.eth.abi.decodeLog(
         [
           {
@@ -151,7 +154,12 @@ export class BlockAnalyzerService {
           walletAddress: decodedLog.from.toString(),
           token: contract.token,
           amount: Number(decodedLog.value) / 10 ** contract.decimals, // TODO: Ensure conversion is correct
-          chainId,
+          block: {
+            chainId,
+            number: log.blockNumber,
+            hash: log.blockHash,
+            status: blockStatus,
+          },
         });
       }
     }
@@ -179,9 +187,10 @@ export class BlockAnalyzerService {
           provider,
           blockProcessRange,
           contracts,
+          acceptedBlockStatus,
         } = this.chainHistory[chainId];
 
-        const latestFinalizedBlock = await provider.eth.getBlock('finalized');
+        const latestFinalizedBlock = await provider.eth.getBlock('safe');
 
         if (
           lastProcessedBlockNumber &&
@@ -213,6 +222,7 @@ export class BlockAnalyzerService {
                     latestFinalizedBlock.number,
                   ),
                   contract,
+                  acceptedBlockStatus,
                 ),
               );
             }

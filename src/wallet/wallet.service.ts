@@ -20,7 +20,7 @@ import { BUSINESSMAN_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { WalletIdentifierType, WalletPopulated } from './types/wallet.types';
-import { BlockchainLogType } from './types/blockchain-log.type';
+import { BlockchainLogType, BlockType } from './types/blockchain-log.type';
 import { ChainMayContractsPopulated } from './types/chain.types';
 
 // ********     MAIN TODOS    *****
@@ -299,18 +299,28 @@ export class WalletService {
     );
   }
 
-  createLog(
+  async getBlock(blockData: BlockType) {
+    const block = await this.prisma.block.findFirst({
+      where: { chainId: blockData.chainId, number: blockData.number },
+    });
+    if (!block) {
+      return this.prisma.block.create({ data: blockData });
+    }
+    return block;
+  }
+
+  async createDepositLog(
     log: BlockchainLogType,
-    deposit: boolean,
     relatedTransactionId?: bigint,
   ) {
-    const { walletAddress, ...tokenData } = log;
+    const { walletAddress, token, amount, block } = log;
     return this.prisma.blockchainLog.create({
       data: {
-        ...(deposit
-          ? { from: walletAddress, to: this.businessWallet.address }
-          : { to: walletAddress, from: this.businessWallet.address }),
-        ...tokenData,
+        from: walletAddress,
+        to: this.businessWallet.address,
+        token,
+        blockId: (await this.getBlock(block)).id,
+        amount,
         ...(relatedTransactionId
           ? { transactionId: relatedTransactionId }
           : {}),
@@ -327,7 +337,7 @@ export class WalletService {
         { address: log.walletAddress },
         log.amount,
         log.token,
-        log.chainId,
+        log.block.chainId,
         { description: 'Deposit', wallet: log.walletAddress },
       );
     } catch (ex) {
@@ -337,6 +347,6 @@ export class WalletService {
         );
       else this.logger.error(ex.toString(), ex, JSON.stringify(log));
     }
-    await this.createLog(log, true, trx.id);
+    await this.createDepositLog(log, trx.id);
   }
 }
