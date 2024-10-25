@@ -20,6 +20,7 @@ enum TokensEnum {
   USDC
   USDT
   WUSDC
+  SEPOLIA_ETH  // remove this fucker nest migration
 }
 
 enum TransactionStatusEnum {

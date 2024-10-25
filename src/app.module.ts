@@ -10,11 +10,14 @@ import { DreamMineModule } from './dream-mine/dream-mine.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
 import appGeneralConfigs from './configs/general';
 import authConfigs from './configs/auth';
+import credentialsConfigs from './configs/credentials';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ load: [appGeneralConfigs, authConfigs] }),
+    ConfigModule.forRoot({
+      load: [appGeneralConfigs, authConfigs, credentialsConfigs],
+    }),
     UserModule,
     AuthModule,
     WalletModule,

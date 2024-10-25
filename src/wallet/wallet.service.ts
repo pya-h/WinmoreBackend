@@ -19,7 +19,7 @@ import { WinmoreGameTypes } from '../common/types/game.types';
 import { BUSINESSMAN_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
-import { WalletIdentifierType, WalletPopulated } from './types/wallet.types';
+import { BusinessWalletType, WalletIdentifierType } from './types/wallet.types';
 import { BlockchainLogType } from './types/blockchain-log.type';
 import { ChainMayContractsPopulated } from './types/chain.types';
 
@@ -27,11 +27,11 @@ import { ChainMayContractsPopulated } from './types/chain.types';
 // FIXME: Add GENERAL get balance method, which sends the whole wallet balances of user to front.
 // TODO: add Mint & burn methods
 // FIXME: Transactions from admin, must never throw insufficient balance error; Write a method to always mint to admin wallet the sufficient amount,
-// when the balance of admin on specific chain & token is lower than a trx amount
+// when the balance of admin on specific chain & token is lower than a transaction amount
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
-  private mBusinessWallet: WalletPopulated;
+  private mBusinessWallet: BusinessWalletType;
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
@@ -70,7 +70,14 @@ export class WalletService {
       throw new InternalServerErrorException(
         'Business account mismatch! Checkout database for conflicts on business account.',
       );
-    console.log('Business wallet loaded.');
+    this.mBusinessWallet.private = this.configService.get<string>(
+      'credentials.privateKey',
+    );
+    if (!this.mBusinessWallet.private)
+      this.logger.error(
+        'Business wallet private key not loaded successfully, this means all user withdrawals will encounter error.',
+      );
+    this.logger.debug('Business wallet loaded.');
   }
 
   async isChainSupported(chainId: number) {
@@ -128,53 +135,62 @@ export class WalletService {
     return result[0]?.balance ?? 0;
   }
 
-  failTransaction(trx: Transaction, include?: { [field: string]: unknown }) {
-    trx.status = TransactionStatusEnum.FAILED;
+  failTransaction(
+    transaction: Transaction,
+    include?: { [field: string]: unknown },
+  ) {
+    transaction.status = TransactionStatusEnum.FAILED;
     return this.prisma.transaction.update({
-      data: { status: trx.status },
-      where: { id: trx.id },
+      data: { status: transaction.status },
+      where: { id: transaction.id },
       ...(include ? { include } : {}),
     });
   }
 
-  revertTransaction(trx: Transaction, include?: { [field: string]: unknown }) {
-    if (trx.status !== TransactionStatusEnum.SUCCESSFUL)
+  revertTransaction(
+    transaction: Transaction,
+    include?: { [field: string]: unknown },
+  ) {
+    if (transaction.status !== TransactionStatusEnum.SUCCESSFUL)
       throw new ConflictException(
         'This transaction was not successful and could not be reverted.',
       );
-    trx.status = TransactionStatusEnum.FAILED;
+    transaction.status = TransactionStatusEnum.FAILED;
     return this.prisma.transaction.update({
-      data: { status: trx.status },
-      where: { id: trx.id },
+      data: { status: transaction.status },
+      where: { id: transaction.id },
       ...(include ? { include } : {}),
     });
   }
 
-  submitTransaction(trx: Transaction, include?: { [field: string]: unknown }) {
-    if (trx.status === TransactionStatusEnum.FAILED)
+  submitTransaction(
+    transaction: Transaction,
+    include?: { [field: string]: unknown },
+  ) {
+    if (transaction.status === TransactionStatusEnum.FAILED)
       throw new ConflictException(
         'Transaction is failed, could not submit such transaction.',
       );
-    trx.status = TransactionStatusEnum.SUCCESSFUL;
+    transaction.status = TransactionStatusEnum.SUCCESSFUL;
     return this.prisma.transaction.update({
-      data: { status: trx.status },
-      where: { id: trx.id },
+      data: { status: transaction.status },
+      where: { id: transaction.id },
       ...(include ? { include } : {}),
     });
   }
 
   addRemarks(
-    trx: Transaction,
+    transaction: Transaction,
     newRemarks: object,
     include?: { [field: string]: unknown },
   ) {
-    for (const [key, value] of Object.entries(trx.remarks))
+    for (const [key, value] of Object.entries(transaction.remarks))
       newRemarks[key] = value;
     return this.prisma.transaction.update({
       data: {
         remarks: newRemarks,
       },
-      where: { id: trx.id },
+      where: { id: transaction.id },
       ...(include ? { include } : {}),
     });
   }
@@ -202,7 +218,7 @@ export class WalletService {
     remarks['fromUser'] = sourceWallet.ownerId;
     remarks['toUser'] = destinationWallet.ownerId;
 
-    const trx = await this.prisma.transaction.create({
+    const transaction = await this.prisma.transaction.create({
       data: {
         sourceId: sourceWallet.id,
         destinationId: destinationWallet.id,
@@ -219,17 +235,19 @@ export class WalletService {
       source.id !== this.businessWallet.id // TODO: Remove this after the admin recharge mechanism implemented.
     ) {
       const sourceBalance = await this.getBalance(
-        trx.sourceId,
-        trx.token,
+        transaction.sourceId,
+        transaction.token,
         chainId,
       ); // TODO/ask: Is admin wallet required to balance check?
-      if (sourceBalance < trx.amount) {
-        await this.failTransaction(trx);
-        throw new ForbiddenException(`Not enough ${trx.token} balance.`);
+      if (sourceBalance < transaction.amount) {
+        await this.failTransaction(transaction);
+        throw new ForbiddenException(
+          `Not enough ${transaction.token} balance.`,
+        );
       }
     }
     // if everything falls into the place:
-    return this.submitTransaction(trx, include);
+    return this.submitTransaction(transaction, include);
   }
 
   async getWallet(identifier: WalletIdentifierType, ownerTag: string = 'User') {
@@ -300,7 +318,7 @@ export class WalletService {
   }
 
   async deposit(log: BlockchainLogType) {
-    this.logger.debug(`New deposit trx from ${log.walletAddress}`); // TODO: Remove this later
+    this.logger.debug(`New deposit transaction from ${log.walletAddress}`); // TODO: Remove this later
     try {
       return this.transact(
         { id: this.mBusinessWallet.id },

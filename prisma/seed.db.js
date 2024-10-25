@@ -22,7 +22,7 @@ async function main() {
           name: 'Polygon Mainnet',
           providerUrl: 'https://polygon-rpc.com',
           blockProcessRange: 50,
-          acceptedBlockStatus: 'safe',
+          acceptedBlockStatus: 'finalized',
         },
         {
           id: 11155111,

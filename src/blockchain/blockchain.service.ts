@@ -3,7 +3,7 @@ import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ChainHistory } from './type/chain-history.type';
-import { BlockStatus, Contract } from '@prisma/client';
+import { BlockStatus, Contract, TokensEnum } from '@prisma/client';
 import { Web3TrxLogType } from './type/trx-receipt.type';
 import {
   BlockchainLogType,
@@ -100,6 +100,68 @@ export class BlockchainService {
       this.logger.error(`Chain#${chainId} Reconnection failed:`, error);
     }
     return false;
+  }
+
+  async withdraw(
+    targetWallet: string,
+    chainId: number,
+    token: TokensEnum,
+    amount: number,
+  ) {
+    try {
+      // Step 1: Set up the token contract instance
+      const tokenABI = [
+        // Minimum ABI required to send token
+        {
+          constant: false,
+          inputs: [
+            { name: '_to', type: 'address' },
+            { name: '_value', type: 'uint256' },
+          ],
+          name: 'transfer',
+          outputs: [{ name: '', type: 'bool' }],
+          type: 'function',
+        },
+      ];
+      const { provider, contracts } = this.chainHistory[chainId];
+      const tokenContractInstance = contracts.find(
+        (ctx) => ctx.token === token,
+      );
+      const tokenContract = new provider.eth.Contract(
+        tokenABI,
+        tokenContractInstance.address,
+      );
+      // Step 2: Calculate the token amount in the correct units
+      const amountInWei = amount * 10 ** tokenContractInstance.decimals; // TODO: Checkout? provider.utils.toWei(amount.toString(), 'ether'); // Adjust based on token decimals if needed
+      // Step 3: Estimate Gas and Check Server Wallet Balance
+      const gasPrice = await provider.eth.getGasPrice();
+      const gasLimit = await tokenContract.methods
+        .transfer(targetWallet, amountInWei)
+        .estimateGas({ from: this.walletService.businessWallet.address });
+      // Step 4: Create Transaction Object
+      const trx = {
+        from: this.walletService.businessWallet.address,
+        to: tokenContractInstance.address,
+        gas: gasLimit,
+        gasPrice,
+        data: tokenContract.methods
+          .transfer(targetWallet, amountInWei)
+          .encodeABI(),
+      };
+      // Step 5: Sign and Send Transaction
+      const signedTrx = await provider.eth.accounts.signTransaction(
+        trx,
+        this.walletService.businessWallet.private,
+      );
+      const receipt = await provider.eth.sendSignedTransaction(
+        signedTrx.rawTransaction,
+      );
+      console.log('Withdrawal successful:', receipt);
+      return receipt.transactionHash; // Return the transaction hash as confirmation
+    } catch (error) {
+      console.error('Error processing withdrawal:', error);
+      throw error; // Handle or log errors as needed
+    }
   }
 
   async getBlock(blockData: BlockType) {
@@ -227,7 +289,8 @@ export class BlockchainService {
           acceptedBlockStatus,
         } = this.chainHistory[chainId];
 
-        const latestFinalizedBlock = await provider.eth.getBlock('safe');
+        const latestFinalizedBlock =
+          await provider.eth.getBlock(acceptedBlockStatus);
 
         if (
           lastProcessedBlockNumber &&

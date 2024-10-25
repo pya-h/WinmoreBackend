@@ -5,7 +5,7 @@ import { setupSwagger } from './configs';
 import { ValidationPipe } from '@nestjs/common';
 import { ResponseTemplateInterceptor } from './common/interceptors/response-template.interceptor';
 import { ExceptionTemplateFilter } from './common/filters/exception-template.filter';
-// import { ValidationError } from 'class-validator';
+// TODO: import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -49,3 +49,5 @@ export type WalletIdentifierType = {
   address?: string;
   ownerId?: number;
 };
+
+export type BusinessWalletType = WalletPopulated & { private?: string };
