@@ -14,13 +14,13 @@ import {
   Transaction,
   TransactionStatusEnum,
 } from '@prisma/client';
-import { ChainHistory } from '../block-analyzer/type/chain-history.type';
+import { ChainHistory } from '../blockchain/type/chain-history.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
 import { BUSINESSMAN_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { WalletIdentifierType, WalletPopulated } from './types/wallet.types';
-import { BlockchainLogType, BlockType } from './types/blockchain-log.type';
+import { BlockchainLogType } from './types/blockchain-log.type';
 import { ChainMayContractsPopulated } from './types/chain.types';
 
 // ********     MAIN TODOS    *****
@@ -299,40 +299,10 @@ export class WalletService {
     );
   }
 
-  async getBlock(blockData: BlockType) {
-    const block = await this.prisma.block.findFirst({
-      where: { chainId: blockData.chainId, number: blockData.number },
-    });
-    if (!block) {
-      return this.prisma.block.create({ data: blockData });
-    }
-    return block;
-  }
-
-  async createDepositLog(
-    log: BlockchainLogType,
-    relatedTransactionId?: bigint,
-  ) {
-    const { walletAddress, token, amount, block } = log;
-    return this.prisma.blockchainLog.create({
-      data: {
-        from: walletAddress,
-        to: this.businessWallet.address,
-        token,
-        blockId: (await this.getBlock(block)).id,
-        amount,
-        ...(relatedTransactionId
-          ? { transactionId: relatedTransactionId }
-          : {}),
-      },
-    });
-  }
-
   async deposit(log: BlockchainLogType) {
     this.logger.debug(`New deposit trx from ${log.walletAddress}`); // TODO: Remove this later
-    let trx: Transaction;
     try {
-      trx = await this.transact(
+      return this.transact(
         { id: this.mBusinessWallet.id },
         { address: log.walletAddress },
         log.amount,
@@ -347,6 +317,6 @@ export class WalletService {
         );
       else this.logger.error(ex.toString(), ex, JSON.stringify(log));
     }
-    await this.createDepositLog(log, trx.id);
+    return null;
   }
 }

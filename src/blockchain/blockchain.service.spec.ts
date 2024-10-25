@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BlockAnalyzerService } from './block-analyzer.service';
+import { BlockchainService } from './blockchain.service';
 
-describe('BlockAnalyzerService', () => {
-  let service: BlockAnalyzerService;
+describe('BlockchainService', () => {
+  let service: BlockchainService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BlockAnalyzerService],
+      providers: [BlockchainService],
     }).compile();
 
-    service = module.get<BlockAnalyzerService>(BlockAnalyzerService);
+    service = module.get<BlockchainService>(BlockchainService);
   });
 
   it('should be defined', () => {

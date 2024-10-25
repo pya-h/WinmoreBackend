@@ -5,13 +5,21 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ChainHistory } from './type/chain-history.type';
 import { BlockStatus, Contract } from '@prisma/client';
 import { Web3TrxLogType } from './type/trx-receipt.type';
+import {
+  BlockchainLogType,
+  BlockType,
+} from 'src/wallet/types/blockchain-log.type';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class BlockAnalyzerService {
-  private readonly logger = new Logger(BlockAnalyzerService.name);
+export class BlockchainService {
+  private readonly logger = new Logger(BlockchainService.name);
   private chainHistory: Record<number, ChainHistory> = {};
 
-  constructor(private readonly walletService: WalletService) {
+  constructor(
+    private readonly walletService: WalletService,
+    private readonly prisma: PrismaService,
+  ) {
     this.init().catch((err) =>
       this.logger.error(
         'Failed to init providers: ',
@@ -94,6 +102,35 @@ export class BlockAnalyzerService {
     return false;
   }
 
+  async getBlock(blockData: BlockType) {
+    const block = await this.prisma.block.findFirst({
+      where: { chainId: blockData.chainId, number: blockData.number },
+    });
+    if (!block) {
+      return this.prisma.block.create({ data: blockData });
+    }
+    return block;
+  }
+
+  async createDepositLog(
+    log: BlockchainLogType,
+    relatedTransactionId?: bigint,
+  ) {
+    const { walletAddress, token, amount, block } = log;
+    return this.prisma.blockchainLog.create({
+      data: {
+        from: walletAddress,
+        to: this.walletService.businessWallet.address,
+        token,
+        blockId: (await this.getBlock(block)).id,
+        amount,
+        ...(relatedTransactionId
+          ? { transactionId: relatedTransactionId }
+          : {}),
+      },
+    });
+  }
+
   async processLogsInRange(
     { provider, chainId }: ChainHistory,
     fromBlock: bigint,
@@ -147,20 +184,20 @@ export class BlockAnalyzerService {
       );
 
       this.logger.debug(decodedLog);
-      if (
-        decodedLog.to.toString().toLowerCase() === businessWallet // double check address
-      ) {
-        await this.walletService.deposit({
+      if (decodedLog.to.toString().toLowerCase() === businessWallet) {
+        const blockchainLog = {
           walletAddress: decodedLog.from.toString(),
           token: contract.token,
-          amount: Number(decodedLog.value) / 10 ** contract.decimals, // TODO: Ensure conversion is correct
+          amount: Number(decodedLog.value) / 10 ** contract.decimals,
           block: {
             chainId,
             number: log.blockNumber,
             hash: log.blockHash,
             status: blockStatus,
           },
-        });
+        };
+        const trx = await this.walletService.deposit(blockchainLog);
+        await this.createDepositLog(blockchainLog, trx?.id);
       }
     }
   }

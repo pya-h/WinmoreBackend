@@ -7,7 +7,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { DreamMineModule } from './dream-mine/dream-mine.module';
-import { BlockAnalyzerModule } from './block-analyzer/block-analyzer.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 import appGeneralConfigs from './configs/general';
 import authConfigs from './configs/auth';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -20,7 +20,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     WalletModule,
     PrismaModule,
     DreamMineModule,
-    BlockAnalyzerModule,
+    BlockchainModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
