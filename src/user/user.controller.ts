@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';
+import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -101,5 +102,18 @@ export class UserController {
     @Body() updateUserData: UpdateUserDto,
   ) {
     return this.userService.updateUser(user.id, updateUserData);
+  }
+
+  @ApiOperation({
+    description: 'Request a withdraw',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Post('withdraw')
+  requestWithdraw(
+    @CurrentUser() user: UserPopulated,
+    @Body() updateUserData: RequestWithdrawalDto,
+  ) {
+    // TODO: discuss the verification method & implementation
+    return this.userService.requestWithdrawal(user, updateUserData);
   }
 }

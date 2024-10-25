@@ -24,7 +24,8 @@ export class DreamMineGamePreferencesDto {
     required: true,
   })
   @IsEnum(TokensEnum, {
-    message: 'Available token values are: USDC, USDT',
+    message:
+      'Available token values are: ' + Object.values(TokensEnum).join(', '),
   })
   token: TokensEnum;
 

@@ -10,12 +10,15 @@ import { Prisma, TokensEnum } from '@prisma/client';
 import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserPopulated } from './types/user-populated.type';
+import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
+import { BlockchainService } from 'src/blockchain/blockchain.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   get userPopulatedIncludeConfig() {
@@ -146,5 +149,12 @@ export class UserService {
       });
     }
     return this.prisma.userProfile.update({ where: { userId }, data: data });
+  }
+
+  async requestWithdrawal(
+    user: UserPopulated,
+    { chain, amount, token }: RequestWithdrawalDto,
+  ) {
+    return this.blockchainService.withdraw(user.wallet, chain, token, amount);
   }
 }

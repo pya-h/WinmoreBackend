@@ -13,6 +13,7 @@ import {
   TokensEnum,
   Transaction,
   TransactionStatusEnum,
+  Wallet,
 } from '@prisma/client';
 import { ChainHistory } from '../blockchain/type/chain-history.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
@@ -334,6 +335,32 @@ export class WalletService {
           `A deposit happened from ${log.walletAddress}, which isn't a user. so it was skipped.`,
         );
       else this.logger.error(ex.toString(), ex, JSON.stringify(log));
+    }
+    return null;
+  }
+
+  async withdraw(
+    wallet: Wallet,
+    chainId: number,
+    token: TokensEnum,
+    amount: number,
+  ) {
+    this.logger.debug(`New withdraw transaction from ${wallet.address}`); // TODO: Remove this later
+    try {
+      return this.transact(
+        { address: wallet.address },
+        { id: this.mBusinessWallet.id },
+        amount,
+        token,
+        chainId,
+        { description: 'Withdraw', wallet: wallet.address },
+      );
+    } catch (ex) {
+      this.logger.error(
+        ex.toString(),
+        ex,
+        JSON.stringify({ address: wallet.address, amount, chainId, token }),
+      );
     }
     return null;
   }

@@ -6,5 +6,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 @Module({
   imports: [WalletModule, PrismaModule],
   providers: [BlockchainService],
+  exports: [BlockchainService],
 })
 export class BlockchainModule {}

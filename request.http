@@ -32,10 +32,6 @@ Content-Type: application/json
     "address": "0x6662153131313431831416841"
 }
 
-### Get users
-GET {{host}}/user/balance/WUSDC?chain=11155111
-Authorization: Bearer {{token}}
-
 ### Complete registeration
 POST {{host}}/user/register
 Content-Type: application/json
@@ -100,3 +96,18 @@ Authorization: Bearer {{token}}
 GET {{host}}/dream-mine/is-playing
 Authorization: Bearer {{token}}
 
+
+### Get users
+GET {{host}}/user/balance/WUSDC?chain=11155111
+Authorization: Bearer {{token}}
+
+### Request withdraw
+POST {{host}}/user/withdraw
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "token": "WUSDC",
+    "amount": 50,
+    "chain": 11155111
+}

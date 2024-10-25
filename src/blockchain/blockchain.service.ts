@@ -1,9 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  MethodNotAllowedException,
+} from '@nestjs/common';
 import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ChainHistory } from './type/chain-history.type';
-import { BlockStatus, Contract, TokensEnum } from '@prisma/client';
+import { BlockStatus, Contract, TokensEnum, Wallet } from '@prisma/client';
 import { Web3TrxLogType } from './type/trx-receipt.type';
 import {
   BlockchainLogType,
@@ -103,13 +108,25 @@ export class BlockchainService {
   }
 
   async withdraw(
-    targetWallet: string,
+    targetWallet: Wallet,
     chainId: number,
     token: TokensEnum,
     amount: number,
   ) {
     try {
-      // Step 1: Set up the token contract instance
+      const { address: businessWalletAddress } =
+        this.walletService.businessWallet;
+      // first try to create transaction by wallet service, since wallet service also checks wallet status and its balance.
+      const transactionId = await this.walletService.withdraw(
+        targetWallet,
+        chainId,
+        token,
+        amount,
+      );
+      if (!transactionId) {
+        throw new ForbiddenException('Whatever');
+        // TODO: Complete this section (whole transaction section i mean.)
+      }
       const tokenABI = [
         // Minimum ABI required to send token
         {
@@ -131,35 +148,50 @@ export class BlockchainService {
         tokenABI,
         tokenContractInstance.address,
       );
-      // Step 2: Calculate the token amount in the correct units
+
       const amountInWei = amount * 10 ** tokenContractInstance.decimals; // TODO: Checkout? provider.utils.toWei(amount.toString(), 'ether'); // Adjust based on token decimals if needed
-      // Step 3: Estimate Gas and Check Server Wallet Balance
+
       const gasPrice = await provider.eth.getGasPrice();
       const gasLimit = await tokenContract.methods
-        .transfer(targetWallet, amountInWei)
-        .estimateGas({ from: this.walletService.businessWallet.address });
-      // Step 4: Create Transaction Object
+        .transfer(targetWallet.address, amountInWei)
+        .estimateGas({ from: businessWalletAddress });
+
+      const nonce = await provider.eth.getTransactionCount(
+        businessWalletAddress.toLowerCase(),
+      );
+
       const trx = {
-        from: this.walletService.businessWallet.address,
+        from: businessWalletAddress,
         to: tokenContractInstance.address,
         gas: gasLimit,
         gasPrice,
+        nonce,
         data: tokenContract.methods
-          .transfer(targetWallet, amountInWei)
+          .transfer(targetWallet.address, amountInWei)
           .encodeABI(),
       };
-      // Step 5: Sign and Send Transaction
+
       const signedTrx = await provider.eth.accounts.signTransaction(
         trx,
         this.walletService.businessWallet.private,
       );
+
       const receipt = await provider.eth.sendSignedTransaction(
         signedTrx.rawTransaction,
       );
-      console.log('Withdrawal successful:', receipt);
+      if (!receipt.status)
+        throw new MethodNotAllowedException('Blockchain trx was unsuccessful.');
+      // TODO: Do more checking? maybe do a getBlock?! (i don't think so, since my block checker will do that eventually.)
+      this.logger.log('Withdrawal successful:', receipt);
+      await this.createWithdrawLog(targetWallet.address, token, amount, {
+        number: BigInt(receipt.blockNumber),
+        hash: receipt.blockHash.toString(),
+        chainId,
+        status: BlockStatus.latest, // This will then add the block to uncertain blocks, and the check block listener will check it until finalization; o.w. returns user balance.
+      });
       return receipt.transactionHash; // Return the transaction hash as confirmation
     } catch (error) {
-      console.error('Error processing withdrawal:', error);
+      this.logger.error('Error processing withdrawal:', error);
       throw error; // Handle or log errors as needed
     }
   }
@@ -183,6 +215,27 @@ export class BlockchainService {
       data: {
         from: walletAddress,
         to: this.walletService.businessWallet.address,
+        token,
+        blockId: (await this.getBlock(block)).id,
+        amount,
+        ...(relatedTransactionId
+          ? { transactionId: relatedTransactionId }
+          : {}),
+      },
+    });
+  }
+
+  async createWithdrawLog(
+    to: string,
+    token: TokensEnum,
+    amount: number,
+    block: BlockType,
+    relatedTransactionId?: bigint,
+  ) {
+    return this.prisma.blockchainLog.create({
+      data: {
+        to,
+        from: this.walletService.businessWallet.address,
         token,
         blockId: (await this.getBlock(block)).id,
         amount,
