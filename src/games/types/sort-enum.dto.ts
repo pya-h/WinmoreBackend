@@ -1,6 +1,5 @@
 export enum SortModeEnum {
   LUCKY = 'lucky',
-  PAYOUT = 'payout',
 }
 
 export enum SortOrderEnum {

@@ -6,8 +6,9 @@ import {
 } from '../../common/types/game.types';
 import { GameStatusEnum } from '@prisma/client';
 import { SortModeEnum, SortOrderEnum } from '../types/sort-enum.dto';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
-export class GameStatusFilterQuery {
+export class GameStatusFilterQuery extends PaginationOptionsDto {
   @ApiProperty({
     description: 'Filter only games within special status.',
     required: false,

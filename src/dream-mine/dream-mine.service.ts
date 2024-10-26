@@ -25,6 +25,7 @@ import {
 import { DM_COLUMNS_COUNT } from '../configs/constants';
 import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
 import { SortModeEnum, SortOrderEnum } from 'src/games/types/sort-enum.dto';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
 @Injectable()
 export class DreamMineService {
@@ -274,17 +275,18 @@ export class DreamMineService {
       filters.userId = userId;
     }
 
-    const sortParams: Record<string, Record<string, string>> = {};
+    const sortParams: Record<string, Record<string, string> | number> = {};
     switch (filter?.sort) {
-      case SortModeEnum.PAYOUT:
+      case SortModeEnum.LUCKY:
         sortParams.orderBy = {
           stake: (filter?.order || SortOrderEnum.DESC).toString(),
         };
         break;
-      case SortModeEnum.LUCKY:
-        // sortParams.orderBy = { stake: (filter?.order || SortOrderEnum.DESC).toString() };
-        break;
     }
+
+    if (filter.take != null) sortParams.take = +filter.take;
+
+    if (filter.skip != null) sortParams.skip = +filter.skip;
 
     const games = await this.prisma.dreamMineGame.findMany({
       where: { ...filters },
@@ -310,10 +312,12 @@ export class DreamMineService {
     });
   }
 
-  getAllOngoingGames() {
+  getAllOngoingGames({ take, skip }: PaginationOptionsDto) {
     return this.prisma.dreamMineGame.findMany({
       where: { status: GameStatusEnum.ONGOING },
       orderBy: { createdAt: 'desc' },
+      ...(take ? { take } : {}),
+      ...(skip != null ? { skip } : {}),
     });
   }
 }

@@ -16,6 +16,7 @@ import { DreamMineService } from './dream-mine.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { DoMineDto } from './dtos/do-mine.dto';
 import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
 @ApiTags('Dream Mine Game')
 @Controller('dream-mine')
@@ -33,10 +34,9 @@ export class DreamMineController {
   @ApiOperation({
     description: 'Returns the balance of a specific token for current user.',
   })
-  @UseGuards(JwtAuthGuard)
   @Get('ongoing')
-  async getUsersOngoingGame() {
-    return this.dreamMineService.getAllOngoingGames();
+  async getUsersOngoingGame(@Query() paginationOptions?: PaginationOptionsDto) {
+    return this.dreamMineService.getAllOngoingGames(paginationOptions);
   }
 
   @ApiOperation({
