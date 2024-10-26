@@ -1,6 +1,6 @@
 @host  = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3Mjk4NTIwNzUsImV4cCI6MTcyOTkzODQ3NX0.f-3eMNBBBsyQ1-aeS8esTJGbX6ZFUDEi7nzSgvoPFvc
-@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiItMFg0ZWZmb2k2eTBzajEzNjJiZjViams3aDA1bGs0bnNqa3lmOWZ3emQiLCJpYXQiOjE3Mjk3MzYwMjQsImV4cCI6MTcyOTgyMjQyNH0.BJ2_2bgMRKJPcZAHZvmrvX6SBM2cbOysdQAe5nt_ZaU
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3Mjk5NzU0MzUsImV4cCI6MTczMDA2MTgzNX0.GgImIo2NfSCpuXC034YZ11j1kp4gv4d2z3dkIdONlhQ
+@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFh4NGxmNTdwMHAzZDY1eGI1aHpoMzM2NzVjN3JpM3Y1NWNyZDBpbGQiLCJpYXQiOjE3Mjk5NzgxMTksImV4cCI6MTczMDA2NDUxOX0.5s_SPBqyBJ9gg_x1z8Wt7C_OeAfDZDObMnwrweEw_a0
 ### main route
 GET {{host}}/
 
@@ -8,10 +8,6 @@ GET {{host}}/
 ### test user: Create test user with random wallet address as fast as possible,
 POST {{host}}/auth/test
 Content-Type: application/json
-
-{
-    "address": "0x808F086E7cd9e344b4397518067c543A6aF195C1"
-}
 
 ### Auth sign in info
 POST {{host}}/auth/message
@@ -56,24 +52,22 @@ Authorization: Bearer {{token}}
 
 ### Get dream mine game rules
 GET {{host}}/dream-mine/rules
-Authorization: Bearer {{token}}
-
 
 ### Place bet on dream mine game
 POST {{host}}/dream-mine/bet
-Authorization: Bearer {{token}}
+Authorization: Bearer {{token2}}
 Content-Type: application/json
 
 {
-    "betAmount": 100,
+    "betAmount": 10,
     "mode": "EASY",
     "rows": 8,
-    "token": "USDT",
-    "chainId": 137
+    "token": "WUSDC",
+    "chainId": 11155111
 }
 
 ### Mine current row
-POST {{host}}/dream-mine/mine/9
+POST {{host}}/dream-mine/mine/5
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -82,20 +76,25 @@ Content-Type: application/json
 }
 
 ### Backoff mining and get the stake
-POST {{host}}/dream-mine/backoff/9
+POST {{host}}/dream-mine/backoff/5
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 
-### Get current user's dream mine game history
-GET {{host}}/dream-mine?status=FINISHED
-Authorization: Bearer {{token}}
+### Get current all users dream mine game history
+GET {{host}}/dream-mine?sort=lucky
+
+### Get current all users dream mine ongoings
+GET {{host}}/dream-mine/ongoing
 
 
 ### Get current user's dream mine game history
-GET {{host}}/dream-mine/is-playing
-Authorization: Bearer {{token}}
+GET {{host}}/user/is-playing
+Authorization: Bearer {{token2}}
 
+### Get current current user's games
+GET {{host}}/user/games/dream-mine?status=LOST&take=2
+Authorization: Bearer {{token2}}
 
 ### Get users
 GET {{host}}/user/balance/WUSDC?chain=11155111
@@ -108,6 +107,6 @@ Authorization: Bearer {{token}}
 
 {
     "token": "WUSDC",
-    "amount": 50,
+    "amount": 100,
     "chain": 11155111
 }

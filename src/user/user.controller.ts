@@ -44,26 +44,6 @@ export class UserController {
     return this.userService.getUsers();
   }
 
-  // TODO: Implement the serialize user data INTERCEPTOR.
-  @ApiOperation({
-    description: 'Get the current user data.',
-  })
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async getUser(
-    @CurrentUser() currentUser,
-    @Param('id', ParseIntPipe) id: string,
-  ) {
-    // TODO: Implement the user data serialization for current user ad other users.
-    // returns the full displayable data if the id === currentId, o.w. return the serialized data.
-
-    if (+id == currentUser.id) return currentUser;
-
-    const user = await this.userService.getById(+id);
-    if (!user) throw new NotFoundException('User Not Found!');
-    return user;
-  }
-
   @ApiOperation({
     description: 'Returns the balance of a specific token for current user.',
   })
@@ -128,14 +108,46 @@ export class UserController {
   }
 
   @ApiOperation({
-    description: "Returns the list of user's dream mine [specific] games.",
+    description: "Returns the list of user's all games.",
   })
   @UseGuards(JwtAuthGuard)
-  @Get('/games/dream-mine')
-  getMyGames(
+  @Get('games')
+  getMyAllGames(
+    @CurrentUser() user: UserPopulated,
+    @Query() filter?: GameStatusFilterQuery,
+  ) {
+    return this.userService.getMyDreamMineGames(user.id, filter); // FIXME: For now there is only dream mine game; This should change after adding the second game, and must use the GamesService
+  }
+
+  @ApiOperation({
+    description: "Returns the list of user's dream mine games.",
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('games/dream-mine')
+  getMyDreamMines(
     @CurrentUser() user: UserPopulated,
     @Query() filter?: GameStatusFilterQuery,
   ) {
     return this.userService.getMyDreamMineGames(user.id, filter);
+  }
+
+  // TODO: Implement the serialize user data INTERCEPTOR.
+  @ApiOperation({
+    description: 'Get the current user data.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getUser(
+    @CurrentUser() currentUser,
+    @Param('id', ParseIntPipe) id: string,
+  ) {
+    // TODO: Implement the user data serialization for current user ad other users.
+    // returns the full displayable data if the id === currentId, o.w. return the serialized data.
+
+    if (+id == currentUser.id) return currentUser;
+
+    const user = await this.userService.getById(+id);
+    if (!user) throw new NotFoundException('User Not Found!');
+    return user;
   }
 }

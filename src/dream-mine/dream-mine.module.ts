@@ -8,5 +8,6 @@ import { WalletModule } from '../wallet/wallet.module';
   imports: [PrismaModule, WalletModule],
   providers: [DreamMineService],
   controllers: [DreamMineController],
+  exports: [DreamMineService],
 })
 export class DreamMineModule {}

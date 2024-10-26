@@ -13,7 +13,7 @@ import { UserPopulated } from './types/user-populated.type';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { DreamMineService } from '../dream-mine/dream-mine.service';
-import { GameStatusFilterQuery } from 'src/games/dtos/game-status-filter.query';
+import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
 
 @Injectable()
 export class UserService {

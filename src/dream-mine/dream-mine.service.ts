@@ -248,6 +248,23 @@ export class DreamMineService {
     userId?: number;
     filter?: GameStatusFilterQuery;
   }) {
+    const sortParams: Record<string, Record<string, string> | number> = {};
+    switch (filter?.sort) {
+      case SortModeEnum.LUCKY:
+        if (filter.status)
+          throw new ConflictException(
+            "Lucky-bets sort doesn't accept any status filter",
+          );
+        sortParams.orderBy = {
+          stake: (filter?.order || SortOrderEnum.DESC).toString(),
+        };
+        break;
+    }
+
+    if (sortParams?.orderBy) {
+      filter.status = ExtraGameStatusEnum.GAINED;
+    }
+
     const filters: Record<string, object | string | number> = {};
 
     if (filter && filter.status !== ExtraGameStatusEnum.ALL) {
@@ -273,15 +290,6 @@ export class DreamMineService {
 
     if (userId != null) {
       filters.userId = userId;
-    }
-
-    const sortParams: Record<string, Record<string, string> | number> = {};
-    switch (filter?.sort) {
-      case SortModeEnum.LUCKY:
-        sortParams.orderBy = {
-          stake: (filter?.order || SortOrderEnum.DESC).toString(),
-        };
-        break;
     }
 
     if (filter.take != null) sortParams.take = +filter.take;

@@ -24,7 +24,8 @@ export class DreamMineController {
   constructor(private readonly dreamMineService: DreamMineService) {}
 
   @ApiOperation({
-    description: "Returns the list of user's dream mine [specific] games.",
+    description:
+      "Returns the list of user's dream mine [specific] games by all users.",
   })
   @Get()
   findGames(@Query() filter?: GameStatusFilterQuery) {
@@ -32,7 +33,7 @@ export class DreamMineController {
   }
 
   @ApiOperation({
-    description: 'Returns the balance of a specific token for current user.',
+    description: 'Returns the list of all ongoing games by all users.',
   })
   @Get('ongoing')
   async getUsersOngoingGame(@Query() paginationOptions?: PaginationOptionsDto) {

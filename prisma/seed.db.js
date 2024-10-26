@@ -13,7 +13,7 @@ async function main() {
         {
           id: 1,
           name: 'Ethereum Mainnet',
-          providerUrl: 'https://cloudflare-eth.com', // https://rpc.ankr.com/eth
+          providerUrl: 'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
           blockProcessRange: 50,
           acceptedBlockStatus: 'safe',
         },
@@ -31,8 +31,23 @@ async function main() {
           blockProcessRange: 50,
           acceptedBlockStatus: 'safe',
         },
-      ].map(async ({ id, name, providerUrl }) =>
-        prisma.chain.create({ data: { id, name, providerUrl } }),
+      ].map(
+        async ({
+          id,
+          name,
+          providerUrl,
+          blockProcessRange,
+          acceptedBlockStatus,
+        }) =>
+          prisma.chain.create({
+            data: {
+              id,
+              name,
+              providerUrl,
+              blockProcessRange,
+              acceptedBlockStatus,
+            },
+          }),
       ),
     );
     console.info('Chain data inserted.');
@@ -76,7 +91,7 @@ async function main() {
         wallet: {
           create: {
             id: BUSINESSMAN_ID,
-            address: '0xa3fdCBaCd38F97598a71637aEB441adCD6e2C817',
+            address: '0xbB1A38B2556BFE672c718D7Bf9c8a3c25AFEE311',
           },
         },
       },

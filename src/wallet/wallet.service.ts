@@ -156,7 +156,7 @@ export class WalletService {
       throw new ConflictException(
         'This transaction was not successful and could not be reverted.',
       );
-    transaction.status = TransactionStatusEnum.FAILED;
+    transaction.status = TransactionStatusEnum.REVERTED;
     return this.prisma.transaction.update({
       data: { status: transaction.status },
       where: { id: transaction.id },
