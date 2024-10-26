@@ -15,7 +15,7 @@ import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
 import { DreamMineService } from './dream-mine.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { DoMineDto } from './dtos/do-mine.dto';
-import { GameStatusFilterQuery } from './dtos/game-status-filter.query';
+import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
 
 @ApiTags('Dream Mine Game')
 @Controller('dream-mine')
@@ -25,22 +25,18 @@ export class DreamMineController {
   @ApiOperation({
     description: "Returns the list of user's dream mine [specific] games.",
   })
-  @UseGuards(JwtAuthGuard)
   @Get()
-  getMyGames(
-    @CurrentUser() user: UserPopulated,
-    @Query() filter?: GameStatusFilterQuery,
-  ) {
-    return this.dreamMineService.getUserGames(user.id, filter);
+  findGames(@Query() filter?: GameStatusFilterQuery) {
+    return this.dreamMineService.findGames({ filter });
   }
 
   @ApiOperation({
     description: 'Returns the balance of a specific token for current user.',
   })
   @UseGuards(JwtAuthGuard)
-  @Get('is-playing')
-  async getUsersOngoingGame(@CurrentUser() user: UserPopulated) {
-    return this.dreamMineService.getOnesOngoingGame(user.id);
+  @Get('ongoing')
+  async getUsersOngoingGame() {
+    return this.dreamMineService.getAllOngoingGames();
   }
 
   @ApiOperation({

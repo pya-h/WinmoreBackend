@@ -11,7 +11,9 @@ import { CompleteRegistrationDto } from './dto/complete-registration.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserPopulated } from './types/user-populated.type';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
-import { BlockchainService } from 'src/blockchain/blockchain.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
+import { DreamMineService } from '../dream-mine/dream-mine.service';
+import { GameStatusFilterQuery } from 'src/games/dtos/game-status-filter.query';
 
 @Injectable()
 export class UserService {
@@ -19,6 +21,7 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
     private readonly blockchainService: BlockchainService,
+    private readonly dreamMineService: DreamMineService,
   ) {}
 
   get userPopulatedIncludeConfig() {
@@ -156,5 +159,15 @@ export class UserService {
     { chain, amount, token }: RequestWithdrawalDto,
   ) {
     return this.blockchainService.withdraw(user.wallet, chain, token, amount);
+  }
+
+  async getMyOngoingGames(userId: number) {
+    const dreamMine = await this.dreamMineService.getOnesOngoingGame(userId);
+
+    return { dreamMine };
+  }
+
+  async getMyDreamMineGames(userId: number, filter?: GameStatusFilterQuery) {
+    return this.dreamMineService.findGames({ userId, filter });
   }
 }

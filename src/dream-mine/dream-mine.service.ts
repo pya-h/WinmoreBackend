@@ -23,7 +23,8 @@ import {
   ExtraGameStatusEnum,
 } from '../common/types/game.types';
 import { DM_COLUMNS_COUNT } from '../configs/constants';
-import { GameStatusFilterQuery } from './dtos/game-status-filter.query';
+import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
+import { SortModeEnum, SortOrderEnum } from 'src/games/types/sort-enum.dto';
 
 @Injectable()
 export class DreamMineService {
@@ -239,27 +240,57 @@ export class DreamMineService {
     return game;
   }
 
-  async getUserGames(userId: number, filter?: GameStatusFilterQuery) {
+  async findGames({
+    userId,
+    filter,
+  }: {
+    userId?: number;
+    filter?: GameStatusFilterQuery;
+  }) {
+    const filters: Record<string, object | string | number> = {};
+
+    if (filter && filter.status !== ExtraGameStatusEnum.ALL) {
+      switch (filter?.status) {
+        case ExtraGameStatusEnum.FINISHED:
+          filters.status = {
+            notIn: [
+              GameStatusEnum.NOT_STARTED,
+              GameStatusEnum.ONGOING, // If any other status added, it must be considered here.
+            ],
+          };
+          break;
+        case ExtraGameStatusEnum.GAINED:
+          filters.status = {
+            in: [GameStatusEnum.WON, GameStatusEnum.FLAWLESS_WIN],
+          };
+          break;
+        default:
+          filters.status = filter.status;
+          break;
+      }
+    }
+
+    if (userId != null) {
+      filters.userId = userId;
+    }
+
+    const sortParams: Record<string, Record<string, string>> = {};
+    switch (filter?.sort) {
+      case SortModeEnum.PAYOUT:
+        sortParams.orderBy = {
+          stake: (filter?.order || SortOrderEnum.DESC).toString(),
+        };
+        break;
+      case SortModeEnum.LUCKY:
+        // sortParams.orderBy = { stake: (filter?.order || SortOrderEnum.DESC).toString() };
+        break;
+    }
+
     const games = await this.prisma.dreamMineGame.findMany({
-      where: {
-        userId: userId,
-        ...(filter && filter.status !== ExtraGameStatusEnum.ALL
-          ? {
-              status:
-                filter.status !== ExtraGameStatusEnum.FINISHED
-                  ? filter.status !== ExtraGameStatusEnum.GAINED
-                    ? filter.status
-                    : { in: [GameStatusEnum.WON, GameStatusEnum.FLAWLESS_WIN] }
-                  : {
-                      notIn: [
-                        GameStatusEnum.NOT_STARTED,
-                        GameStatusEnum.ONGOING, // If any other status added, it must be considered here.
-                      ],
-                    },
-            }
-          : {}),
-      },
+      where: { ...filters },
+      ...sortParams,
     });
+
     const rules = await this.getLatestRules();
     return games.map((game) => {
       const { multiplier } = this.getRowCharacteristics(rules, game);
@@ -275,7 +306,14 @@ export class DreamMineService {
   getOnesOngoingGame(userId: number) {
     return this.prisma.dreamMineGame.findFirst({
       where: { userId, status: GameStatusEnum.ONGOING },
-      orderBy: { id: 'desc' },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  getAllOngoingGames() {
+    return this.prisma.dreamMineGame.findMany({
+      where: { status: GameStatusEnum.ONGOING },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

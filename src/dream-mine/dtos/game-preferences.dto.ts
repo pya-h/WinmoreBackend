@@ -48,7 +48,8 @@ export class DreamMineGamePreferencesDto {
     required: true,
   })
   @IsEnum(GameModesEnum, {
-    message: 'Available mode values are: EASY, MEDIUM, HARD',
+    message:
+      'Available mode values are: ' + Object.values(GameModesEnum).join(', '),
   })
   mode: GameModesEnum;
 

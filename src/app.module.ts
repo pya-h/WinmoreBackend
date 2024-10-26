@@ -12,6 +12,7 @@ import appGeneralConfigs from './configs/general';
 import authConfigs from './configs/auth';
 import credentialsConfigs from './configs/credentials';
 import { ScheduleModule } from '@nestjs/schedule';
+import { GamesModule } from './games/games.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     DreamMineModule,
     BlockchainModule,
     ScheduleModule.forRoot(),
+    GamesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
