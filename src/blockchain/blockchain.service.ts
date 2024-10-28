@@ -327,6 +327,7 @@ export class BlockchainService {
             status: blockStatus,
           },
         };
+
         const trx = await this.walletService.deposit(blockchainLog);
         await this.createDepositLog(blockchainLog, trx?.id);
       }

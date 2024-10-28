@@ -13,6 +13,7 @@ import {
   TokensEnum,
   Transaction,
   TransactionStatusEnum,
+  TransactionTypeEnum,
   Wallet,
 } from '@prisma/client';
 import { ChainHistory } from '../blockchain/type/chain-history.type';
@@ -202,8 +203,17 @@ export class WalletService {
     amount: number,
     token: TokensEnum,
     chainId: number,
-    remarks?: object,
-    include?: { [field: string]: unknown },
+    {
+      type = TransactionTypeEnum.INGAME,
+      remarks,
+      holdStatusPending,
+      include,
+    }: {
+      type?: TransactionTypeEnum;
+      remarks?: object;
+      holdStatusPending?: boolean;
+      include?: { [field: string]: unknown };
+    },
   ) {
     if (!(await this.isChainSupported(chainId)))
       throw new BadRequestException(
@@ -228,6 +238,7 @@ export class WalletService {
         token,
         chainId,
         remarks,
+        type,
       },
     });
 
@@ -247,7 +258,9 @@ export class WalletService {
         );
       }
     }
-    // if everything falls into the place:
+    if (holdStatusPending) {
+      return transaction;
+    }
     return this.submitTransaction(transaction, include);
   }
 
@@ -289,8 +302,7 @@ export class WalletService {
       amount,
       token,
       chainId,
-      { description: 'Place Bet Transaction' },
-      include,
+      { remarks: { description: 'Place Bet Transaction' }, include },
     );
   }
 
@@ -309,12 +321,14 @@ export class WalletService {
       game.token,
       game.chainId,
       {
-        description: `Win Game Reward Transaction`,
-        winnerId: winnerWallet.owner.id,
-        winnerName: winnerWallet.owner.name,
-        game,
+        remarks: {
+          description: `Win Game Reward Transaction`,
+          winnerId: winnerWallet.owner.id,
+          winnerName: winnerWallet.owner.name,
+          game,
+        },
+        include,
       },
-      include,
     );
   }
 
@@ -326,7 +340,10 @@ export class WalletService {
         log.amount,
         log.token,
         log.block.chainId,
-        { description: 'Deposit', wallet: log.walletAddress },
+        {
+          type: TransactionTypeEnum.DEPOSIT,
+          remarks: { description: 'Deposit', wallet: log.walletAddress },
+        },
       );
     } catch (ex) {
       if (ex instanceof NotFoundException)
@@ -351,7 +368,11 @@ export class WalletService {
         amount,
         token,
         chainId,
-        { description: 'Withdraw', wallet: wallet.address },
+        {
+          type: TransactionTypeEnum.WITHDRAWAL,
+          holdStatusPending: true,
+          remarks: { description: 'Withdraw', wallet: wallet.address },
+        },
       );
     } catch (ex) {
       this.logger.error(

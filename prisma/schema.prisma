@@ -20,7 +20,6 @@ enum TokensEnum {
   USDC
   USDT
   WUSDC
-  SEPOLIA_ETH  // remove this fucker nest migration
 }
 
 enum TransactionStatusEnum {
@@ -30,10 +29,30 @@ enum TransactionStatusEnum {
   PENDING
 }
 
+enum TransactionTypeEnum {
+  INGAME
+  WITHDRAWAL
+  DEPOSIT
+}
+
 enum BlockStatus {
   latest
   safe
   finalized
+}
+
+enum GameStatusEnum {
+  WON
+  FLAWLESS_WIN
+  LOST
+  ONGOING
+  NOT_STARTED
+}
+
+enum GameModesEnum {
+  EASY
+  MEDIUM
+  HARD
 }
 
 // Models:
@@ -78,16 +97,16 @@ model Chain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name                String          @db.VarChar(64)
-  providerUrl         String          @db.VarChar(256)
+  name                String      @db.VarChar(64)
+  providerUrl         String      @db.VarChar(256)
   lastProcessedBlock  BigInt?
-  blockProcessRange   Int             @default(5)
-  acceptedBlockStatus BlockStatus     @default(finalized)
+  blockProcessRange   Int         @default(5)
+  acceptedBlockStatus BlockStatus @default(finalized)
 
-  transactions        Transaction[]
-  dreamMineGames      DreamMineGame[]
-  contracts           Contract[]
-  blocks              Block[]
+  transactions   Transaction[]
+  dreamMineGames DreamMineGame[]
+  contracts      Contract[]
+  blocks         Block[]
 }
 
 model Contract {
@@ -117,22 +136,10 @@ model Transaction {
   chainId       Int
   chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
+  type          TransactionTypeEnum   @default(INGAME)
   remarks       Json?
+  
   logs          BlockchainLog[]
-}
-
-enum GameStatusEnum {
-  WON
-  FLAWLESS_WIN
-  LOST
-  ONGOING
-  NOT_STARTED
-}
-
-enum GameModesEnum {
-  EASY
-  MEDIUM
-  HARD
 }
 
 model DreamMineGame {
