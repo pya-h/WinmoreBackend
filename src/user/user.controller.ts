@@ -62,6 +62,16 @@ export class UserController {
   }
 
   @ApiOperation({
+    description:
+      'Returns the wallet balance of users, containing all their available tokens on each available chain, based on their transaction activity.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('wallet')
+  getWallet(@CurrentUser() user: UserPopulated) {
+    return this.userService.getWallet(user);
+  }
+
+  @ApiOperation({
     description: 'Completed user registration.',
   })
   @UseGuards(JwtAuthGuard)

@@ -125,6 +125,13 @@ export class AuthService {
     if (!this.configService.get<boolean>('general.debug'))
       throw new NotFoundException('No such route.');
 
+    if (optionalWalletAddress) {
+      const user = await this.userService.getByWalletAddress(
+        optionalWalletAddress,
+      );
+      if (user)
+        return { token: this.getJwtToken(user), statusCode: HttpStatus.OK };
+    }
     let randomWalletAddress: string | null = optionalWalletAddress || null;
     while (
       !randomWalletAddress ||

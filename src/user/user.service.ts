@@ -43,6 +43,10 @@ export class UserService {
     return this.walletService.getBalance(user.wallet.id, token, chainId);
   }
 
+  getWallet(user: UserPopulated) {
+    return this.walletService.getUserWallet(user.id);
+  }
+
   async getByWalletAddress(address: string) {
     return this.prisma.user.findFirst({
       where: { wallet: { address } },

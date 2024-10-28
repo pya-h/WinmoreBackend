@@ -1,5 +1,5 @@
 @host  = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3Mjk5NzU0MzUsImV4cCI6MTczMDA2MTgzNX0.GgImIo2NfSCpuXC034YZ11j1kp4gv4d2z3dkIdONlhQ
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3MzAxMjYyNDYsImV4cCI6MTczMDIxMjY0Nn0.b5w2DbhuGTNv-WqO63IrRMYkXDE-_z68cSmyVHdAr-k
 @token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFh4NGxmNTdwMHAzZDY1eGI1aHpoMzM2NzVjN3JpM3Y1NWNyZDBpbGQiLCJpYXQiOjE3Mjk5NzgxMTksImV4cCI6MTczMDA2NDUxOX0.5s_SPBqyBJ9gg_x1z8Wt7C_OeAfDZDObMnwrweEw_a0
 ### main route
 GET {{host}}/
@@ -8,6 +8,11 @@ GET {{host}}/
 ### test user: Create test user with random wallet address as fast as possible,
 POST {{host}}/auth/test
 Content-Type: application/json
+
+{
+    "address": "0x808F086E7cd9e344b4397518067c543A6aF195C1"
+}
+
 
 ### Auth sign in info
 POST {{host}}/auth/message
@@ -97,7 +102,11 @@ GET {{host}}/user/games/dream-mine?status=LOST&take=2
 Authorization: Bearer {{token2}}
 
 ### Get users
-GET {{host}}/user/balance/WUSDC?chain=11155111
+GET {{host}}/user/balance/ETH?chain=137
+Authorization: Bearer {{token}}
+
+### Get user's wallet
+GET {{host}}/user/wallet
 Authorization: Bearer {{token}}
 
 ### Request withdraw

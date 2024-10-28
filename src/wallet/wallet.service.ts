@@ -132,9 +132,32 @@ export class WalletService {
           COALESCE(SUM(CASE WHEN t."sourceId" = w."id" THEN t."amount" ELSE 0 END), 0)
         ) AS balance
       FROM public."Transaction" t JOIN wallet w ON t."destinationId" = w."id" OR t."sourceId" = w."id"
-      WHERE w.ownerId=${userId} AND t."token" = ${token}:"TokensEnum" AND "chainId"=${chainId} AND t."status"=${TransactionStatusEnum.SUCCESSFUL}::"TransactionStatusEnum" `;
+      WHERE w."ownerId"=${userId} AND t."token" = ${token}:"TokensEnum" AND "chainId"=${chainId} AND t."status"=${TransactionStatusEnum.SUCCESSFUL}::"TransactionStatusEnum" `;
 
     return result[0]?.balance ?? 0;
+  }
+
+  async getUserWallet(userId: number) {
+    const result = await this.prisma.$queryRaw<
+      { chainId: number; token: TokensEnum; balance: number }[]
+    >`SELECT t."chainId", t."token", (
+          COALESCE(SUM(CASE WHEN t."destinationId" = w."id" THEN t."amount" ELSE 0 END), 0) -
+          COALESCE(SUM(CASE WHEN t."sourceId" = w."id" THEN t."amount" ELSE 0 END), 0)
+        ) AS balance
+      FROM public."Transaction" t 
+        JOIN public."Wallet" w ON t."destinationId" = w."id" OR t."sourceId" = w."id"
+        WHERE w."ownerId" = ${userId} 
+          AND t."status" = ${TransactionStatusEnum.SUCCESSFUL}::"TransactionStatusEnum"
+        GROUP BY t."chainId", t."token"`;
+
+    return result.reduce(
+      (acc, { chainId, token, balance }) => {
+        if (!acc[chainId]) acc[chainId] = {};
+        acc[chainId][token.toString()] = balance;
+        return acc;
+      },
+      {} as Record<number, Record<string, number>>,
+    );
   }
 
   failTransaction(
