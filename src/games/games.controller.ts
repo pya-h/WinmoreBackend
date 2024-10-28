@@ -12,8 +12,23 @@ export class GamesController {
     description: 'Returns the list of all games of all users.',
   })
   @Get()
-  findGames(@Query() filter?: GameStatusFilterQuery) {
-    return this.dreamMineService.findGames({ filter });
+  async findGames(@Query() filter?: GameStatusFilterQuery) {
+    return (
+      await this.dreamMineService.findGames({
+        filter,
+        include: {
+          user: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      })
+    ).map((game) => ({
+      ...game,
+      name: 'Dream Mine',
+    }));
   }
 
   @ApiOperation({
@@ -21,6 +36,15 @@ export class GamesController {
   })
   @Get('ongoing')
   async getUsersOngoingGame(@Query() paginationOptions?: PaginationOptionsDto) {
-    return this.dreamMineService.getAllOngoingGames(paginationOptions);
+    return (
+      await this.dreamMineService.getAllOngoingGames(paginationOptions, {
+        user: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+      })
+    ).map((game) => ({ ...game, name: 'Dream Mine' }));
   }
 }

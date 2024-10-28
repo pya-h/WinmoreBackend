@@ -89,7 +89,6 @@ export class DreamMineService {
     game = await this.prisma.dreamMineGame.update({
       data: game,
       where: { id: game.id },
-      include: { user: true },
     });
 
     return this.walletService.rewardTheWinner(game.userId, game.stake, {
@@ -244,9 +243,11 @@ export class DreamMineService {
   async findGames({
     userId,
     filter,
+    include = {},
   }: {
     userId?: number;
     filter?: GameStatusFilterQuery;
+    include?: Record<string, object>;
   }) {
     const sortParams: Record<string, Record<string, string> | number> = {};
     switch (filter?.sort) {
@@ -296,19 +297,21 @@ export class DreamMineService {
 
     if (filter.skip != null) sortParams.skip = +filter.skip;
 
-    const games = await this.prisma.dreamMineGame.findMany({
+    const games: DreamMineGame[] = await this.prisma.dreamMineGame.findMany({
       where: { ...filters },
       ...sortParams,
+      include,
     });
 
     const rules = await this.getLatestRules();
     return games.map((game) => {
       const { multiplier } = this.getRowCharacteristics(rules, game);
       game['multiplier'] = multiplier;
-      game['time'] =
+      game['time'] = Math.ceil(
         ((game.finishedAt?.getTime() || Date.now()) -
           game.createdAt.getTime()) /
-        6000;
+          6000,
+      );
       return game;
     });
   }
@@ -320,12 +323,16 @@ export class DreamMineService {
     });
   }
 
-  getAllOngoingGames({ take, skip }: PaginationOptionsDto) {
+  getAllOngoingGames(
+    { take, skip }: PaginationOptionsDto,
+    include?: Record<string, object>,
+  ) {
     return this.prisma.dreamMineGame.findMany({
       where: { status: GameStatusEnum.ONGOING },
       orderBy: { createdAt: 'desc' },
       ...(take ? { take } : {}),
       ...(skip != null ? { skip } : {}),
+      ...(include ? { include } : {}),
     });
   }
 }

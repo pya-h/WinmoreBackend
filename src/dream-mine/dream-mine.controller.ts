@@ -29,7 +29,17 @@ export class DreamMineController {
   })
   @Get()
   findGames(@Query() filter?: GameStatusFilterQuery) {
-    return this.dreamMineService.findGames({ filter });
+    return this.dreamMineService.findGames({
+      filter,
+      include: {
+        user: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+      },
+    });
   }
 
   @ApiOperation({
@@ -37,7 +47,14 @@ export class DreamMineController {
   })
   @Get('ongoing')
   async getUsersOngoingGame(@Query() paginationOptions?: PaginationOptionsDto) {
-    return this.dreamMineService.getAllOngoingGames(paginationOptions);
+    return this.dreamMineService.getAllOngoingGames(paginationOptions, {
+      user: {
+        select: {
+          name: true,
+          id: true,
+        },
+      },
+    });
   }
 
   @ApiOperation({

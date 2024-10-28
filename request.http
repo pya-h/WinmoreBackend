@@ -87,7 +87,7 @@ Content-Type: application/json
 
 
 ### Get current all users dream mine game history
-GET {{host}}/dream-mine?sort=lucky
+GET {{host}}/games
 
 ### Get current all users dream mine ongoings
 GET {{host}}/dream-mine/ongoing
@@ -95,7 +95,7 @@ GET {{host}}/dream-mine/ongoing
 
 ### Get current user's dream mine game history
 GET {{host}}/user/is-playing
-Authorization: Bearer {{token2}}
+Authorization: Bearer {{token}}
 
 ### Get current current user's games
 GET {{host}}/user/games/dream-mine?status=LOST&take=2
