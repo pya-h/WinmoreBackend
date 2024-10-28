@@ -87,7 +87,7 @@ export class DreamMineService {
     game.status = backedOff ? GameStatusEnum.WON : GameStatusEnum.FLAWLESS_WIN;
     game.finishedAt = new Date();
     game = await this.prisma.dreamMineGame.update({
-      data: game, // TODO: Check if this works ok
+      data: game,
       where: { id: game.id },
       include: { user: true },
     });
@@ -121,7 +121,7 @@ export class DreamMineService {
       game.mode,
       rule.difficultyCoefficients,
     );
-    if (!difficultyValue) throw new ConflictException('Invalid game state.'); // TODO: What to do here [though it never happens actually]
+    if (!difficultyValue) throw new ConflictException('Invalid game state.');
     return {
       multiplier: rule.rowCoefficients[game.currentRow] * difficultyValue,
       probability:
@@ -182,7 +182,7 @@ export class DreamMineService {
         'This game has not started yet! First place your bet.',
       );
     if (game.finishedAt && game.finishedAt <= new Date()) {
-      // await this.finishTheGame(game); // FIXME: Add method to handle situations like this.
+      // await this.finishTheGame(game); // TODO: What to do in this rare occasion?
       throw new ForbiddenException('This game is finished.');
     }
     if (game.status !== GameStatusEnum.ONGOING)

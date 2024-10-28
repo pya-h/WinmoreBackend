@@ -10,8 +10,7 @@ export const setupSwagger = (app: INestApplication) => {
     appName = configService.getOrThrow<string>('general.appName');
 
   if (isInDebugMode) {
-    // for now implement just in debug mode but,
-    // TODO: After a while, make it password protected using basicAuth when app is not in development mode.
+    // TODO: Make it password protected using basicAuth when app is not in development mode.
     const config = new DocumentBuilder()
       .setTitle(appName)
       .setDescription(`${appName} API`)

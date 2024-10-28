@@ -239,7 +239,7 @@ export class WalletService {
         transaction.sourceId,
         transaction.token,
         chainId,
-      ); // TODO/ask: Is admin wallet required to balance check?
+      );
       if (sourceBalance < transaction.amount) {
         await this.failTransaction(transaction);
         throw new ForbiddenException(
@@ -300,7 +300,7 @@ export class WalletService {
     game: WinmoreGameTypes,
     include?: { [field: string]: unknown },
   ) {
-    const winnerWallet = await this.getWallet({ ownerId: winnerId }, 'Winner'); // TODO: If the user does not have wallet [wallet data cleaned], this transaction must wait(?)
+    const winnerWallet = await this.getWallet({ ownerId: winnerId }, 'Winner');
 
     return this.transact(
       { id: this.mBusinessWallet.id },
@@ -319,7 +319,6 @@ export class WalletService {
   }
 
   async deposit(log: BlockchainLogType) {
-    this.logger.debug(`New deposit transaction from ${log.walletAddress}`); // TODO: Remove this later
     try {
       return this.transact(
         { id: this.mBusinessWallet.id },
@@ -345,7 +344,6 @@ export class WalletService {
     token: TokensEnum,
     amount: number,
   ) {
-    this.logger.debug(`New withdraw transaction from ${wallet.address}`); // TODO: Remove this later
     try {
       return this.transact(
         { address: wallet.address },

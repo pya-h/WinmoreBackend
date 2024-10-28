@@ -8,8 +8,6 @@ import { PaginationOptionsDto } from '../common/dtos/pagination-options.dto';
 export class GamesController {
   constructor(private readonly dreamMineService: DreamMineService) {}
 
-  // TODO: This implementation is temp; for now there is only the dream mine game; so im using dream mine service;
-  // After adding the second game, this module will have its own service
   @ApiOperation({
     description: 'Returns the list of all games of all users.',
   })
