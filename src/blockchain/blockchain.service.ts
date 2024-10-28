@@ -126,11 +126,8 @@ export class BlockchainService {
       token,
       amount,
     );
-    if (
-      !transaction ||
-      transaction.status !== TransactionStatusEnum.SUCCESSFUL
-    ) {
-      throw new ForbiddenException('Whatever');
+    if (!transaction) {
+      throw new ForbiddenException('Transaction creation failed.');
       // TODO: Complete this section (whole transaction section i mean.)
     }
     try {
@@ -185,26 +182,40 @@ export class BlockchainService {
         this.walletService.businessWallet.private,
       );
 
-      const receipt = await provider.eth.sendSignedTransaction(
-        signedTrx.rawTransaction,
-      );
-      if (!receipt.status)
-        throw new MethodNotAllowedException('Blockchain trx was unsuccessful.');
-      // TODO: Do more checking? maybe do a getBlock?! (i don't think so, since my block checker will do that eventually.)
-      this.logger.log('Withdrawal successful:', receipt);
-      await this.createWithdrawLog(
-        targetWallet.address,
-        token,
-        amount,
-        {
-          number: BigInt(receipt.blockNumber),
-          hash: receipt.blockHash.toString(),
-          chainId,
-          status: BlockStatus.latest, // This will then add the block to uncertain blocks, and the check block listener will check it until finalization; o.w. returns user balance.
-        },
-        transaction.id,
-      );
-      return { trxHash: receipt.transactionHash }; // Return the transaction hash as confirmation
+      // const receipt = await provider.eth.sendSignedTransaction(
+      //   signedTrx.rawTransaction,
+      // );
+      provider.eth
+        .sendSignedTransaction(signedTrx.rawTransaction)
+        .then(async (receipt) => {
+          if (!receipt.status)
+            throw new MethodNotAllowedException(
+              'Blockchain trx was unsuccessful.',
+            );
+          // TODO: Do more checking? maybe do a getBlock?! (i don't think so, since my block checker will do that eventually.)
+          this.logger.log('Withdrawal successful:', receipt);
+          await this.createWithdrawLog(
+            targetWallet.address,
+            token,
+            amount,
+            {
+              number: BigInt(receipt.blockNumber),
+              hash: receipt.blockHash.toString(),
+              chainId,
+              status: BlockStatus.latest, // This will then add the block to uncertain blocks, and the check block listener will check it until finalization; o.w. returns user balance.
+            },
+            transaction.id,
+          );
+        })
+        .catch((err) => {
+          this.logger.error('Failed to withdraw:', err);
+        });
+      // return { trxHash: receipt.transactionHash }; // Return the transaction hash as confirmation
+      return {
+        ok: true,
+        message:
+          'Transaction created and waiting to be mined... This may take a while ...',
+      };
     } catch (error) {
       this.logger.error('Error processing withdrawal:', error);
       await this.walletService.revertTransaction(transaction);
@@ -248,18 +259,24 @@ export class BlockchainService {
     block: BlockType,
     relatedTransactionId?: bigint,
   ) {
-    return this.prisma.blockchainLog.create({
-      data: {
-        to,
-        from: this.walletService.businessWallet.address,
-        token,
-        blockId: (await this.getBlock(block)).id,
-        amount,
-        ...(relatedTransactionId
-          ? { transactionId: relatedTransactionId }
-          : {}),
-      },
-    });
+    await Promise.all([
+      this.prisma.transaction.update({
+        where: { id: relatedTransactionId },
+        data: { status: TransactionStatusEnum.SUCCESSFUL },
+      }),
+      this.prisma.blockchainLog.create({
+        data: {
+          to,
+          from: this.walletService.businessWallet.address,
+          token,
+          blockId: (await this.getBlock(block)).id,
+          amount,
+          ...(relatedTransactionId
+            ? { transactionId: relatedTransactionId }
+            : {}),
+        },
+      }),
+    ]);
   }
 
   async processLogsInRange(

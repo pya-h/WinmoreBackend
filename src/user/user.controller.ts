@@ -20,6 +20,7 @@ import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { GameStatusFilterQuery } from 'src/games/dtos/game-status-filter.query';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -69,6 +70,18 @@ export class UserController {
   @Get('wallet')
   getWallet(@CurrentUser() user: UserPopulated) {
     return this.userService.getWallet(user);
+  }
+
+  @ApiOperation({
+    description: 'Returns all user transactions.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('transactions')
+  getTransactions(
+    @CurrentUser() user: UserPopulated,
+    @Query() { take = 50, skip = 0 }: PaginationOptionsDto,
+  ) {
+    return this.userService.getMyTransactions(user.id, { take, skip });
   }
 
   @ApiOperation({

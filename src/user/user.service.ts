@@ -14,6 +14,7 @@ import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { DreamMineService } from '../dream-mine/dream-mine.service';
 import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
 @Injectable()
 export class UserService {
@@ -47,11 +48,18 @@ export class UserService {
     return this.walletService.getUserWallet(user.id);
   }
 
-  async getByWalletAddress(address: string) {
+  getByWalletAddress(address: string) {
     return this.prisma.user.findFirst({
       where: { wallet: { address } },
       include: this.userPopulatedIncludeConfig,
     });
+  }
+
+  async getMyTransactions(
+    userId: number,
+    { take, skip }: PaginationOptionsDto,
+  ) {
+    return this.walletService.getUserTransactionsHistory(userId, take, skip);
   }
 
   updateLastLoginDate(userId: number) {
@@ -158,7 +166,7 @@ export class UserService {
     return this.prisma.userProfile.update({ where: { userId }, data: data });
   }
 
-  async requestWithdrawal(
+  requestWithdrawal(
     user: UserPopulated,
     { chain, amount, token }: RequestWithdrawalDto,
   ) {
@@ -171,7 +179,7 @@ export class UserService {
     return { dreamMine };
   }
 
-  async getMyDreamMineGames(userId: number, filter?: GameStatusFilterQuery) {
+  getMyDreamMineGames(userId: number, filter?: GameStatusFilterQuery) {
     return this.dreamMineService.findGames({ userId, filter });
   }
 }

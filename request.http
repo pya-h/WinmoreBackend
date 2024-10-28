@@ -60,7 +60,7 @@ GET {{host}}/dream-mine/rules
 
 ### Place bet on dream mine game
 POST {{host}}/dream-mine/bet
-Authorization: Bearer {{token2}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -107,6 +107,11 @@ Authorization: Bearer {{token}}
 
 ### Get user's wallet
 GET {{host}}/user/wallet
+Authorization: Bearer {{token}}
+
+### Get user transactions
+
+GET {{host}}/user/transactions
 Authorization: Bearer {{token}}
 
 ### Request withdraw

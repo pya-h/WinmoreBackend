@@ -406,4 +406,65 @@ export class WalletService {
     }
     return null;
   }
+
+  getUserTransactions(userId: number, take: number, skip: number) {
+    return this.prisma.transaction.findMany({
+      where: {
+        OR: [
+          { source: { ownerId: userId } },
+          { destination: { ownerId: userId } },
+        ],
+      },
+      ...(take ? { take } : {}),
+      ...(skip ? { skip } : {}),
+    });
+  }
+
+  async getUserTransactionsHistory(userId: number, take: number, skip: number) {
+    const walletDisplayFilter = {
+      select: {
+        id: true,
+        address: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    };
+    return (
+      await this.prisma.transaction.findMany({
+        where: {
+          OR: [
+            { source: { ownerId: userId } },
+            { destination: { ownerId: userId } },
+          ],
+        },
+        select: {
+          id: true,
+          source: walletDisplayFilter,
+          destination: walletDisplayFilter,
+          amount: true,
+          chain: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+          status: true,
+          token: true,
+          type: true,
+          remarks: true,
+        },
+        ...(take ? { take } : {}),
+        ...(skip ? { skip } : {}),
+      })
+    ).map((trx) => ({
+      ...trx,
+      id: trx.id.toString(),
+    }));
+  }
 }
