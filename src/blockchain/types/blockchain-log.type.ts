@@ -13,5 +13,15 @@ export type BlockchainLogType = {
   amount: number;
   hash?: string;
   index?: bigint;
+  nonce?: bigint;
+  gasUsed?: bigint;
   block: BlockType;
+};
+
+export type InitialWithdrawLog = {
+  from: string;
+  to: string;
+  gas: bigint;
+  gasPrice: bigint;
+  nonce: bigint;
 };

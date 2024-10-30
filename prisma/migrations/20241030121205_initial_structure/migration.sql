@@ -5,13 +5,16 @@ CREATE TYPE "TokensEnum" AS ENUM ('SOL', 'ETH', 'USDC', 'USDT', 'WUSDC');
 CREATE TYPE "TransactionStatusEnum" AS ENUM ('SUCCESSFUL', 'FAILED', 'REVERTED', 'PENDING');
 
 -- CreateEnum
+CREATE TYPE "TransactionTypeEnum" AS ENUM ('INGAME', 'WITHDRAWAL', 'DEPOSIT');
+
+-- CreateEnum
+CREATE TYPE "BlockStatus" AS ENUM ('latest', 'safe', 'finalized');
+
+-- CreateEnum
 CREATE TYPE "GameStatusEnum" AS ENUM ('WON', 'FLAWLESS_WIN', 'LOST', 'ONGOING', 'NOT_STARTED');
 
 -- CreateEnum
 CREATE TYPE "GameModesEnum" AS ENUM ('EASY', 'MEDIUM', 'HARD');
-
--- CreateEnum
-CREATE TYPE "BlockStatus" AS ENUM ('latest', 'safe', 'finalized');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -57,6 +60,7 @@ CREATE TABLE "Chain" (
     "providerUrl" VARCHAR(256) NOT NULL,
     "lastProcessedBlock" BIGINT,
     "blockProcessRange" INTEGER NOT NULL DEFAULT 5,
+    "acceptedBlockStatus" "BlockStatus" NOT NULL DEFAULT 'finalized',
 
     CONSTRAINT "Chain_pkey" PRIMARY KEY ("id")
 );
@@ -86,6 +90,7 @@ CREATE TABLE "Transaction" (
     "amount" DOUBLE PRECISION NOT NULL,
     "chainId" INTEGER NOT NULL,
     "status" "TransactionStatusEnum" NOT NULL DEFAULT 'PENDING',
+    "type" "TransactionTypeEnum" NOT NULL DEFAULT 'INGAME',
     "remarks" JSONB,
 
     CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
@@ -149,7 +154,12 @@ CREATE TABLE "BlockchainLog" (
     "to" TEXT NOT NULL,
     "amount" DOUBLE PRECISION NOT NULL,
     "token" "TokensEnum" NOT NULL DEFAULT 'USDT',
-    "isReverted" BOOLEAN NOT NULL DEFAULT false,
+    "successful" BOOLEAN NOT NULL DEFAULT true,
+    "trxHash" TEXT,
+    "trxNonce" BIGINT,
+    "trxIndex" BIGINT,
+    "chainId" INTEGER NOT NULL,
+    "blockId" BIGINT NOT NULL,
     "transactionId" BIGINT,
 
     CONSTRAINT "BlockchainLog_pkey" PRIMARY KEY ("id")
@@ -169,6 +179,9 @@ CREATE UNIQUE INDEX "Wallet_address_key" ON "Wallet"("address");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Contract_address_key" ON "Contract"("address");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "BlockchainLog_transactionId_key" ON "BlockchainLog"("transactionId");
 
 -- AddForeignKey
 ALTER TABLE "UserProfile" ADD CONSTRAINT "UserProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -196,6 +209,12 @@ ALTER TABLE "DreamMineGame" ADD CONSTRAINT "DreamMineGame_chainId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "Block" ADD CONSTRAINT "Block_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BlockchainLog" ADD CONSTRAINT "BlockchainLog_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "Chain"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "BlockchainLog" ADD CONSTRAINT "BlockchainLog_blockId_fkey" FOREIGN KEY ("blockId") REFERENCES "Block"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BlockchainLog" ADD CONSTRAINT "BlockchainLog_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "Transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;

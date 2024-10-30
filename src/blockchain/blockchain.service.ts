@@ -2,20 +2,22 @@ import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { ChainHistory } from './type/chain-history.type';
+import { ChainHistory } from './types/chain-history.type';
 import {
+  BlockchainLog,
   BlockStatus,
   Contract,
   TokensEnum,
-  TransactionStatusEnum,
+  Transaction,
   Wallet,
 } from '@prisma/client';
-import { Web3TrxLogType } from './type/trx-receipt.type';
+import { Web3TrxLogType } from './types/trx-receipt.type';
 import {
   BlockchainLogType,
   BlockType,
-} from 'src/wallet/types/blockchain-log.type';
-import { PrismaService } from 'src/prisma/prisma.service';
+  InitialWithdrawLog,
+} from './types/blockchain-log.type';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class BlockchainService {
@@ -117,12 +119,20 @@ export class BlockchainService {
       nonce = await provider.eth.getTransactionCount(
         this.walletService.businessWallet.address.toLowerCase(),
       );
-      await this.walletService.isNonceUsed(chainId, nonce);
+      await this.isNonceUsed(chainId, nonce);
       nonce += 1n
     ) {
       console.log(nonce);
     }
     return nonce;
+  }
+
+  async isNonceUsed(chainId: number, nonce: bigint) {
+    return Boolean(
+      await this.prisma.blockchainLog.findFirst({
+        where: { chainId, trxNonce: nonce },
+      }),
+    );
   }
 
   async withdraw(
@@ -131,14 +141,11 @@ export class BlockchainService {
     token: TokensEnum,
     amount: number,
   ) {
-    const nonce = await this.getNextNonce(chainId);
-
     const transaction = await this.walletService.withdraw(
       targetWallet,
       chainId,
       token,
       amount,
-      nonce,
     );
 
     if (!transaction) {
@@ -164,6 +171,8 @@ export class BlockchainService {
         (ctx) => ctx.token === token,
       );
 
+      const nonce = await this.getNextNonce(chainId);
+
       const tokenContract = new provider.eth.Contract(
         tokenABI,
         tokenContractInstance.address,
@@ -178,7 +187,7 @@ export class BlockchainService {
         .transfer(targetWallet.address, amountInWei)
         .estimateGas({ from: businessWalletAddress });
 
-      const trx = {
+      const initialData = {
         from: businessWalletAddress,
         to: tokenContractInstance.address,
         gas: gasLimit,
@@ -190,18 +199,19 @@ export class BlockchainService {
       };
 
       const signedTrx = await provider.eth.accounts.signTransaction(
-        trx,
+        initialData,
         this.walletService.businessWallet.private,
       );
+      const blockchainWithdrawLog = await this.createInitialWithdrawLog(
+        initialData as InitialWithdrawLog,
+        transaction,
+      );
 
-      // const receipt = await provider.eth.sendSignedTransaction(
-      //   signedTrx.rawTransaction,
-      // );
-      let log: BlockchainLogType;
+      let finalLog: BlockchainLogType;
       provider.eth
         .sendSignedTransaction(signedTrx.rawTransaction)
         .then(async (receipt) => {
-          log = {
+          finalLog = {
             walletAddress: targetWallet.address,
             token,
             amount,
@@ -213,6 +223,7 @@ export class BlockchainService {
             },
             hash: receipt.transactionHash.toString(),
             index: BigInt(receipt.transactionIndex),
+            gasUsed: BigInt(receipt.gasUsed),
           };
 
           if (!receipt.status)
@@ -221,24 +232,16 @@ export class BlockchainService {
             );
 
           await Promise.all([
-            this.createWithdrawLog(log, transaction.id),
-            this.walletService.finalizeWithdrawTransaction(
-              transaction,
-              TransactionStatusEnum.SUCCESSFUL,
-              { hash: log.hash, index: log.index },
-            ),
+            this.finalizeWithdrawLog(blockchainWithdrawLog, finalLog),
+            this.walletService.submitTransaction(transaction),
           ]);
           this.logger.debug('Withdrawal successful:', receipt);
         })
         .catch(async (err) => {
           this.logger.error('Failed to withdraw:', err);
           await Promise.all([
-            this.createWithdrawLog(log, transaction.id, false),
-            this.walletService.finalizeWithdrawTransaction(
-              transaction,
-              TransactionStatusEnum.FAILED,
-              { hash: log.hash, index: log.index },
-            ),
+            this.finalizeWithdrawLog(blockchainWithdrawLog, finalLog, false),
+            this.walletService.failTransaction(transaction),
           ]);
         });
 
@@ -277,6 +280,9 @@ export class BlockchainService {
         token,
         blockId: (await this.getBlock(block)).id,
         amount,
+        chainId: log.block.chainId,
+        trxHash: log.hash,
+        trxIndex: log.index,
         successful,
         ...(relatedTransactionId
           ? { transactionId: relatedTransactionId }
@@ -285,30 +291,39 @@ export class BlockchainService {
     });
   }
 
-  async createWithdrawLog(
-    { walletAddress: to, token, amount, block }: BlockchainLogType,
-    relatedTransactionId?: bigint,
+  createInitialWithdrawLog(data: InitialWithdrawLog, transaction: Transaction) {
+    return this.prisma.blockchainLog.create({
+      data: {
+        from: data.from,
+        to: data.to,
+        token: transaction.token,
+        amount: transaction.amount,
+        chainId: transaction.chainId,
+        successful: false,
+        transactionId: transaction.id,
+        gasLimit: data.gas,
+        gasPrice: data.gasPrice,
+        trxNonce: data.nonce,
+      },
+    });
+  }
+
+  async finalizeWithdrawLog(
+    log: BlockchainLog,
+    { block, nonce, index, hash, gasUsed }: BlockchainLogType,
     successful: boolean = true,
   ) {
-    await Promise.all([
-      this.prisma.transaction.update({
-        where: { id: relatedTransactionId },
-        data: { status: TransactionStatusEnum.SUCCESSFUL },
-      }),
-      this.prisma.blockchainLog.create({
-        data: {
-          to,
-          from: this.walletService.businessWallet.address,
-          token,
-          blockId: (await this.getBlock(block)).id,
-          amount,
-          successful,
-          ...(relatedTransactionId
-            ? { transactionId: relatedTransactionId }
-            : {}),
-        },
-      }),
-    ]);
+    return this.prisma.blockchainLog.update({
+      where: { id: log.id },
+      data: {
+        blockId: (await this.getBlock(block)).id,
+        trxNonce: nonce,
+        trxIndex: index,
+        trxHash: hash,
+        gasPrice: gasUsed,
+        successful,
+      },
+    });
   }
 
   async processLogsInRange(

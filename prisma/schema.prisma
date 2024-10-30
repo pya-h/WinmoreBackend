@@ -107,6 +107,7 @@ model Chain {
   dreamMineGames DreamMineGame[]
   contracts      Contract[]
   blocks         Block[]
+  logs           BlockchainLog[]
 }
 
 model Contract {
@@ -137,11 +138,9 @@ model Transaction {
   chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
   type          TransactionTypeEnum   @default(INGAME)
-  trxHash       String?
-  trxNonce      BigInt?
   remarks       Json?
 
-  logs BlockchainLog[]
+  log BlockchainLog?
 }
 
 model DreamMineGame {
@@ -204,9 +203,16 @@ model BlockchainLog {
   token  TokensEnum @default(USDT)
 
   successful Boolean @default(true)
+  trxHash    String?
+  trxNonce   BigInt?
+  trxIndex   BigInt?
+  gasPrice   BigInt?
+  gasLimit   BigInt?
 
-  blockId       BigInt
-  block         Block        @relation(fields: [blockId], references: [id])
-  transactionId BigInt?
+  chainId       Int
+  chain         Chain        @relation(fields: [chainId], references: [id])
+  blockId       BigInt?
+  block         Block?       @relation(fields: [blockId], references: [id])
+  transactionId BigInt?      @unique
   transaction   Transaction? @relation(fields: [transactionId], references: [id])
 }

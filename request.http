@@ -1,5 +1,5 @@
 @host  = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3MzAyODA1MjIsImV4cCI6MTczMDM2NjkyMn0.Zx5nX1Fk1LuKTHnUgclwwOKnuuMY2-ZIwxVvwMWDihA
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3MzAyOTMyMDMsImV4cCI6MTczMDM3OTYwM30.QUjyS9uRZ_LpgiTfaN7T7oww4SEs7bfsoY9FzNPPs9Y
 @token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFh4NGxmNTdwMHAzZDY1eGI1aHpoMzM2NzVjN3JpM3Y1NWNyZDBpbGQiLCJpYXQiOjE3Mjk5NzgxMTksImV4cCI6MTczMDA2NDUxOX0.5s_SPBqyBJ9gg_x1z8Wt7C_OeAfDZDObMnwrweEw_a0
 ### main route
 GET {{host}}/
@@ -111,7 +111,7 @@ Authorization: Bearer {{token}}
 
 ### Get user transactions
 
-GET {{host}}/user/transactions?skip=2&take=2
+GET {{host}}/user/transactions
 Authorization: Bearer {{token}}
 
 ### Request withdraw

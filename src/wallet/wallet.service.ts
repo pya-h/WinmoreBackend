@@ -16,13 +16,13 @@ import {
   TransactionTypeEnum,
   Wallet,
 } from '@prisma/client';
-import { ChainHistory } from '../blockchain/type/chain-history.type';
+import { ChainHistory } from '../blockchain/types/chain-history.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
 import { BUSINESSMAN_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { BusinessWalletType, WalletIdentifierType } from './types/wallet.types';
-import { BlockchainLogType } from './types/blockchain-log.type';
+import { BlockchainLogType } from '../blockchain/types/blockchain-log.type';
 import { ChainMayContractsPopulated } from './types/chain.types';
 
 // ********     MAIN TODOS    *****
@@ -203,24 +203,6 @@ export class WalletService {
     });
   }
 
-  finalizeWithdrawTransaction(
-    transaction: Transaction,
-    status: TransactionStatusEnum,
-    trxData: { hash: string; index: bigint },
-  ) {
-    const newRemarks: object = { trxIndex: trxData.index };
-    for (const [key, value] of Object.entries(transaction.remarks))
-      newRemarks[key] = value;
-    return this.prisma.transaction.update({
-      where: { id: transaction.id },
-      data: {
-        status,
-        trxHash: trxData.hash,
-        remarks: newRemarks,
-      },
-    });
-  }
-
   addRemarks(
     transaction: Transaction,
     newRemarks: object,
@@ -248,14 +230,10 @@ export class WalletService {
       remarks,
       holdStatusPending = false,
       include,
-      hash = null,
-      nonce = null,
     }: {
       type?: TransactionTypeEnum;
       remarks?: object;
       holdStatusPending?: boolean;
-      hash?: string;
-      nonce?: bigint;
       include?: { [field: string]: unknown };
     },
   ) {
@@ -283,8 +261,6 @@ export class WalletService {
         chainId,
         remarks,
         type,
-        trxHash: hash,
-        trxNonce: nonce,
       },
     });
 
@@ -393,7 +369,6 @@ export class WalletService {
             wallet: log.walletAddress,
             trxIndex: log.index,
           },
-          hash: log.hash,
         },
       );
     } catch (ex) {
@@ -411,7 +386,6 @@ export class WalletService {
     chainId: number,
     token: TokensEnum,
     amount: number,
-    nonce: bigint,
   ) {
     try {
       return this.transact(
@@ -423,7 +397,6 @@ export class WalletService {
         {
           type: TransactionTypeEnum.WITHDRAWAL,
           holdStatusPending: true,
-          nonce,
           remarks: { description: 'Withdraw', wallet: wallet.address },
         },
       );
@@ -487,8 +460,24 @@ export class WalletService {
           status: true,
           token: true,
           type: true,
-          trxHash: true,
-          remarks: true,
+          log: {
+            select: {
+              from: true,
+              to: true,
+              trxHash: true,
+              trxIndex: true,
+              gasPrice: true,
+              successful: true,
+              block: {
+                select: {
+                  number: true,
+                  hash: true,
+                  status: true,
+                },
+              },
+            },
+          },
+          // trxHash: true, // FIXME: Get trx data from log
         },
         ...(take ? { take } : {}),
         ...(skip ? { skip } : {}),
@@ -496,14 +485,9 @@ export class WalletService {
     ).map((trx) => ({
       ...trx,
       id: trx.id.toString(),
+      trxHash: trx.log.trxHash,
+      trxIndex: trx.log.trxIndex,
+      gas: trx.log.gasPrice,
     }));
-  }
-
-  async isNonceUsed(chainId: number, nonce: bigint) {
-    return Boolean(
-      await this.prisma.transaction.findFirst({
-        where: { chainId, trxNonce: nonce },
-      }),
-    );
   }
 }
