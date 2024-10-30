@@ -111,7 +111,7 @@ Authorization: Bearer {{token}}
 
 ### Get user transactions
 
-GET {{host}}/user/transactions?token=WUSDC
+GET {{host}}/user/transactions?sort=date&take=5&skip=2&order=asc
 Authorization: Bearer {{token}}
 
 ### Request withdraw

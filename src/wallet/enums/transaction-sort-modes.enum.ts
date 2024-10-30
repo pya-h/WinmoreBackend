@@ -1,7 +1,7 @@
 export enum TransactionSortModesEnum {
-  DATE = 'DATE',
-  AMOUNT = 'AMOUNT',
-  TOKEN = 'TOKEN',
-  CHAIN_ID = 'CHAIN_ID',
-  STATUS = 'STATUS',
+  DATE = 'date',
+  AMOUNT = 'amount',
+  TOKEN = 'token',
+  CHAIN_ID = 'chain',
+  STATUS = 'status',
 }

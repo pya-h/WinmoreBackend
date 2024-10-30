@@ -28,6 +28,8 @@ import {
   ExtraTransactionTypesEnum,
   GeneralTransactionTypes,
 } from 'src/wallet/enums/extra-transaction-types.enum';
+import { TransactionSortModesEnum } from './enums/transaction-sort-modes.enum';
+import { SortOrderEnum } from 'src/common/types/sort-orders.enum';
 
 // ********     MAIN TODOS    *****
 // TODO: add Mint & burn methods
@@ -441,11 +443,24 @@ export class WalletService {
     };
   }
 
+  getFieldNameFromSortMode(sortMode: TransactionSortModesEnum) {
+    switch (sortMode) {
+      case TransactionSortModesEnum.CHAIN_ID:
+        return 'chainId';
+      case TransactionSortModesEnum.AMOUNT:
+      case TransactionSortModesEnum.STATUS:
+      case TransactionSortModesEnum.TOKEN:
+        return sortMode.toString();
+    }
+    return 'createdAt';
+  }
+
   getUserTransactions(
     userId: number,
     typeFilter: GeneralTransactionTypes,
     take: number,
     skip: number,
+    sortMode?: { by?: TransactionSortModesEnum; order?: SortOrderEnum },
     extraFilters: {
       status?: TransactionStatusEnum;
       chain?: number;
@@ -463,6 +478,11 @@ export class WalletService {
           extraFilters,
         ),
       },
+      orderBy: {
+        [this.getFieldNameFromSortMode(sortMode.by)]: (
+          sortMode.order || SortOrderEnum.DESC
+        ).toString(),
+      },
       ...(take ? { take } : {}),
       ...(skip ? { skip } : {}),
     });
@@ -473,6 +493,7 @@ export class WalletService {
     typeFilter: GeneralTransactionTypes,
     take: number,
     skip: number,
+    sortMode?: { by?: TransactionSortModesEnum; order?: SortOrderEnum },
     extraFilters: {
       status?: TransactionStatusEnum;
       chain?: number;
@@ -538,6 +559,11 @@ export class WalletService {
               },
             },
           },
+        },
+        orderBy: {
+          [this.getFieldNameFromSortMode(sortMode.by)]: (
+            sortMode.order || SortOrderEnum.DESC
+          ).toString(),
         },
         ...(take ? { take } : {}),
         ...(skip ? { skip } : {}),

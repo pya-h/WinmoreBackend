@@ -57,13 +57,23 @@ export class UserService {
 
   async getMyTransactions(
     userId: number,
-    { type, take, skip, status, token, chain }: TransactionHistoryFilterDto,
+    {
+      type,
+      take,
+      skip,
+      status,
+      token,
+      chain,
+      sort,
+      order,
+    }: TransactionHistoryFilterDto,
   ) {
     return this.walletService.getUserTransactionsHistory(
       userId,
       type,
       +take,
       +skip,
+      { by: sort, order },
       { status, token, chain: +chain },
     );
   }

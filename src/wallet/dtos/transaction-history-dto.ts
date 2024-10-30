@@ -10,6 +10,8 @@ import {
   ExtraTransactionTypesEnum,
   GeneralTransactionTypes,
 } from '../enums/extra-transaction-types.enum';
+import { SortOrderEnum } from 'src/common/types/sort-orders.enum';
+import { TransactionSortModesEnum } from '../enums/transaction-sort-modes.enum';
 
 const supportedTransactionsTypes = [
   ...Object.values(TransactionTypeEnum),
@@ -63,4 +65,27 @@ export class TransactionHistoryFilterDto extends PaginationOptionsDto {
       Object.values(TransactionStatusEnum).join(', '),
   })
   status?: TransactionStatusEnum;
+
+  @ApiProperty({
+    description: 'Sort type of game lists.',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(TransactionSortModesEnum, {
+    message:
+      'Valid sort modes are: ' +
+      Object.values(TransactionSortModesEnum).join(', '),
+  })
+  sort?: TransactionSortModesEnum;
+
+  @ApiProperty({
+    description: 'Sort order',
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(SortOrderEnum, {
+    message:
+      'Valid sort orders are: ' + Object.values(SortOrderEnum).join(', '),
+  })
+  order?: SortOrderEnum;
 }
