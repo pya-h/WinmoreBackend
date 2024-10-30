@@ -24,8 +24,9 @@ import {
 } from '../common/types/game.types';
 import { DM_COLUMNS_COUNT } from '../configs/constants';
 import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
-import { SortModeEnum, SortOrderEnum } from 'src/games/types/sort-enum.dto';
-import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
+import { SortModeEnum } from '../games/types/sort-enum.dto';
+import { PaginationOptionsDto } from '../common/dtos/pagination-options.dto';
+import { SortOrderEnum } from '../common/types/sort-orders.enum';
 
 @Injectable()
 export class DreamMineService {

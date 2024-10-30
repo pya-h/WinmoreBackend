@@ -5,8 +5,9 @@ import {
   GeneralGameStatus,
 } from '../../common/types/game.types';
 import { GameStatusEnum } from '@prisma/client';
-import { SortModeEnum, SortOrderEnum } from '../types/sort-enum.dto';
+import { SortModeEnum } from '../types/sort-enum.dto';
 import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
+import { SortOrderEnum } from '../../common/types/sort-orders.enum';
 
 const supportedGameStatusOptions = [
   ...Object.values(GameStatusEnum),
