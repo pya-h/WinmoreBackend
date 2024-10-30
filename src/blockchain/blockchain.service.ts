@@ -119,7 +119,9 @@ export class BlockchainService {
       );
       await this.walletService.isNonceUsed(chainId, nonce);
       nonce += 1n
-    );
+    ) {
+      console.log(nonce);
+    }
     return nonce;
   }
 

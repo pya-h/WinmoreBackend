@@ -208,15 +208,15 @@ export class WalletService {
     status: TransactionStatusEnum,
     trxData: { hash: string; index: bigint },
   ) {
+    const newRemarks: object = { trxIndex: trxData.index };
+    for (const [key, value] of Object.entries(transaction.remarks))
+      newRemarks[key] = value;
     return this.prisma.transaction.update({
       where: { id: transaction.id },
       data: {
         status,
         trxHash: trxData.hash,
-        remarks: {
-          ...JSON.parse(transaction.remarks.toString()),
-          index: trxData.index,
-        },
+        remarks: newRemarks,
       },
     });
   }
@@ -499,9 +499,11 @@ export class WalletService {
     }));
   }
 
-  isNonceUsed(chainId: number, nonce: bigint) {
-    return this.prisma.transaction.findFirst({
-      where: { chainId, trxNonce: nonce },
-    });
+  async isNonceUsed(chainId: number, nonce: bigint) {
+    return Boolean(
+      await this.prisma.transaction.findFirst({
+        where: { chainId, trxNonce: nonce },
+      }),
+    );
   }
 }
