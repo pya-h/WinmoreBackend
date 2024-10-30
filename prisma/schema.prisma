@@ -137,9 +137,11 @@ model Transaction {
   chain         Chain                 @relation(fields: [chainId], references: [id])
   status        TransactionStatusEnum @default(PENDING)
   type          TransactionTypeEnum   @default(INGAME)
+  trxHash       String?
+  trxNonce      Int?
   remarks       Json?
-  
-  logs          BlockchainLog[]
+
+  logs BlockchainLog[]
 }
 
 model DreamMineGame {
@@ -201,7 +203,7 @@ model BlockchainLog {
   amount Float
   token  TokensEnum @default(USDT)
 
-  isReverted Boolean @default(false)
+  successful Boolean @default(true)
 
   blockId       BigInt
   block         Block        @relation(fields: [blockId], references: [id])

@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-  MethodNotAllowedException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -119,7 +114,6 @@ export class BlockchainService {
     token: TokensEnum,
     amount: number,
   ) {
-    // first try to create transaction by wallet service, since wallet service also checks wallet status and its balance.
     const transaction = await this.walletService.withdraw(
       targetWallet,
       chainId,
@@ -134,7 +128,6 @@ export class BlockchainService {
       const { address: businessWalletAddress } =
         this.walletService.businessWallet;
       const tokenABI = [
-        // Minimum ABI required to send token
         {
           constant: false,
           inputs: [
@@ -185,32 +178,51 @@ export class BlockchainService {
       // const receipt = await provider.eth.sendSignedTransaction(
       //   signedTrx.rawTransaction,
       // );
+      let log: BlockchainLogType;
       provider.eth
         .sendSignedTransaction(signedTrx.rawTransaction)
         .then(async (receipt) => {
-          if (!receipt.status)
-            throw new MethodNotAllowedException(
-              'Blockchain trx was unsuccessful.',
-            );
-          // TODO: Do more checking? maybe do a getBlock?! (i don't think so, since my block checker will do that eventually.)
-          this.logger.log('Withdrawal successful:', receipt);
-          await this.createWithdrawLog(
-            targetWallet.address,
+          log = {
+            walletAddress: targetWallet.address,
             token,
             amount,
-            {
+            block: {
               number: BigInt(receipt.blockNumber),
               hash: receipt.blockHash.toString(),
               chainId,
               status: BlockStatus.latest, // This will then add the block to uncertain blocks, and the check block listener will check it until finalization; o.w. returns user balance.
             },
-            transaction.id,
-          );
+            hash: receipt.transactionHash.toString(),
+            index: BigInt(receipt.transactionIndex),
+          };
+
+          if (!receipt.status)
+            throw new Error(
+              'Transaction status was successful:' + JSON.stringify(receipt),
+            );
+
+          await Promise.all([
+            this.createWithdrawLog(log, transaction.id),
+            this.walletService.finalizeWithdrawTransaction(
+              transaction,
+              TransactionStatusEnum.SUCCESSFUL,
+              { hash: log.hash, index: log.index },
+            ),
+          ]);
+          this.logger.debug('Withdrawal successful:', receipt);
         })
-        .catch((err) => {
+        .catch(async (err) => {
           this.logger.error('Failed to withdraw:', err);
+          await Promise.all([
+            this.createWithdrawLog(log, transaction.id, false),
+            this.walletService.finalizeWithdrawTransaction(
+              transaction,
+              TransactionStatusEnum.FAILED,
+              { hash: log.hash, index: log.index },
+            ),
+          ]);
         });
-      // return { trxHash: receipt.transactionHash }; // Return the transaction hash as confirmation
+
       return {
         ok: true,
         message:
@@ -236,6 +248,7 @@ export class BlockchainService {
   async createDepositLog(
     log: BlockchainLogType,
     relatedTransactionId?: bigint,
+    successful: boolean = true,
   ) {
     const { walletAddress, token, amount, block } = log;
     return this.prisma.blockchainLog.create({
@@ -245,6 +258,7 @@ export class BlockchainService {
         token,
         blockId: (await this.getBlock(block)).id,
         amount,
+        successful,
         ...(relatedTransactionId
           ? { transactionId: relatedTransactionId }
           : {}),
@@ -253,11 +267,9 @@ export class BlockchainService {
   }
 
   async createWithdrawLog(
-    to: string,
-    token: TokensEnum,
-    amount: number,
-    block: BlockType,
+    { walletAddress: to, token, amount, block }: BlockchainLogType,
     relatedTransactionId?: bigint,
+    successful: boolean = true,
   ) {
     await Promise.all([
       this.prisma.transaction.update({
@@ -271,6 +283,7 @@ export class BlockchainService {
           token,
           blockId: (await this.getBlock(block)).id,
           amount,
+          successful,
           ...(relatedTransactionId
             ? { transactionId: relatedTransactionId }
             : {}),
@@ -337,6 +350,8 @@ export class BlockchainService {
           walletAddress: decodedLog.from.toString(),
           token: contract.token,
           amount: Number(decodedLog.value) / 10 ** contract.decimals,
+          hash: log.transactionHash,
+          index: log.transactionIndex,
           block: {
             chainId,
             number: log.blockNumber,

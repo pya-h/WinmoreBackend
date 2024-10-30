@@ -203,6 +203,24 @@ export class WalletService {
     });
   }
 
+  finalizeWithdrawTransaction(
+    transaction: Transaction,
+    status: TransactionStatusEnum,
+    trxData: { hash: string; index: bigint },
+  ) {
+    return this.prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        status,
+        trxHash: trxData.hash,
+        remarks: {
+          ...JSON.parse(transaction.remarks.toString()),
+          index: trxData.index,
+        },
+      },
+    });
+  }
+
   addRemarks(
     transaction: Transaction,
     newRemarks: object,
@@ -228,12 +246,16 @@ export class WalletService {
     {
       type = TransactionTypeEnum.INGAME,
       remarks,
-      holdStatusPending,
+      holdStatusPending = false,
       include,
+      hash = null,
+      nonce = null,
     }: {
       type?: TransactionTypeEnum;
       remarks?: object;
       holdStatusPending?: boolean;
+      hash?: string;
+      nonce?: number;
       include?: { [field: string]: unknown };
     },
   ) {
@@ -261,6 +283,8 @@ export class WalletService {
         chainId,
         remarks,
         type,
+        trxHash: hash,
+        trxNonce: nonce,
       },
     });
 
@@ -364,7 +388,12 @@ export class WalletService {
         log.block.chainId,
         {
           type: TransactionTypeEnum.DEPOSIT,
-          remarks: { description: 'Deposit', wallet: log.walletAddress },
+          remarks: {
+            description: 'Deposit',
+            wallet: log.walletAddress,
+            trxIndex: log.index,
+          },
+          hash: log.hash,
         },
       );
     } catch (ex) {
@@ -456,6 +485,7 @@ export class WalletService {
           status: true,
           token: true,
           type: true,
+          trxHash: true,
           remarks: true,
         },
         ...(take ? { take } : {}),

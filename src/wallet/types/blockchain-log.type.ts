@@ -11,5 +11,7 @@ export type BlockchainLogType = {
   walletAddress: string;
   token: TokensEnum;
   amount: number;
+  hash?: string;
+  index?: bigint;
   block: BlockType;
 };
