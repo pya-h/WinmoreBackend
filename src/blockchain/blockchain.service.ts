@@ -108,25 +108,44 @@ export class BlockchainService {
     return false;
   }
 
+  async getNextNonce(chainId: number) {
+    const { provider } = this.chainHistory[chainId];
+
+    let nonce: bigint;
+
+    for (
+      nonce = await provider.eth.getTransactionCount(
+        this.walletService.businessWallet.address.toLowerCase(),
+      );
+      await this.walletService.isNonceUsed(chainId, nonce);
+      nonce += 1n
+    );
+    return nonce;
+  }
+
   async withdraw(
     targetWallet: Wallet,
     chainId: number,
     token: TokensEnum,
     amount: number,
   ) {
+    const nonce = await this.getNextNonce(chainId);
+
     const transaction = await this.walletService.withdraw(
       targetWallet,
       chainId,
       token,
       amount,
+      nonce,
     );
+
     if (!transaction) {
       throw new ForbiddenException('Transaction creation failed.');
       // TODO: Complete this section (whole transaction section i mean.)
     }
     try {
-      const { address: businessWalletAddress } =
-        this.walletService.businessWallet;
+      const { provider, contracts } = this.chainHistory[chainId];
+
       const tokenABI = [
         {
           constant: false,
@@ -139,10 +158,10 @@ export class BlockchainService {
           type: 'function',
         },
       ];
-      const { provider, contracts } = this.chainHistory[chainId];
       const tokenContractInstance = contracts.find(
         (ctx) => ctx.token === token,
       );
+
       const tokenContract = new provider.eth.Contract(
         tokenABI,
         tokenContractInstance.address,
@@ -151,13 +170,11 @@ export class BlockchainService {
       const amountInWei = amount * 10 ** tokenContractInstance.decimals; // TODO: Checkout? provider.utils.toWei(amount.toString(), 'ether'); // Adjust based on token decimals if needed
 
       const gasPrice = await provider.eth.getGasPrice();
+      const { address: businessWalletAddress } =
+        this.walletService.businessWallet;
       const gasLimit = await tokenContract.methods
         .transfer(targetWallet.address, amountInWei)
         .estimateGas({ from: businessWalletAddress });
-
-      const nonce = await provider.eth.getTransactionCount(
-        businessWalletAddress.toLowerCase(),
-      );
 
       const trx = {
         from: businessWalletAddress,

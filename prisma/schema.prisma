@@ -138,7 +138,7 @@ model Transaction {
   status        TransactionStatusEnum @default(PENDING)
   type          TransactionTypeEnum   @default(INGAME)
   trxHash       String?
-  trxNonce      Int?
+  trxNonce      BigInt?
   remarks       Json?
 
   logs BlockchainLog[]

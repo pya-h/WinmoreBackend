@@ -255,7 +255,7 @@ export class WalletService {
       remarks?: object;
       holdStatusPending?: boolean;
       hash?: string;
-      nonce?: number;
+      nonce?: bigint;
       include?: { [field: string]: unknown };
     },
   ) {
@@ -411,6 +411,7 @@ export class WalletService {
     chainId: number,
     token: TokensEnum,
     amount: number,
+    nonce: bigint,
   ) {
     try {
       return this.transact(
@@ -422,6 +423,7 @@ export class WalletService {
         {
           type: TransactionTypeEnum.WITHDRAWAL,
           holdStatusPending: true,
+          nonce,
           remarks: { description: 'Withdraw', wallet: wallet.address },
         },
       );
@@ -495,5 +497,11 @@ export class WalletService {
       ...trx,
       id: trx.id.toString(),
     }));
+  }
+
+  isNonceUsed(chainId: number, nonce: bigint) {
+    return this.prisma.transaction.findFirst({
+      where: { chainId, trxNonce: nonce },
+    });
   }
 }
