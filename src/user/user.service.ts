@@ -14,7 +14,7 @@ import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { DreamMineService } from '../dream-mine/dream-mine.service';
 import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
-import { TransactionHistoryFilterDto } from './dto/transaction-history-dto';
+import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
 
 @Injectable()
 export class UserService {
@@ -57,13 +57,14 @@ export class UserService {
 
   async getMyTransactions(
     userId: number,
-    { type, take, skip }: TransactionHistoryFilterDto,
+    { type, take, skip, status, token, chain }: TransactionHistoryFilterDto,
   ) {
     return this.walletService.getUserTransactionsHistory(
       userId,
       type,
       +take,
       +skip,
+      { status, token, chain: +chain },
     );
   }
 

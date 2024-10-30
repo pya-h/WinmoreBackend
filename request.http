@@ -111,7 +111,7 @@ Authorization: Bearer {{token}}
 
 ### Get user transactions
 
-GET {{host}}/user/transactions?type=DEPOSIT
+GET {{host}}/user/transactions?token=WUSDC
 Authorization: Bearer {{token}}
 
 ### Request withdraw

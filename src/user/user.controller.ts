@@ -20,7 +20,7 @@ import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { GameStatusFilterQuery } from 'src/games/dtos/game-status-filter.query';
-import { TransactionHistoryFilterDto } from './dto/transaction-history-dto';
+import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
 
 @ApiTags('User')
 @Controller('user')

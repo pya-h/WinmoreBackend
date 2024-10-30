@@ -27,7 +27,7 @@ import { ChainMayContractsPopulated } from './types/chain.types';
 import {
   ExtraTransactionTypesEnum,
   GeneralTransactionTypes,
-} from 'src/user/types/extra-transaction-types.enum';
+} from 'src/wallet/enums/extra-transaction-types.enum';
 
 // ********     MAIN TODOS    *****
 // TODO: add Mint & burn methods
@@ -269,7 +269,7 @@ export class WalletService {
     });
 
     if (
-      !this.configService.get<boolean>('general.debug') && // FIXME: This is for test purpose, remove it as soon as possible
+      !this.configService.get<boolean>('general.debug') &&
       source.id !== this.businessWallet.id // TODO: Remove this after the admin recharge mechanism implemented.
     ) {
       const sourceBalance = await this.getBalance(
@@ -414,18 +414,31 @@ export class WalletService {
     return null;
   }
 
-  getTransactionTypeCondition(typeFilter: GeneralTransactionTypes) {
-    if (typeFilter && typeFilter !== ExtraTransactionTypesEnum.ALL) {
-      switch (typeFilter) {
-        case ExtraTransactionTypesEnum.BLOCKCHAIN:
-          return {
-            type: { notIn: [TransactionTypeEnum.INGAME] }, // NOTICE: If there where new types added to Types enum, this must be updated.
-          };
-        default:
-          return { type: typeFilter };
-      }
-    }
-    return {};
+  convertTransactionHistoryFiltersToConditions(
+    typeFilter: GeneralTransactionTypes,
+    {
+      status = null,
+      token = null,
+      chain = null,
+    }: {
+      status?: TransactionStatusEnum;
+      chain?: number;
+      token?: TokensEnum;
+    } = {},
+  ) {
+    return {
+      ...(typeFilter && typeFilter !== ExtraTransactionTypesEnum.ALL
+        ? {
+            type:
+              typeFilter != ExtraTransactionTypesEnum.BLOCKCHAIN
+                ? typeFilter
+                : { notIn: [TransactionTypeEnum.INGAME] },
+          }
+        : {}),
+      ...(status ? { status } : {}),
+      ...(token ? { token } : {}),
+      ...(chain ? { chainId: chain } : {}),
+    };
   }
 
   getUserTransactions(
@@ -433,6 +446,11 @@ export class WalletService {
     typeFilter: GeneralTransactionTypes,
     take: number,
     skip: number,
+    extraFilters: {
+      status?: TransactionStatusEnum;
+      chain?: number;
+      token?: TokensEnum;
+    } = {},
   ) {
     return this.prisma.transaction.findMany({
       where: {
@@ -440,7 +458,10 @@ export class WalletService {
           { source: { ownerId: userId } },
           { destination: { ownerId: userId } },
         ],
-        ...this.getTransactionTypeCondition(typeFilter),
+        ...this.convertTransactionHistoryFiltersToConditions(
+          typeFilter,
+          extraFilters,
+        ),
       },
       ...(take ? { take } : {}),
       ...(skip ? { skip } : {}),
@@ -452,6 +473,11 @@ export class WalletService {
     typeFilter: GeneralTransactionTypes,
     take: number,
     skip: number,
+    extraFilters: {
+      status?: TransactionStatusEnum;
+      chain?: number;
+      token?: TokensEnum;
+    } = {},
   ) {
     const walletDisplayFilter = {
       select: {
@@ -474,7 +500,10 @@ export class WalletService {
             { destination: { ownerId: userId } },
           ],
 
-          ...this.getTransactionTypeCondition(typeFilter),
+          ...this.convertTransactionHistoryFiltersToConditions(
+            typeFilter,
+            extraFilters,
+          ),
         },
         select: {
           id: true,
@@ -509,7 +538,6 @@ export class WalletService {
               },
             },
           },
-          // trxHash: true, // FIXME: Get trx data from log
         },
         ...(take ? { take } : {}),
         ...(skip ? { skip } : {}),
