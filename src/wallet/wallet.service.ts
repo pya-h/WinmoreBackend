@@ -26,9 +26,8 @@ import { BlockchainLogType } from './types/blockchain-log.type';
 import { ChainMayContractsPopulated } from './types/chain.types';
 
 // ********     MAIN TODOS    *****
-// FIXME: Add GENERAL get balance method, which sends the whole wallet balances of user to front.
 // TODO: add Mint & burn methods
-// FIXME: Transactions from admin, must never throw insufficient balance error; Write a method to always mint to admin wallet the sufficient amount,
+// TODO: Transactions from admin, must never throw insufficient balance error; Write a method to always mint to admin wallet the sufficient amount,
 // when the balance of admin on specific chain & token is lower than a transaction amount
 @Injectable()
 export class WalletService {

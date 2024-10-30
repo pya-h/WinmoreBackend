@@ -59,7 +59,7 @@ export class UserService {
     userId: number,
     { take, skip }: PaginationOptionsDto,
   ) {
-    return this.walletService.getUserTransactionsHistory(userId, take, skip);
+    return this.walletService.getUserTransactionsHistory(userId, +take, +skip);
   }
 
   updateLastLoginDate(userId: number) {
