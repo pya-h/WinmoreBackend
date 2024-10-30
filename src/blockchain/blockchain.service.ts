@@ -121,9 +121,7 @@ export class BlockchainService {
       );
       await this.isNonceUsed(chainId, nonce);
       nonce += 1n
-    ) {
-      console.log(nonce);
-    }
+    );
     return nonce;
   }
 

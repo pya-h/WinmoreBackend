@@ -20,7 +20,7 @@ import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { GameStatusFilterQuery } from 'src/games/dtos/game-status-filter.query';
-import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
+import { TransactionHistoryFilterDto } from './dto/transaction-history-dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -79,9 +79,12 @@ export class UserController {
   @Get('transactions')
   getTransactions(
     @CurrentUser() user: UserPopulated,
-    @Query() { take = 50, skip = 0 }: PaginationOptionsDto,
+    @Query() transactionHistoryFilter: TransactionHistoryFilterDto,
   ) {
-    return this.userService.getMyTransactions(user.id, { take, skip });
+    return this.userService.getMyTransactions(
+      user.id,
+      transactionHistoryFilter,
+    );
   }
 
   @ApiOperation({

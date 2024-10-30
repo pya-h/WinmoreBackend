@@ -8,16 +8,21 @@ import { GameStatusEnum } from '@prisma/client';
 import { SortModeEnum, SortOrderEnum } from '../types/sort-enum.dto';
 import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
+const supportedGameStatusOptions = [
+  ...Object.values(GameStatusEnum),
+  ...Object.values(ExtraGameStatusEnum),
+];
 export class GameStatusFilterQuery extends PaginationOptionsDto {
   @ApiProperty({
     description: 'Filter only games within special status.',
     required: false,
   })
   @IsOptional()
-  @IsIn([
-    ...Object.values(GameStatusEnum),
-    ...Object.values(ExtraGameStatusEnum),
-  ])
+  @IsIn(supportedGameStatusOptions, {
+    message:
+      'Game status must be one of these options: ' +
+      supportedGameStatusOptions.join(', '),
+  })
   status?: GeneralGameStatus;
 
   @ApiProperty({

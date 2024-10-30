@@ -24,6 +24,10 @@ import { UserPopulated } from '../user/types/user-populated.type';
 import { BusinessWalletType, WalletIdentifierType } from './types/wallet.types';
 import { BlockchainLogType } from '../blockchain/types/blockchain-log.type';
 import { ChainMayContractsPopulated } from './types/chain.types';
+import {
+  ExtraTransactionTypesEnum,
+  GeneralTransactionTypes,
+} from 'src/user/types/extra-transaction-types.enum';
 
 // ********     MAIN TODOS    *****
 // TODO: add Mint & burn methods
@@ -423,7 +427,12 @@ export class WalletService {
     });
   }
 
-  async getUserTransactionsHistory(userId: number, take: number, skip: number) {
+  async getUserTransactionsHistory(
+    userId: number,
+    typeFilter: GeneralTransactionTypes,
+    take: number,
+    skip: number,
+  ) {
     const walletDisplayFilter = {
       select: {
         id: true,
@@ -436,6 +445,20 @@ export class WalletService {
         },
       },
     };
+    let typeCondition = {};
+
+    if (typeFilter && typeFilter !== ExtraTransactionTypesEnum.ALL) {
+      switch (typeFilter) {
+        case ExtraTransactionTypesEnum.BLOCKCHAIN:
+          typeCondition = {
+            type: { notIn: [TransactionTypeEnum.INGAME] }, // NOTICE: If there where new types added to Types enum, this must be updated.
+          };
+          break;
+        default:
+          typeCondition = { type: typeFilter };
+          break;
+      }
+    }
     return (
       await this.prisma.transaction.findMany({
         where: {
@@ -443,6 +466,8 @@ export class WalletService {
             { source: { ownerId: userId } },
             { destination: { ownerId: userId } },
           ],
+
+          ...typeCondition,
         },
         select: {
           id: true,
@@ -485,9 +510,23 @@ export class WalletService {
     ).map((trx) => ({
       ...trx,
       id: trx.id.toString(),
-      trxHash: trx.log.trxHash,
-      trxIndex: trx.log.trxIndex,
-      gas: trx.log.gasPrice,
+      ...(trx.log
+        ? {
+            log: {
+              ...trx.log,
+              trxIndex: trx.log.trxIndex?.toString(),
+              gasPrice: trx.log.gasPrice?.toString(),
+              ...(trx.log?.block
+                ? {
+                    block: {
+                      ...trx.log.block,
+                      number: trx.log.block?.number?.toString(),
+                    },
+                  }
+                : {}),
+            },
+          }
+        : {}),
     }));
   }
 }
