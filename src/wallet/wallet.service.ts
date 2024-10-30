@@ -414,13 +414,33 @@ export class WalletService {
     return null;
   }
 
-  getUserTransactions(userId: number, take: number, skip: number) {
+  getTransactionTypeCondition(typeFilter: GeneralTransactionTypes) {
+    if (typeFilter && typeFilter !== ExtraTransactionTypesEnum.ALL) {
+      switch (typeFilter) {
+        case ExtraTransactionTypesEnum.BLOCKCHAIN:
+          return {
+            type: { notIn: [TransactionTypeEnum.INGAME] }, // NOTICE: If there where new types added to Types enum, this must be updated.
+          };
+        default:
+          return { type: typeFilter };
+      }
+    }
+    return {};
+  }
+
+  getUserTransactions(
+    userId: number,
+    typeFilter: GeneralTransactionTypes,
+    take: number,
+    skip: number,
+  ) {
     return this.prisma.transaction.findMany({
       where: {
         OR: [
           { source: { ownerId: userId } },
           { destination: { ownerId: userId } },
         ],
+        ...this.getTransactionTypeCondition(typeFilter),
       },
       ...(take ? { take } : {}),
       ...(skip ? { skip } : {}),
@@ -445,20 +465,7 @@ export class WalletService {
         },
       },
     };
-    let typeCondition = {};
 
-    if (typeFilter && typeFilter !== ExtraTransactionTypesEnum.ALL) {
-      switch (typeFilter) {
-        case ExtraTransactionTypesEnum.BLOCKCHAIN:
-          typeCondition = {
-            type: { notIn: [TransactionTypeEnum.INGAME] }, // NOTICE: If there where new types added to Types enum, this must be updated.
-          };
-          break;
-        default:
-          typeCondition = { type: typeFilter };
-          break;
-      }
-    }
     return (
       await this.prisma.transaction.findMany({
         where: {
@@ -467,7 +474,7 @@ export class WalletService {
             { destination: { ownerId: userId } },
           ],
 
-          ...typeCondition,
+          ...this.getTransactionTypeCondition(typeFilter),
         },
         select: {
           id: true,
