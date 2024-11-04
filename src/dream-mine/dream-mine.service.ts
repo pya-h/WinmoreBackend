@@ -104,11 +104,18 @@ export class DreamMineService {
   ) {
     switch (mode) {
       case GameModesEnum.EASY:
-        return 1;
+        return { difficultyValue: 1, columnsCount: DM_COLUMNS_COUNT };
       case GameModesEnum.HARD:
-        return difficultyCoefficients[0] || 1;
+        return {
+          difficultyValue: difficultyCoefficients[0] || 1,
+          columnsCount: DM_COLUMNS_COUNT - 2,
+        };
       case GameModesEnum.MEDIUM:
-        return difficultyCoefficients[1] || difficultyCoefficients[0] || 1;
+        return {
+          difficultyValue:
+            difficultyCoefficients[1] || difficultyCoefficients[0] || 1,
+          columnsCount: DM_COLUMNS_COUNT - 1,
+        };
       default:
         throw new ConflictException(
           'Unfortunately your game is misconfigured! This is a rare issue that needs evaluating, so please contact the support.',
@@ -117,12 +124,14 @@ export class DreamMineService {
   }
 
   getRowCharacteristics(rule: DreamMineRules, game: DreamMineGame) {
-    const difficultyValue = this.matchGameModeWithDifficultyCoefficient(
-      game.mode,
-      rule.difficultyCoefficients,
-    );
+    const { difficultyValue, columnsCount } =
+      this.matchGameModeWithDifficultyCoefficient(
+        game.mode,
+        rule.difficultyCoefficients,
+      );
     if (!difficultyValue) throw new ConflictException('Invalid game state.');
     return {
+      columnsCount,
       multiplier: rule.rowCoefficients[game.currentRow] * difficultyValue,
       probability:
         (100 * (rule.rowProbabilities[game.currentRow] || 0)) / difficultyValue,
@@ -136,7 +145,12 @@ export class DreamMineService {
         'It seems that site is not ready for your next mine; wait a little bit.',
       );
 
-    const { probability, multiplier } = this.getRowCharacteristics(rule, game);
+    const { probability, multiplier, columnsCount } =
+      this.getRowCharacteristics(rule, game);
+    if (choice > columnsCount)
+      throw new BadRequestException(
+        `Invalid selection! There are only ${columnsCount} stones.`,
+      );
     const playerChance = Math.random() * 100.0;
     let result: Record<string, unknown>;
     game.lastChoice = choice;
@@ -157,7 +171,7 @@ export class DreamMineService {
       game.finishedAt = new Date();
       let goldIndex: number = 0;
       while (!goldIndex || goldIndex === choice)
-        goldIndex = ((Math.random() * DM_COLUMNS_COUNT) | 0) + 1;
+        goldIndex = ((Math.random() * columnsCount) | 0) + 1;
       game.golds.push(goldIndex);
       result = { success: false, ...game };
     }
@@ -265,6 +279,8 @@ export class DreamMineService {
 
     if (sortParams?.orderBy) {
       filter.status = ExtraGameStatusEnum.GAINED;
+    } else {
+      sortParams.orderBy = { createdAt: SortOrderEnum.DESC.toString() };
     }
 
     const filters: Record<string, object | string | number> = {};
