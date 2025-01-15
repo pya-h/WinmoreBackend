@@ -100,20 +100,20 @@ export class DreamMineService {
 
   matchGameModeWithDifficultyCoefficient(
     mode: GameModesEnum,
-    difficultyCoefficients: number[],
+    difficultyMultipliers: number[],
   ) {
     switch (mode) {
       case GameModesEnum.EASY:
         return { difficultyValue: 1, columnsCount: DM_COLUMNS_COUNT };
       case GameModesEnum.HARD:
         return {
-          difficultyValue: difficultyCoefficients[0] || 1,
+          difficultyValue: difficultyMultipliers[0] || 1,
           columnsCount: DM_COLUMNS_COUNT - 2,
         };
       case GameModesEnum.MEDIUM:
         return {
           difficultyValue:
-            difficultyCoefficients[1] || difficultyCoefficients[0] || 1,
+            difficultyMultipliers[1] || difficultyMultipliers[0] || 1,
           columnsCount: DM_COLUMNS_COUNT - 1,
         };
       default:
@@ -127,14 +127,14 @@ export class DreamMineService {
     const { difficultyValue, columnsCount } =
       this.matchGameModeWithDifficultyCoefficient(
         game.mode,
-        rule.difficultyCoefficients,
+        rule.difficultyMultipliers,
       );
     if (!difficultyValue) throw new ConflictException('Invalid game state.');
     return {
       columnsCount,
-      multiplier: rule.rowCoefficients[game.currentRow] * difficultyValue,
+      multiplier: rule.multipliers[game.currentRow] * difficultyValue,
       probability:
-        (100 * (rule.rowProbabilities[game.currentRow] || 0)) / difficultyValue,
+        (100 * (rule.probabilities[game.currentRow] || 0)) / difficultyValue,
     };
   }
 
@@ -155,7 +155,7 @@ export class DreamMineService {
     let result: Record<string, unknown>;
     game.lastChoice = choice;
     if (playerChance <= probability) {
-      if (rule.rowCoefficients[game.currentRow])
+      if (rule.multipliers[game.currentRow])
         game.stake = game.initialBet * multiplier;
 
       game.golds.push(choice);
@@ -218,15 +218,15 @@ export class DreamMineService {
     return gameRules;
   }
 
-  populateRowCoefficients(
-    rowCoefficients: number[],
-    difficultyCoefficients: number[],
+  populatemultipliers(
+    multipliers: number[],
+    difficultyMultipliers: number[],
   ): { easy: number[]; medium?: number[]; hard: number[] } {
-    const [hardCoef, mediumCoef] = difficultyCoefficients;
+    const [hardCoef, mediumCoef] = difficultyMultipliers;
 
     if (!mediumCoef) {
       const [easy, hard] = [1, hardCoef].map((diffCoef: number) =>
-        rowCoefficients.map((rowCoef: number) => rowCoef * diffCoef),
+        multipliers.map((rowCoef: number) => rowCoef * diffCoef),
       );
 
       return { easy, hard };
@@ -234,7 +234,7 @@ export class DreamMineService {
 
     const [easy, medium, hard] = [1, mediumCoef, hardCoef].map(
       (diffCoef: number) =>
-        rowCoefficients.map((rowCoef: number) => rowCoef * diffCoef),
+        multipliers.map((rowCoef: number) => rowCoef * diffCoef),
     );
 
     return { easy, medium, hard };

@@ -105,17 +105,17 @@ export class DreamMineController {
       minRows,
       maxBetAmount,
       maxRows,
-      rowCoefficients,
-      difficultyCoefficients,
+      multipliers,
+      difficultyMultipliers,
     } = await this.dreamMineService.getLatestRules();
     return {
       minBetAmount,
       maxBetAmount,
       minRows,
       maxRows,
-      coefficients: this.dreamMineService.populateRowCoefficients(
-        rowCoefficients,
-        difficultyCoefficients,
+      coefficients: this.dreamMineService.populatemultipliers(
+        multipliers,
+        difficultyMultipliers,
       ),
     };
   }

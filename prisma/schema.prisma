@@ -89,7 +89,7 @@ model Wallet {
   ownerId              Int           @unique
   address              String        @unique @db.VarChar(256)
   withdrawTransactions Transaction[] @relation("TrxSource")
-  despositTransactions Transaction[] @relation("TrxDestination")
+  depositTransactions  Transaction[] @relation("TrxDestination")
 }
 
 model Chain {
@@ -158,7 +158,7 @@ model DreamMineGame {
   rowsCount  Int            @default(8)
   currentRow Int            @default(0)
   stake      Float          @default(0.0)
-  golds      Int[]
+  nulls      Int[]
   lastChoice Int?
   status     GameStatusEnum @default(NOT_STARTED)
   finishedAt DateTime?
@@ -169,14 +169,14 @@ model DreamMineRules {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  rowCoefficients        Float[] // Stake multiplier, must be > 1
-  rowProbabilities       Float[] // as Percentage, in range: (0, 100)
-  difficultyCoefficients Float[] // easy coefficient is 1 always. This array contains two coefficients [hard, medium] for medium and hard difficulties. (or only hard if only one value)
-  // this coef must be larger than 1, and has effect on both rowCoefficients & probability values.
-  minRows                Int     @default(8)
-  maxRows                Int     @default(12)
-  minBetAmount           Float?
-  maxBetAmount           Float?
+  rows                  Int     @unique
+  multipliers           Float[] // Stake multiplier, must be > 1
+  probabilities         Float[] // in Percentage
+  difficultyMultipliers Float[] // easy coefficient is 1 always. This array contains two coefficients [hard, medium] for medium and hard difficulties. (or only hard if only one value)
+  // this coef must be larger than 1, and has effect on both multipliers & probability values.
+  minBetAmount          Float?
+  maxBetAmount          Float?
+  companyShare          Float
 }
 
 model Block {

@@ -271,8 +271,8 @@ export class WalletService {
     });
 
     if (
-      // !this.configService.get<boolean>('general.debug') &&
-      source.id !== this.businessWallet.id // TODO: Remove this after the admin recharge mechanism implemented.
+      !this.configService.get<boolean>('general.debug') &&
+      source.id !== this.businessWallet.id
     ) {
       const sourceBalance = await this.getBalance(
         transaction.sourceId,
