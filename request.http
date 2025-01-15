@@ -1,5 +1,5 @@
 @host  = http://localhost:8080
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3MzA3MjA5NDMsImV4cCI6MTczMDgwNzM0M30.KmMcUaUICe-3GbHKsVgcnNoeT_gXj9oeLkVZtJI7Tds
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3MzY5Njk1MTUsImV4cCI6MTczNzA1NTkxNX0.DAU1f2Ei6g9ZXb3elnzLs-cFuKjqtD7DO9HWvS4ABqE
 @token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFh4NGxmNTdwMHAzZDY1eGI1aHpoMzM2NzVjN3JpM3Y1NWNyZDBpbGQiLCJpYXQiOjE3Mjk5NzgxMTksImV4cCI6MTczMDA2NDUxOX0.5s_SPBqyBJ9gg_x1z8Wt7C_OeAfDZDObMnwrweEw_a0
 ### main route
 GET {{host}}/
@@ -66,13 +66,13 @@ Content-Type: application/json
 {
     "betAmount": 100,
     "mode": "HARD",
-    "rows": 8,
+    "rows": 12,
     "token": "WUSDC",
     "chainId": 11155111
 }
 
 ### Mine current row
-POST {{host}}/dream-mine/mine/4
+POST {{host}}/dream-mine/mine/2
 Authorization: Bearer {{token}}
 Content-Type: application/json
 

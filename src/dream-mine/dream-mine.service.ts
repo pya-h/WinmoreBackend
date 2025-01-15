@@ -241,17 +241,21 @@ export class DreamMineService {
   populateMultipliers(
     multipliers: number[],
     difficultyMultipliers: number[],
-  ): { easy: number[]; medium?: number[]; hard: number[] } {
-    const [hardCoef, mediumCoef] = difficultyMultipliers;
+  ): { easy: number[]; medium?: number[]; hard?: number[] } {
+    if (!difficultyMultipliers?.length) {
+      return { easy: multipliers };
+    }
 
-    if (!mediumCoef) {
-      const [easy, hard] = [1, hardCoef].map((diffCoef: number) =>
-        multipliers.map((rowCoef: number) => rowCoef * diffCoef),
+    if (difficultyMultipliers.length === 1) {
+      const [easy, hard] = [1, difficultyMultipliers[0]].map(
+        (diffCoef: number) =>
+          multipliers.map((rowCoef: number) => rowCoef * diffCoef),
       );
 
       return { easy, hard };
     }
 
+    const [mediumCoef, hardCoef] = difficultyMultipliers;
     const [easy, medium, hard] = [1, mediumCoef, hardCoef].map(
       (diffCoef: number) =>
         multipliers.map((rowCoef: number) => rowCoef * diffCoef),

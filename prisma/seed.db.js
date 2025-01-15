@@ -88,7 +88,7 @@ async function main() {
             0.612, 1.1135, 1.6575, 2.363, 3.247, 4.335, 5.661, 7.14,
           ],
           probabilities: [75.0, 65.0, 45.0, 25.0, 9.0, 3.0, 1.0, 0.0],
-          difficultyMultipliers: [1.3, 2.6],
+          difficultyMultipliers: [3, 8],
         },
         {
           rows: 9,
@@ -96,7 +96,7 @@ async function main() {
             0.684, 1.2445, 1.8525, 2.641, 3.629, 4.845, 6.327, 7.98, 9.8325,
           ],
           probabilities: [75, 55, 38, 17, 8, 2.5, 0.5, 0, 0],
-          difficultyMultipliers: [1.3, 2.6],
+          difficultyMultipliers: [3, 7],
         },
         {
           rows: 10,
@@ -104,7 +104,7 @@ async function main() {
             0.72, 1.31, 1.95, 2.78, 3.82, 5.1, 6.66, 8.4, 10.35, 12.7,
           ],
           probabilities: [75, 50, 33, 15, 7, 1.8, 0.1, 0, 0, 0],
-          difficultyMultipliers: [1.3, 2.6],
+          difficultyMultipliers: [3, 7],
         },
         {
           rows: 11,
@@ -113,7 +113,7 @@ async function main() {
             16.368,
           ],
           probabilities: [60, 40, 20, 10, 5, 2, 0, 0, 0, 0, 0],
-          difficultyMultipliers: [1.3, 2.6],
+          difficultyMultipliers: [3, 7],
         },
         {
           rows: 12,
@@ -122,7 +122,7 @@ async function main() {
             17.856, 20.52,
           ],
           probabilities: [50, 25, 8, 4, 2, 0, 0, 0, 0, 0, 0, 0],
-          difficultyMultipliers: [1.3, 2.6],
+          difficultyMultipliers: [2, 6],
         },
       ].map(({ rows, multipliers, probabilities, difficultyMultipliers }) => {
         if (rows !== multipliers?.length || rows !== probabilities?.length) {
