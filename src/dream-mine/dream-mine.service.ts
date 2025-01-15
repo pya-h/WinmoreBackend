@@ -122,19 +122,30 @@ export class DreamMineService {
     }
   }
 
-  getRowCharacteristics(rule: DreamMineRules, game: DreamMineGame) {
-    const { difficultyValue, columnsCount } =
-      this.matchGameModeWithDifficultyCoefficient(
-        game.mode,
-        rule.difficultyMultipliers,
-      );
-    if (!difficultyValue) throw new ConflictException('Invalid game state.');
-    return {
-      columnsCount,
-      multiplier: rule.multipliers[game.currentRow] * difficultyValue,
-      probability:
-        (100 * (rule.probabilities[game.currentRow] || 0)) / difficultyValue,
-    };
+  getRowCharacteristics(
+    rule: DreamMineRules,
+    game: DreamMineGame,
+    throwOnNoRules: boolean = true,
+  ) {
+    try {
+      const { difficultyValue, columnsCount } =
+        this.matchGameModeWithDifficultyCoefficient(
+          game.mode,
+          rule.difficultyMultipliers,
+        );
+      if (!difficultyValue) {
+        throw new ConflictException('Invalid game state.');
+      }
+      return {
+        columnsCount,
+        multiplier: rule.multipliers[game.currentRow] * difficultyValue,
+        probability:
+          (100 * (rule.probabilities[game.currentRow] || 0)) / difficultyValue,
+      };
+    } catch (ex) {
+      if (throwOnNoRules) throw ex;
+    }
+    return null;
   }
 
   async mine(game: DreamMineGame, choice: number) {
@@ -154,10 +165,13 @@ export class DreamMineService {
     let result: Record<string, unknown>;
     game.lastChoice = choice;
     if (playerChance <= probability) {
-      if (rule.multipliers[game.currentRow])
-        game.stake = game.initialBet * multiplier;
+      if (multiplier) game.stake = game.initialBet * multiplier;
 
-      game.golds.push(choice);
+      let goldIndex: number = 0;
+      while (!goldIndex || goldIndex === choice)
+        goldIndex = ((Math.random() * columnsCount) | 0) + 1;
+      game.nulls.push(goldIndex);
+
       game.currentRow++;
       if (game.currentRow === game.rowsCount) {
         await this.finalizeGame(game, false);
@@ -168,10 +182,7 @@ export class DreamMineService {
     } else {
       game.status = GameStatusEnum.LOST;
       game.finishedAt = new Date();
-      let goldIndex: number = 0;
-      while (!goldIndex || goldIndex === choice)
-        goldIndex = ((Math.random() * columnsCount) | 0) + 1;
-      game.golds.push(goldIndex);
+      game.nulls.push(choice);
       result = { success: false, ...game };
     }
     await this.prisma.dreamMineGame.update({
@@ -217,7 +228,13 @@ export class DreamMineService {
     return gameRules;
   }
 
-  async getRulesByRows(rows: number) {
+  async getRulesMapped() {
+    return Object.fromEntries(
+      (await this.getRules()).map((rule) => [rule.rows, rule]),
+    );
+  }
+
+  getRulesByRows(rows: number) {
     return this.prisma.dreamMineRules.findFirst({ where: { rows } });
   }
 
@@ -323,9 +340,11 @@ export class DreamMineService {
       include,
     });
 
-    const rules = await this.getRules();
+    const rules = await this.getRulesMapped();
     return games.map((game) => {
-      const { multiplier } = this.getRowCharacteristics(rules, game);
+      const { multiplier } =
+        this.getRowCharacteristics(rules[game.rowsCount], game, false) || {};
+
       game['multiplier'] = multiplier;
       game['time'] = Math.ceil(
         ((game.finishedAt?.getTime() || Date.now()) -
