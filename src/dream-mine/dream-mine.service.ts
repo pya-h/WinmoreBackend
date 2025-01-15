@@ -50,11 +50,10 @@ export class DreamMineService {
       throw new BadRequestException(
         'Could not place bet due to some reason! Please try again.',
       );
-    const rules = await this.getLatestRules();
-    const rowsCount = rows || rules.minRows;
-    if (rowsCount < rules.minRows || rowsCount > rules.maxRows)
+    const rules = await this.getRulesByRows(rows);
+    if (!rules)
       throw new BadRequestException(
-        `Number of rows must an integer between ${rules.minRows} & ${rules.maxRows}`,
+        `Winmore doesn't support ${rows} rows game.`,
       );
 
     const game = await this.prisma.dreamMineGame.create({
@@ -64,7 +63,7 @@ export class DreamMineService {
         token,
         chainId,
         mode,
-        rowsCount,
+        rowsCount: rows,
         status: GameStatusEnum.ONGOING,
         stake: betAmount,
         currentRow: 0,
@@ -107,13 +106,13 @@ export class DreamMineService {
         return { difficultyValue: 1, columnsCount: DM_COLUMNS_COUNT };
       case GameModesEnum.HARD:
         return {
-          difficultyValue: difficultyMultipliers[0] || 1,
+          difficultyValue:
+            difficultyMultipliers[difficultyMultipliers.length - 1] || 1,
           columnsCount: DM_COLUMNS_COUNT - 2,
         };
       case GameModesEnum.MEDIUM:
         return {
-          difficultyValue:
-            difficultyMultipliers[1] || difficultyMultipliers[0] || 1,
+          difficultyValue: difficultyMultipliers[0] || 1,
           columnsCount: DM_COLUMNS_COUNT - 1,
         };
       default:
@@ -139,7 +138,7 @@ export class DreamMineService {
   }
 
   async mine(game: DreamMineGame, choice: number) {
-    const rule = await this.getLatestRules();
+    const rule = await this.getRulesByRows(game.rowsCount);
     if (!rule)
       throw new MethodNotAllowedException(
         'It seems that site is not ready for your next mine; wait a little bit.',
@@ -206,19 +205,23 @@ export class DreamMineService {
     return this.mine(game, userChoice);
   }
 
-  async getLatestRules() {
-    const gameRules = await this.prisma.dreamMineRules.findFirst({
-      orderBy: { createdAt: 'desc' },
+  async getRules() {
+    const gameRules = await this.prisma.dreamMineRules.findMany({
+      orderBy: { rows: 'asc' },
     });
 
-    if (!gameRules)
+    if (!gameRules?.length)
       throw new InternalServerErrorException(
         'For some reason dream mine game rules are not available. Can not play Dream Mine right now.',
       );
     return gameRules;
   }
 
-  populatemultipliers(
+  async getRulesByRows(rows: number) {
+    return this.prisma.dreamMineRules.findFirst({ where: { rows } });
+  }
+
+  populateMultipliers(
     multipliers: number[],
     difficultyMultipliers: number[],
   ): { easy: number[]; medium?: number[]; hard: number[] } {
@@ -320,7 +323,7 @@ export class DreamMineService {
       include,
     });
 
-    const rules = await this.getLatestRules();
+    const rules = await this.getRules();
     return games.map((game) => {
       const { multiplier } = this.getRowCharacteristics(rules, game);
       game['multiplier'] = multiplier;

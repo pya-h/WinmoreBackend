@@ -100,23 +100,13 @@ export class DreamMineController {
   })
   @Get('rules')
   async getLatestRules() {
-    const {
-      minBetAmount,
-      minRows,
-      maxBetAmount,
-      maxRows,
-      multipliers,
-      difficultyMultipliers,
-    } = await this.dreamMineService.getLatestRules();
-    return {
-      minBetAmount,
-      maxBetAmount,
-      minRows,
-      maxRows,
-      coefficients: this.dreamMineService.populatemultipliers(
-        multipliers,
-        difficultyMultipliers,
-      ),
-    };
+    return (await this.dreamMineService.getRules()).map((rule) => ({
+      rows: rule.rows,
+      minBetAmount: rule.minBetAmount,
+      coefficients: this.dreamMineService.populateMultipliers(
+        rule.multipliers,
+        rule.difficultyMultipliers,
+      ), // TODO: Rename this field to 'multipliers', after checking out its usage in front
+    }));
   }
 }
