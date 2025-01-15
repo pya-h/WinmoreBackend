@@ -15,21 +15,44 @@ async function main() {
           name: 'Ethereum Mainnet',
           providerUrl: 'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
           blockProcessRange: 50,
-          acceptedBlockStatus: 'safe',
+          acceptedBlockStatus: 'latest',
+        },
+        {
+          id: 10,
+          name: 'Optimism Mainnet',
+          providerUrl: 'https://mainnet.optimism.io',
+          blockProcessRange: 50,
+          acceptedBlockStatus: 'latest',
         },
         {
           id: 137,
           name: 'Polygon Mainnet',
           providerUrl: 'https://polygon-rpc.com',
           blockProcessRange: 50,
-          acceptedBlockStatus: 'finalized',
+          acceptedBlockStatus: 'latest',
+        },
+        {
+          id: 8453,
+          name: 'Base Mainnet',
+          // providerUrl: 'https://rpc.ankr.com/base',
+          providerUrl: 'https://mainnet.base.org',
+          blockProcessRange: 50,
+          acceptedBlockStatus: 'latest',
+        },
+        {
+          id: 42161,
+          name: 'Arbitrum One',
+          providerUrl: 'https://arb1.arbitrum.io/rpc',
+          blockProcessRange: 50,
+          acceptedBlockStatus: 'latest',
         },
         {
           id: 11155111,
           name: 'Sepolia',
           providerUrl: 'https://rpc.sepolia.org',
+          // providerUrl: 'https://rpc.ankr.com/eth_sepolia',
           blockProcessRange: 50,
-          acceptedBlockStatus: 'safe',
+          acceptedBlockStatus: 'latest',
         },
       ].map(
         async ({
@@ -161,22 +184,82 @@ async function main() {
   try {
     await Promise.all(
       [
+        // ETHEREUM
         {
-          title: 'USDT Contract on Ethereum Mainnet',
+          title: 'Tether USD',
           token: TokensEnum.USDT,
           address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
           chainId: 1,
         },
         {
-          title: 'USDT Contract on Polygon',
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+          chainId: 1,
+        },
+        // OPTIMISM
+        {
+          title: 'Tether USD',
           token: TokensEnum.USDT,
-          address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+          address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58',
+          chainId: 10,
+        },
+        {
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0x0b2c639c533813f4aa9d7837caf62653d097ff85',
+          chainId: 10,
+        },
+        // POLYGON:
+        {
+          title: 'Tether USD',
+          token: TokensEnum.USDT,
+          address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f',
           chainId: 137,
         },
         {
-          title: 'USDT Contract on Sepolia',
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
+          chainId: 137,
+        },
+        // BASE:
+        {
+          title: 'USD Tether',
           token: TokensEnum.USDT,
-          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0',
+          address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
+          chainId: 8453,
+        },
+        {
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+          chainId: 8453,
+        },
+        // ARBITRUM:
+        {
+          title: 'USD Tether',
+          token: TokensEnum.USDT,
+          address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9',
+          chainId: 42161,
+        },
+        {
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+          chainId: 42161,
+        },
+        // SEPOLIA:
+        {
+          title: 'USD Tether',
+          token: TokensEnum.USDT,
+          address: '0xaa8e23fb1079ea71e0a56f48a2aa51851d8433d0',
+          chainId: 11155111,
+        },
+        {
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0xf08a50178dfcde18524640ea6618a1f965821715',
           chainId: 11155111,
         },
         {

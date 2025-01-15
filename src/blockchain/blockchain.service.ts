@@ -28,43 +28,49 @@ export class BlockchainService {
     private readonly walletService: WalletService,
     private readonly prisma: PrismaService,
   ) {
-    this.init().catch((err) =>
-      this.logger.error(
-        'Failed to init providers: ',
-        (err as Error).stack,
-        err as string,
-      ),
+    this.init().catch((ex) =>
+      this.logger.error('General Failure loading chains: ', ex),
     );
   }
 
   async init() {
     for (const chain of await this.walletService.findChains(true)) {
-      this.chainHistory[chain.id] = {
-        provider: new Web3(chain.providerUrl),
-        lastProcessedBlockNumber: chain.lastProcessedBlock,
-        chainId: chain.id,
-        blockProcessRange: BigInt(chain.blockProcessRange),
-        acceptedBlockStatus: chain.acceptedBlockStatus,
-        contracts: chain.contracts,
-      };
+      try {
+        this.chainHistory[chain.id] = {
+          provider: new Web3(chain.providerUrl),
+          lastProcessedBlockNumber: chain.lastProcessedBlock,
+          chainId: chain.id,
+          blockProcessRange: BigInt(chain.blockProcessRange),
+          acceptedBlockStatus: chain.acceptedBlockStatus,
+          contracts: chain.contracts,
+        };
 
-      for (const contract of this.chainHistory[chain.id].contracts) {
-        try {
-          if (contract.decimals == null) {
-            contract.decimals = Number(
-              await this.getContractDecimals(
-                this.chainHistory[chain.id].provider,
-                contract.address,
-              ),
+        for (const contract of this.chainHistory[chain.id].contracts) {
+          try {
+            if (contract.decimals == null) {
+              contract.decimals = Number(
+                await this.getContractDecimals(
+                  this.chainHistory[chain.id].provider,
+                  contract.address,
+                ),
+              );
+              await this.walletService.saveContract(contract);
+            }
+            this.logger.debug(
+              `Successfully setup chain#${chain.id} contract#${contract.token}`,
             );
-            await this.walletService.saveContract(contract);
+          } catch (ex) {
+            this.logger.error(
+              `Error loading TokenContract#${contract.token} data on chain#${chain.id}:`,
+              ex,
+            );
           }
-        } catch (ex) {
-          this.logger.error(
-            `Error loading chain#${chain.id} contract#${contract.token} data`,
-            ex,
-          );
         }
+      } catch (ex) {
+        this.logger.error(
+          `Chain#${chain.id}:${chain.name} General Failure setting up providers: `,
+          ex,
+        );
       }
     }
   }
