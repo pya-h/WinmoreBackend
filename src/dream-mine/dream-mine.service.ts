@@ -134,10 +134,10 @@ export class DreamMineService {
       return ((Math.random() * columns) | 0) + 1;
     }
 
-    let goldIndex: number = 0;
-    while (!goldIndex || goldIndex === exception)
-      goldIndex = ((Math.random() * columns) | 0) + 1;
-    return goldIndex;
+    let col: number = 0;
+    while (!col || col === exception)
+      col = ((Math.random() * columns) | 0) + 1;
+    return col;
   }
 
   getRowCharacteristics(
