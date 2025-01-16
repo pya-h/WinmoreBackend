@@ -83,9 +83,16 @@ export class DreamMineService {
    * @param backedOff: This specifies wether the user has backed off or not. The true value mens user is requesting the stake withdraw in the game.
    * @returns the reward transaction.
    */
-  async finalizeGame(game: DreamMineGame, backedOff: boolean = true) {
+  async finalizeGame(
+    game: DreamMineGame,
+    backedOff: boolean = true,
+    { rule = null }: { rule?: DreamMineRules } = {},
+  ) {
     game.status = backedOff ? GameStatusEnum.WON : GameStatusEnum.FLAWLESS_WIN;
     game.finishedAt = new Date();
+    if (game.nulls.length !== game.rowsCount) {
+      await this.determineRemainingNulls(game, { rule });
+    }
     game = await this.prisma.dreamMineGame.update({
       data: game,
       where: { id: game.id },
@@ -120,6 +127,17 @@ export class DreamMineService {
           'Unfortunately your game is misconfigured! This is a rare issue that needs evaluating, so please contact the support.',
         );
     }
+  }
+
+  getRandomColumn(columns: number, exception?: number) {
+    if (!exception) {
+      return ((Math.random() * columns) | 0) + 1;
+    }
+
+    let goldIndex: number = 0;
+    while (!goldIndex || goldIndex === exception)
+      goldIndex = ((Math.random() * columns) | 0) + 1;
+    return goldIndex;
   }
 
   getRowCharacteristics(
@@ -167,14 +185,11 @@ export class DreamMineService {
     if (playerChance <= probability) {
       if (multiplier) game.stake = game.initialBet * multiplier;
 
-      let goldIndex: number = 0;
-      while (!goldIndex || goldIndex === choice)
-        goldIndex = ((Math.random() * columnsCount) | 0) + 1;
-      game.nulls.push(goldIndex);
+      game.nulls.push(this.getRandomColumn(columnsCount, choice));
 
       game.currentRow++;
       if (game.currentRow === game.rowsCount) {
-        await this.finalizeGame(game, false);
+        await this.finalizeGame(game, false, { rule });
         result = { success: true, ...game };
       } else {
         result = { success: true, ...game };
@@ -183,6 +198,7 @@ export class DreamMineService {
       game.status = GameStatusEnum.LOST;
       game.finishedAt = new Date();
       game.nulls.push(choice);
+      await this.determineRemainingNulls(game, { columnsCount });
       result = { success: false, ...game };
     }
     await this.prisma.dreamMineGame.update({
@@ -262,6 +278,28 @@ export class DreamMineService {
     );
 
     return { easy, medium, hard };
+  }
+
+  async determineRemainingNulls(
+    game: DreamMineGame,
+    {
+      rule = null,
+      columnsCount = null,
+    }: { rule?: DreamMineRules; columnsCount?: number } = {},
+  ) {
+    if (!columnsCount) {
+      if (!rule) {
+        rule = await this.getRulesByRows(game.rowsCount);
+      }
+      columnsCount = this.getRowCharacteristics(rule, game)?.columnsCount;
+      if (!columnsCount)
+        throw new InternalServerErrorException(
+          'Something went wrong while determining remaining route; Game data seems missing!',
+        );
+    }
+    for (let i = game.nulls.length; i < game.rowsCount; i++) {
+      game.nulls.push(this.getRandomColumn(columnsCount)); // TODO: This or .map approach? which one is more efficient.
+    }
   }
 
   async backoffTheGame(user: UserPopulated, gameId: number) {
