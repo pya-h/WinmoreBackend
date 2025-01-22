@@ -158,7 +158,7 @@ export class DreamMineService {
         columnsCount,
         multiplier: rule.multipliers[game.currentRow] * difficultyValue,
         probability:
-          (100 * (rule.probabilities[game.currentRow] || 0)) / difficultyValue,
+          (rule.probabilities[game.currentRow] || 0) / difficultyValue,
       };
     } catch (ex) {
       if (throwOnNoRules) throw ex;
@@ -182,6 +182,7 @@ export class DreamMineService {
     const playerChance = Math.random() * 100.0;
     let result: Record<string, unknown>;
     game.lastChoice = choice;
+
     if (playerChance <= probability) {
       if (multiplier) game.stake = game.initialBet * multiplier;
 
