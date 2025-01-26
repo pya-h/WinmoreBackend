@@ -1,4 +1,9 @@
-import { GameModesEnum, GameStatusEnum, TokensEnum } from '@prisma/client';
+import {
+  DreamMineRules,
+  GameModesEnum,
+  GameStatusEnum,
+  TokensEnum,
+} from '@prisma/client';
 
 export type WinmoreGameTypes = {
   id: number;
@@ -9,6 +14,7 @@ export type WinmoreGameTypes = {
   mode: GameModesEnum;
   status: GameStatusEnum;
   finishedAt: Date;
+  rule: DreamMineRules; // TODO: ADD Plinko rules after its implementation.
 };
 
 export enum ExtraGameStatusEnum {

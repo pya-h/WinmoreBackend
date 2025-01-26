@@ -18,7 +18,7 @@ import {
 } from '@prisma/client';
 import { ChainHistory } from '../blockchain/types/chain-history.type';
 import { WinmoreGameTypes } from '../common/types/game.types';
-import { BUSINESSMAN_ID } from '../configs/constants';
+import { BUSINESSMAN_ID, SHARE_MANAGER_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import { BusinessWalletType, WalletIdentifierType } from './types/wallet.types';
@@ -27,9 +27,10 @@ import { ChainMayContractsPopulated } from './types/chain.types';
 import {
   ExtraTransactionTypesEnum,
   GeneralTransactionTypes,
-} from 'src/wallet/enums/extra-transaction-types.enum';
+} from '../wallet/enums/extra-transaction-types.enum';
 import { TransactionSortModesEnum } from './enums/transaction-sort-modes.enum';
-import { SortOrderEnum } from 'src/common/types/sort-orders.enum';
+import { SortOrderEnum } from '../common/types/sort-orders.enum';
+import { approximate } from '../common/tools';
 
 // ********     MAIN TODOS    *****
 // TODO: add Mint & burn methods
@@ -39,13 +40,15 @@ import { SortOrderEnum } from 'src/common/types/sort-orders.enum';
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
   private mBusinessWallet: BusinessWalletType;
+  private mShareManWallet: BusinessWalletType;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    this.loadBusinessWallet().catch((err) => {
+    this.loadBusinessWallets().catch((err) => {
       this.logger.error(
-        'Can not load app business wallet, this may cause serious problems.',
+        'Could not load app business wallets, this may cause serious problems.',
         err,
       );
     });
@@ -53,7 +56,7 @@ export class WalletService {
 
   get businessWallet() {
     if (!this.mBusinessWallet)
-      this.loadBusinessWallet()
+      this.loadBusinessWallets()
         .then(() =>
           this.logger.warn(
             'Business wallet value was null in runtime, but re-loaded successfully.',
@@ -68,7 +71,24 @@ export class WalletService {
     return this.mBusinessWallet;
   }
 
-  async loadBusinessWallet() {
+  get shareManWallet() {
+    if (!this.mShareManWallet)
+      this.loadBusinessWallets()
+        .then(() =>
+          this.logger.warn(
+            'Shareman wallet was not set at first, but re-loaded successfully.',
+          ),
+        )
+        .catch((err) =>
+          this.logger.error(
+            'Tried to reload business wallet, but failed again!',
+            err,
+          ),
+        );
+    return this.mShareManWallet;
+  }
+
+  async loadBusinessWallets() {
     this.mBusinessWallet = await this.prisma.wallet.findUnique({
       where: { ownerId: BUSINESSMAN_ID },
       include: { owner: true },
@@ -84,7 +104,12 @@ export class WalletService {
       this.logger.error(
         'Business wallet private key not loaded successfully, this means all user withdrawals will encounter error.',
       );
-    this.logger.debug('Business wallet loaded.');
+    this.logger.debug('Admin Business wallet loaded.');
+
+    this.mShareManWallet = await this.prisma.wallet.findUnique({
+      where: { ownerId: SHARE_MANAGER_ID },
+      include: { owner: true },
+    });
   }
 
   async isChainSupported(chainId: number) {
@@ -342,10 +367,30 @@ export class WalletService {
   ) {
     const winnerWallet = await this.getWallet({ ownerId: winnerId }, 'Winner');
 
+    const companyShare = approximate(prize * game.rule.companyShare);
+
+    await this.transact(
+      { id: this.mBusinessWallet.id },
+      { id: this.shareManWallet.id },
+      companyShare,
+      game.token,
+      game.chainId,
+      {
+        remarks: {
+          description: `Win Game Company Share Transaction`,
+          winnerId: winnerWallet.owner.id,
+          winnerName: winnerWallet.owner.name,
+          game,
+          actualPrize: prize,
+          companyShareRatio: game.rule.companyShare,
+        },
+        include,
+      },
+    );
     return this.transact(
       { id: this.mBusinessWallet.id },
       { id: winnerWallet.id },
-      prize,
+      prize - companyShare,
       game.token,
       game.chainId,
       {
@@ -354,6 +399,8 @@ export class WalletService {
           winnerId: winnerWallet.owner.id,
           winnerName: winnerWallet.owner.name,
           game,
+          actualPrize: prize,
+          companyShareRatio: game.rule.companyShare,
         },
         include,
       },

@@ -56,6 +56,10 @@ export class DreamMineService {
         `Winmore doesn't support ${rows} rows game.`,
       );
 
+    if (betAmount > rules.maxBetAmount)
+      throw new BadRequestException(
+        `Bet must not exceed ${rules.maxBetAmount}$ for now!`,
+      );
     const game = await this.prisma.dreamMineGame.create({
       data: {
         userId: user.id,
@@ -90,9 +94,13 @@ export class DreamMineService {
   ) {
     game.status = backedOff ? GameStatusEnum.WON : GameStatusEnum.FLAWLESS_WIN;
     game.finishedAt = new Date();
+
     if (game.nulls.length !== game.rowsCount) {
-      await this.determineRemainingNulls(game, { rule });
+      rule = (await this.determineRemainingNulls(game, { rule })).rule;
+    } else if (!rule) {
+      rule = await this.getRulesByRows(game.rowsCount);
     }
+
     game = await this.prisma.dreamMineGame.update({
       data: game,
       where: { id: game.id },
@@ -100,6 +108,7 @@ export class DreamMineService {
 
     return this.walletService.rewardTheWinner(game.userId, game.stake, {
       ...game,
+      rule,
       name: 'Dream Mine',
     } as WinmoreGameTypes);
   }
@@ -135,8 +144,9 @@ export class DreamMineService {
     }
 
     let col: number = 0;
-    while (!col || col === exception)
+    while (!col || col === exception) {
       col = ((Math.random() * columns) | 0) + 1;
+    }
     return col;
   }
 
@@ -301,6 +311,7 @@ export class DreamMineService {
     for (let i = game.nulls.length; i < game.rowsCount; i++) {
       game.nulls.push(this.getRandomColumn(columnsCount)); // TODO: This or .map approach? which one is more efficient.
     }
+    return { game, rule };
   }
 
   async backoffTheGame(user: UserPopulated, gameId: number) {
