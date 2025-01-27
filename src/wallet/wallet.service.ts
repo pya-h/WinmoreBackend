@@ -31,6 +31,7 @@ import {
 import { TransactionSortModesEnum } from './enums/transaction-sort-modes.enum';
 import { SortOrderEnum } from '../common/types/sort-orders.enum';
 import { approximate } from '../common/tools';
+import * as crypto from 'crypto-js';
 
 // ********     MAIN TODOS    *****
 // TODO: add Mint & burn methods
@@ -88,6 +89,16 @@ export class WalletService {
     return this.mShareManWallet;
   }
 
+  get businessSecret(): string {
+    const privateKeyEnc = this.configService.get<string>(
+        'credentials.privateKey',
+      ),
+      slogan = this.configService.get<string>('general.slogan');
+    if (!privateKeyEnc?.length || slogan?.length)
+      throw new Error('Missing credentials to load admin wallet.');
+    return crypto.AES.decrypt(privateKeyEnc, slogan).toString(crypto.enc.Utf8);
+  }
+
   async loadBusinessWallets() {
     this.mBusinessWallet = await this.prisma.wallet.findUnique({
       where: { ownerId: BUSINESSMAN_ID },
@@ -97,9 +108,9 @@ export class WalletService {
       throw new InternalServerErrorException(
         'Business account mismatch! Checkout database for conflicts on business account.',
       );
-    this.mBusinessWallet.private = this.configService.get<string>(
-      'credentials.privateKey',
-    );
+
+    this.mBusinessWallet.private = this.businessSecret;
+    console.log(this.mBusinessWallet.private);
     if (!this.mBusinessWallet.private)
       this.logger.error(
         'Business wallet private key not loaded successfully, this means all user withdrawals will encounter error.',
