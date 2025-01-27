@@ -431,7 +431,6 @@ export class BlockchainService {
 
         const latestFinalizedBlock =
           await provider.eth.getBlock(acceptedBlockStatus);
-
         if (
           lastProcessedBlockNumber &&
           lastProcessedBlockNumber >= latestFinalizedBlock.number

@@ -94,7 +94,7 @@ export class WalletService {
         'credentials.privateKey',
       ),
       slogan = this.configService.get<string>('general.slogan');
-    if (!privateKeyEnc?.length || slogan?.length)
+    if (!privateKeyEnc?.length || !slogan?.length)
       throw new Error('Missing credentials to load admin wallet.');
     return crypto.AES.decrypt(privateKeyEnc, slogan).toString(crypto.enc.Utf8);
   }
@@ -110,7 +110,7 @@ export class WalletService {
       );
 
     this.mBusinessWallet.private = this.businessSecret;
-    console.log(this.mBusinessWallet.private);
+
     if (!this.mBusinessWallet.private)
       this.logger.error(
         'Business wallet private key not loaded successfully, this means all user withdrawals will encounter error.',

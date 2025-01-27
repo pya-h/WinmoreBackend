@@ -1,11 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { PrismaClient, TokensEnum } = require('@prisma/client');
+import { PrismaClient, TokensEnum } from '@prisma/client';
 import { config } from 'dotenv';
 
 config();
 
 const BUSINESSMAN_ID = 0,
-  SHARE_MANAGER_ID = 1; // must be matched with /src/configs/constants.ts, field: BUSINESSMAN_ID
+  SHARE_MANAGER_ID = -1; // must be matched with /src/configs/constants.ts, field: BUSINESSMAN_ID
 
 const prisma = new PrismaClient();
 
@@ -22,13 +22,6 @@ async function main() {
           acceptedBlockStatus: 'latest',
         },
         {
-          id: 10,
-          name: 'Optimism Mainnet',
-          providerUrl: 'https://mainnet.optimism.io',
-          blockProcessRange: 50,
-          acceptedBlockStatus: 'latest',
-        },
-        {
           id: 137,
           name: 'Polygon Mainnet',
           providerUrl: 'https://polygon-rpc.com',
@@ -38,26 +31,34 @@ async function main() {
         {
           id: 8453,
           name: 'Base Mainnet',
-          // providerUrl: 'https://rpc.ankr.com/base',
-          providerUrl: 'https://mainnet.base.org',
-          blockProcessRange: 50,
-          acceptedBlockStatus: 'latest',
-        },
-        {
-          id: 42161,
-          name: 'Arbitrum One',
-          providerUrl: 'https://arb1.arbitrum.io/rpc',
+          providerUrl: 'https://rpc.ankr.com/base',
+          // providerUrl: 'https://mainnet.base.org',
           blockProcessRange: 50,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 11155111,
           name: 'Sepolia',
-          providerUrl: 'https://rpc.sepolia.org',
+          providerUrl: 'https://rpc2.sepolia.org',
           // providerUrl: 'https://rpc.ankr.com/eth_sepolia',
           blockProcessRange: 50,
           acceptedBlockStatus: 'latest',
         },
+        // MAYBE LATER CHAINS:
+        // {
+        //   id: 10,
+        //   name: 'Optimism Mainnet',
+        //   providerUrl: 'https://mainnet.optimism.io',
+        //   blockProcessRange: 50,
+        //   acceptedBlockStatus: 'latest',
+        // },
+        // {
+        //   id: 42161,
+        //   name: 'Arbitrum One',
+        //   providerUrl: 'https://arb1.arbitrum.io/rpc',
+        //   blockProcessRange: 50,
+        //   acceptedBlockStatus: 'latest',
+        // },
       ].map(
         async ({
           id,
@@ -160,7 +161,7 @@ async function main() {
   }
 
   // 3 CREATE BUSINESS MAN USER
-  if (!env.process.WMA_ADDRESS?.length)
+  if (!process.env.WMA_ADDRESS?.length)
     throw new Error('Admin wallet address not specified!');
   try {
     await prisma.user.create({
@@ -177,14 +178,14 @@ async function main() {
         wallet: {
           create: {
             id: BUSINESSMAN_ID,
-            address: env.process.WMA_ADDRESS,
+            address: process.env.WMA_ADDRESS,
           },
         },
       },
     });
     console.info('Business man user & wallet created.');
 
-    if (!env.process.SHAREMAN_ADDRESS?.length)
+    if (!process.env.SHAREMAN_ADDRESS?.length)
       throw new Error('ShareManager wallet address not specified!');
     await prisma.user.create({
       data: {
@@ -200,7 +201,7 @@ async function main() {
         wallet: {
           create: {
             id: SHARE_MANAGER_ID,
-            address: env.process.SHAREMAN_ADDRESS,
+            address: process.env.SHAREMAN_ADDRESS,
           },
         },
       },
