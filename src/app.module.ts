@@ -13,6 +13,7 @@ import authConfigs from './configs/auth';
 import credentialsConfigs from './configs/credentials';
 import { ScheduleModule } from '@nestjs/schedule';
 import { GamesModule } from './games/games.module';
+import { PlinkoModule } from './plinko/plinko.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { GamesModule } from './games/games.module';
     BlockchainModule,
     ScheduleModule.forRoot(),
     GamesModule,
+    PlinkoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

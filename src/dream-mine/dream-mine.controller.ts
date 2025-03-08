@@ -11,7 +11,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../user/decorators/current-user.decorator';
 import { UserPopulated } from '../user/types/user-populated.type';
-import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
+import { CommonGamePreferencesDto } from '../games/dtos/game-preferences.dto';
 import { DreamMineService } from './dream-mine.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { DoMineDto } from './dtos/do-mine.dto';
@@ -64,7 +64,7 @@ export class DreamMineController {
   @Post('bet')
   startNewGame(
     @CurrentUser() user: UserPopulated,
-    @Body() gamePreferences: DreamMineGamePreferencesDto,
+    @Body() gamePreferences: CommonGamePreferencesDto,
   ) {
     return this.dreamMineService.newGame(user, gamePreferences);
   }

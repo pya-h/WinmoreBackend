@@ -9,7 +9,7 @@ import {
   IsPositive,
 } from 'class-validator';
 
-export class DreamMineGamePreferencesDto {
+export class CommonGamePreferencesDto {
   @ApiProperty({ description: 'Initial Bet Amount', required: true })
   @IsNotEmpty({ message: 'Bet amount must be specified.' })
   @IsNumber()
@@ -54,7 +54,7 @@ export class DreamMineGamePreferencesDto {
   mode: GameModesEnum;
 
   @ApiProperty({
-    description: 'Number of rows that could be mined.',
+    description: 'Number of rows.',
     required: false,
   })
   @IsOptional()

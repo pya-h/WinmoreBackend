@@ -15,7 +15,7 @@ import {
   GameStatusEnum,
   TransactionStatusEnum,
 } from '@prisma/client';
-import { DreamMineGamePreferencesDto } from './dtos/game-preferences.dto';
+import { CommonGamePreferencesDto } from '../games/dtos/game-preferences.dto';
 import { WalletService } from '../wallet/wallet.service';
 import { UserPopulated } from '../user/types/user-populated.type';
 import {
@@ -37,7 +37,7 @@ export class DreamMineService {
 
   async newGame(
     user: UserPopulated,
-    { betAmount, token, chainId, mode, rows }: DreamMineGamePreferencesDto,
+    { betAmount, token, chainId, mode, rows }: CommonGamePreferencesDto,
   ) {
     const placeBetTrx = await this.walletService.placeBet(
       user,
