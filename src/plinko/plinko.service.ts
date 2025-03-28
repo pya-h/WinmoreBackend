@@ -39,12 +39,12 @@ export class PlinkoService {
       chainId,
       mode,
       rows,
-      numberOfBalls,
+      ballsCount,
     }: PlinkoGamePreferences,
   ) {
     const placeBetTrx = await this.walletService.placeBet(
       user,
-      betAmount * numberOfBalls,
+      betAmount * ballsCount,
       token,
       chainId,
     );
@@ -72,8 +72,7 @@ export class PlinkoService {
         mode,
         rowsCount: rows,
         status: PlinkoGameStatus.NOT_DROPPED_YET,
-        numberOfBalls,
-        hitMultipliers: [],
+        ballsCount,
       },
     });
 
@@ -98,7 +97,7 @@ export class PlinkoService {
       where: { id: game.id },
     });
 
-    return this.walletService.rewardTheWinner(game.userId, game.amountWon, {
+    return this.walletService.rewardTheWinner(game.userId, game.prize, {
       ...game, // TODO: Modify this maybe
       rule,
       name: 'Plinko',
@@ -200,7 +199,7 @@ export class PlinkoService {
     if (filter && filter.status !== ExtraGameStatusEnum.ALL) {
       switch (filter?.status) {
         case ExtraGameStatusEnum.GAINED:
-          // TODO: Games with amountWon > initialBet
+          // TODO: Games with prize > initialBet
           break;
         default:
           filters.status = filter.status;

@@ -12,5 +12,5 @@ export class PlinkoGamePreferences extends CommonGamePreferencesDto {
   @IsPositive({
     message: 'Number of balls dropping; Bet amount will be multiplied by this!',
   })
-  numberOfBalls?: number;
+  ballsCount?: number;
 }

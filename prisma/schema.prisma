@@ -68,7 +68,8 @@ model User {
   wallet           Wallet?
   profile          UserProfile?
   dreamMineRecords DreamMineGame[]
-  PlinkoGame       PlinkoGame[]
+  plinkoGames      PlinkoGame[]
+  plinkoBalls      PlinkoBalls[]
 }
 
 model UserProfile {
@@ -109,7 +110,7 @@ model Chain {
   contracts      Contract[]
   blocks         Block[]
   logs           BlockchainLog[]
-  PlinkoGame     PlinkoGame[]
+  plinkoGames    PlinkoGame[]
 }
 
 model Contract {
@@ -194,17 +195,31 @@ model PlinkoGame {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  initialBet     Float
-  token          TokensEnum       @default(USDC)
-  chainId        Int
-  chain          Chain            @relation(fields: [chainId], references: [id])
-  mode           GameModesEnum    @default(EASY)
-  rowsCount      Int              @default(8)
-  numberOfBalls  Int              @default(1)
-  hitMultipliers Float[]
-  amountWon      Float            @default(0.0)
-  status         PlinkoGameStatus @default(NOT_DROPPED_YET)
-  finishedAt     DateTime?
+  initialBet  Float
+  token       TokensEnum       @default(USDC)
+  chainId     Int
+  chain       Chain            @relation(fields: [chainId], references: [id])
+  ballsCount  Int              @default(1)
+  mode        GameModesEnum    @default(EASY)
+  rowsCount   Int              @default(8)
+  prize       Float            @default(0.0)
+  status      PlinkoGameStatus @default(NOT_DROPPED_YET)
+  finishedAt  DateTime?
+  plinkoBalls PlinkoBalls[]
+}
+
+model PlinkoBalls {
+  id        Int      @id @default(autoincrement()) // TODO: What to do with id type? Int or BigInt?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game             PlinkoGame @relation(fields: [gameId], references: [id])
+  gameId           Int
+  User             User       @relation(fields: [userId], references: [id])
+  userId           Int
+  bucketIndex      Int
+  scoredMultiplier Float
+  dropSpecs        Json
 }
 
 model PlinkoRules {
@@ -219,9 +234,11 @@ model PlinkoRules {
   minBetAmount          Float?
   maxBetAmount          Float?
   companyShare          Float
-  ballDropSpeed         Float
+  verticalSpeedFactor   Float
+  horizontalSpeedFactor Float
   gravity               Float
   friction              Float
+  // TODO: Add board width and height too? considering that can be approximately be calculated based on .rows
 }
 
 model Block {
