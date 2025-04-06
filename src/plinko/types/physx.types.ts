@@ -7,6 +7,10 @@ export type PlinkoBallType = {
   rapidImpacts?: number[];
 };
 
+export type DeterministicPlinkoBallType = PlinkoBallType & {
+  bucketIndex: number;
+};
+
 export type InitialBallStateType = {
   radius: number;
   y0: number;

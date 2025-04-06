@@ -215,7 +215,7 @@ model PlinkoBalls {
 
   game             PlinkoGame @relation(fields: [gameId], references: [id])
   gameId           Int
-  User             User       @relation(fields: [userId], references: [id])
+  user             User       @relation(fields: [userId], references: [id])
   userId           Int
   bucketIndex      Int
   scoredMultiplier Float

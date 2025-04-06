@@ -396,6 +396,7 @@ export class DreamMineService {
 
     const rules = await this.getRulesMapped();
     return games.map((game) => {
+      // FIXME: Transfer this logic to frontend
       const { multiplier } =
         this.getRowCharacteristics(rules[game.rowsCount], game, false) || {};
 

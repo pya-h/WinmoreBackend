@@ -3,6 +3,7 @@ import { PlinkoRules } from '@prisma/client';
 import {
   BucketsDataType,
   BucketSpecsType,
+  DeterministicPlinkoBallType,
   InitialBallStateType,
   PegCoordinationsType,
   PegsDataType,
@@ -11,12 +12,12 @@ import {
 
 @Injectable()
 export class PlinkoPhysxService {
-  static readonly boardOffsets = {
+  public static readonly boardOffsets = {
     width: 600,
     height: 200,
   };
 
-  static readonly bucketSpecs: BucketSpecsType = {
+  public static readonly bucketSpecs: BucketSpecsType = {
     width: 60,
     height: 80,
     widthThreshold: 5,
@@ -173,7 +174,7 @@ export class PlinkoPhysxService {
     targetBucketIndex: number,
     { y0, v0 = null, radius }: InitialBallStateType,
     dx: number = 5,
-  ) {
+  ): DeterministicPlinkoBallType {
     const board = this.getBoardSpecs(gameRule.rows);
     const startTime = Date.now();
     const correctos = [];
@@ -207,6 +208,7 @@ export class PlinkoPhysxService {
       ...v0,
       radius,
       rapidImpacts: [],
+      bucketIndex: targetBucketIndex,
     };
   }
 }
