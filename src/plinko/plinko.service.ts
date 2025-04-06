@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   MethodNotAllowedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  GameModesEnum,
   PlinkoGame,
   PlinkoGameStatus,
   PlinkoRules,
@@ -83,10 +85,52 @@ export class PlinkoService {
     return game;
   }
 
-  async finalizeGame(
-    game: PlinkoGame,
-    { rule = null }: { rule?: PlinkoRules } = {},
+  matchDifficultyWithMultiplier(
+    mode: GameModesEnum,
+    difficultyMultipliers: number[],
   ) {
+    switch (mode) {
+      case GameModesEnum.EASY:
+        return 1;
+      case GameModesEnum.HARD:
+        return difficultyMultipliers[difficultyMultipliers.length - 1] || 1;
+      case GameModesEnum.MEDIUM:
+        return difficultyMultipliers[0] || 1;
+      default:
+        throw new ConflictException(
+          'Unfortunately your game is misconfigured! This is a rare issue that needs evaluating, so please contact the support.',
+        );
+    }
+  }
+
+  getActualMultipliersAndPossibilities(
+    rule: PlinkoRules,
+    gameMode: GameModesEnum,
+  ) {
+    const difficulty = this.matchDifficultyWithMultiplier(
+      gameMode,
+      rule.difficultyMultipliers,
+    );
+
+    return {
+      multipliers: rule.multipliers.map((x) => difficulty * x),
+      possibilities: rule.probabilities.map((x) => x / difficulty),
+    };
+  }
+
+  async finalizeGame(user: UserPopulated, gameId: number) {
+    let game = await this.prisma.plinkoGame.findUnique({
+      where: { id: gameId },
+    });
+    if (user.id !== game.userId)
+      throw new ForbiddenException(
+        'Not allowed to play this game since its not yours!',
+      );
+
+    const rule = await this.getRulesByRows(game.rowsCount);
+    const { multipliers, possibilities } =
+      this.getActualMultipliersAndPossibilities(rule, game.mode);
+
     game.status = PlinkoGameStatus.FINISHED;
     game.finishedAt = new Date();
 
