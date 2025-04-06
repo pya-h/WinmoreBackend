@@ -1,5 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PlinkoRules } from '@prisma/client';
+import {
+  BucketsDataType,
+  BucketSpecsType,
+  InitialBallStateType,
+  PegCoordinationsType,
+  PegsDataType,
+  PlinkoBallType,
+} from './types/physx.types';
 
 @Injectable()
 export class PlinkoPhysxService {
@@ -8,10 +16,11 @@ export class PlinkoPhysxService {
     height: 200,
   };
 
-  static readonly bucketSpecs = {
+  static readonly bucketSpecs: BucketSpecsType = {
     width: 60,
     height: 80,
     widthThreshold: 5,
+    heightThreshold: 30,
     cornerRadius: 10,
     topRatio: 1.1,
     bottomRatio: 0.7,
@@ -30,7 +39,7 @@ export class PlinkoPhysxService {
     radius: number = 9,
     spacing: number = 50,
     firstRowY: number = 100,
-  ) {
+  ): PegsDataType {
     const pegs: { x: number; y: number; radius: number }[] = [];
     const halfBoardWidth = this.getBoardSpecs(rows).width / 2,
       halfRows = rows / 2;
@@ -57,32 +66,31 @@ export class PlinkoPhysxService {
   }
 
   getBuckets(
-    rows: number,
+    rule: PlinkoRules,
     xOffset: number,
     yOffset: number,
     specs = PlinkoPhysxService.bucketSpecs,
-  ) {
+  ): BucketsDataType {
     return {
-      coords: Array.from({ length: rows - 1 }) // TODO: may not be accurate for some rows count
-        .fill(0)
-        .map((_, index) => {
-          const topWidth = specs.width * specs.topRatio;
-          const bottomWidth = specs.width * specs.bottomRatio;
-          const x =
-            index * (specs.width + specs.widthThreshold * 1.5) +
-            xOffset +
-            specs.widthThreshold * 4;
-          const y = yOffset + 20;
-          return {
-            x,
-            y,
-            topLeftX: x - topWidth / 2,
-            topRightX: x + topWidth / 2,
-            bottomLeftX: x - bottomWidth / 2,
-            bottomRightX: x + bottomWidth / 2,
-            bottomY: y + specs.height,
-          };
-        }),
+      coords: rule.multipliers.map((multiplier, index) => {
+        const topWidth = specs.width * specs.topRatio;
+        const bottomWidth = specs.width * specs.bottomRatio;
+        const x =
+          index * (specs.width + specs.widthThreshold * 1.5) +
+          xOffset +
+          specs.widthThreshold * 4;
+        const y = yOffset + 20;
+        return {
+          x,
+          y,
+          topLeftX: x - topWidth / 2,
+          topRightX: x + topWidth / 2,
+          bottomLeftX: x - bottomWidth / 2,
+          bottomRightX: x + bottomWidth / 2,
+          bottomY: y + specs.height,
+          multiplier,
+        };
+      }),
       specs,
     };
   }
@@ -90,21 +98,15 @@ export class PlinkoPhysxService {
   // FIXME: revise types
   simulateDropping(
     gameRule: PlinkoRules,
-    buckets: Record<string, number>[],
-    pegs: Record<string, number>[],
-    ball: {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      radius: number;
-      rapidImpacts?: number[];
-    },
-    bucketYThreshold: number,
-    bucketWidthThreshold: number, // TODO: Combine bucketsSpecs and buckets as one, after defining and revising types
+    { coords: bucketCoords, specs: bucketSpecs }: BucketsDataType,
+    pegs: PegCoordinationsType[],
+    ball: PlinkoBallType,
+    timeout: number = 5000, // in mili-seconds
   ) {
-    // TODO: maybe add a safety break for loop? (e.g. break if took more than 1,2,? sec)
-    while (true) {
+    const startedAt = Date.now(),
+      destinationY = bucketCoords[0].y + bucketSpecs.heightThreshold;
+
+    while (Date.now() - startedAt <= timeout) {
       ball.vy += gameRule.gravity;
       ball.vy *= gameRule.friction;
       ball.vx *= gameRule.friction;
@@ -135,96 +137,75 @@ export class PlinkoPhysxService {
         }
       });
 
-      if (ball.y >= buckets[0].y + bucketYThreshold) {
+      if (ball.y >= destinationY) {
         // Find the closest bucket
-        let bucketInContactIndex = -1;
-
         if (
-          ball.x >= buckets[0].topLeftX - bucketWidthThreshold &&
-          ball.x <= buckets[buckets.length - 1].topRightX + bucketWidthThreshold
+          ball.x >= bucketCoords[0].topLeftX - bucketSpecs.widthThreshold &&
+          ball.x <=
+            bucketCoords[bucketCoords.length - 1].topRightX +
+              bucketSpecs.widthThreshold
         ) {
-          for (let i = 0; i < buckets.length - 1; i++) {
+          for (let i = 0; i < bucketCoords.length - 1; i++) {
             if (
-              ball.x >= buckets[i].topLeftX &&
-              ball.x < buckets[i + 1].topLeftX
+              ball.x >= bucketCoords[i].topLeftX &&
+              ball.x < bucketCoords[i + 1].topLeftX
             ) {
-              bucketInContactIndex = i;
-              break;
+              return i;
             }
           }
-          if (bucketInContactIndex === -1) {
-            // ball fell into the first or last bucket threshold
-            bucketInContactIndex =
-              ball.x >= buckets[buckets.length - 1].topLeftX &&
-              ball.x <=
-                buckets[buckets.length - 1].topRightX + bucketWidthThreshold
-                ? buckets.length - 1
-                : 0;
-          }
-          if (bucketInContactIndex !== -1) {
-            ball.x = buckets[bucketInContactIndex].x;
-            ball.y =
-              buckets[bucketInContactIndex].bottomY - bucketWidthThreshold;
-            ball.vx = 0;
-            ball.vy = 0;
-          }
+          return ball.x >= bucketCoords[bucketCoords.length - 1].topLeftX &&
+            ball.x <=
+              bucketCoords[bucketCoords.length - 1].topRightX +
+                bucketSpecs.widthThreshold
+            ? bucketCoords.length - 1
+            : 0;
         }
-        return bucketInContactIndex;
+        return -1;
       }
     }
+    return -1;
   }
 
-  // FIXME: revise types
   findDroppingBall(
     gameRule: PlinkoRules,
-    buckets: Record<string, number>[],
-    pegs: Record<string, number>[],
+    buckets: BucketsDataType,
+    pegs: PegsDataType,
     targetBucketIndex: number,
-    dropY: number,
-    ballRadius: number,
-    v0?: { vx: number; vy: number },
-    bucketSpecs = PlinkoPhysxService.bucketSpecs,
+    { y0, v0 = null, radius }: InitialBallStateType,
     dx: number = 5,
   ) {
     const board = this.getBoardSpecs(gameRule.rows);
     const startTime = Date.now();
-    const correctXs = [];
-    let bucketIndex = -1;
-    let dropX = 95; // FIXME: After defining types, revise this => pegs.borders.leftX
+    const correctos = [];
+
     if (!v0) {
       v0 = {
         vx: Math.random() * 6 - 3,
-        vy: 0,
+        vy: 0, // TODO: test it with random too
       };
     }
-    while (dropX <= board.width) {
-      dropX += dx;
-      bucketIndex = this.simulateDropping(
-        gameRule,
-        buckets,
-        pegs,
-        {
-          x: dropX,
-          y: dropY,
+
+    for (let x0 = pegs.borders.leftX - dx; x0 <= board.width; x0 += dx) {
+      if (
+        this.simulateDropping(gameRule, buckets, pegs.coords, {
+          x: x0,
+          y: y0,
           ...v0,
-          radius: ballRadius,
+          radius,
           rapidImpacts: [],
-        },
-        bucketSpecs.height / 2, // TODO: Combine bucketsSpecs and buckets as one, after defining and revising types
-        bucketSpecs.widthThreshold,
-      );
-      if (bucketIndex === targetBucketIndex) {
-        correctXs.push(dropX);
+        }) === targetBucketIndex
+      ) {
+        correctos.push(x0);
       }
     }
 
     console.log('Simulation took', (Date.now() - startTime) / 1000, 'sec');
-    console.log(`found ${correctXs.length} results.`);
+    console.log(`found ${correctos.length} results.`);
     return {
-      x: correctXs[(Math.random() * correctXs.length) | 0],
-      y: dropY,
+      x: correctos[(Math.random() * correctos.length) | 0],
+      y: y0,
       ...v0,
-      radius: ballRadius,
+      radius,
       rapidImpacts: [],
     };
   }
