@@ -238,7 +238,6 @@ model PlinkoRules {
   horizontalSpeedFactor Float
   gravity               Float
   friction              Float
-  // TODO: Add board width and height too? considering that can be approximately be calculated based on .rows
 }
 
 model Block {

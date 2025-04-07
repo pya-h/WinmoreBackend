@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PlinkoRules } from '@prisma/client';
 import {
+  BoxBordersType,
   BucketsDataType,
   BucketSpecsType,
   DeterministicPlinkoBallType,
@@ -40,13 +41,14 @@ export class PlinkoPhysxService {
     radius: number = 9,
     spacing: number = 50,
     firstRowY: number = 100,
+    firstRowPegsCount: number = 3,
   ): PegsDataType {
     const pegs: { x: number; y: number; radius: number }[] = [];
     const halfBoardWidth = this.getBoardSpecs(rows).width / 2,
       halfRows = rows / 2;
     let leastLeft = Infinity;
     for (let row = 0; row < rows; row++) {
-      for (let i = 0; i <= row + 2; i++) {
+      for (let i = 0; i < row + firstRowPegsCount; i++) {
         const x = halfBoardWidth + (i - halfRows) * spacing - bucketWidth;
         if (x < leastLeft) {
           leastLeft = x;
@@ -68,8 +70,7 @@ export class PlinkoPhysxService {
 
   getBuckets(
     rule: PlinkoRules,
-    xOffset: number,
-    yOffset: number,
+    offsetBox: BoxBordersType,
     specs = PlinkoPhysxService.bucketSpecs,
   ): BucketsDataType {
     return {
@@ -78,9 +79,9 @@ export class PlinkoPhysxService {
         const bottomWidth = specs.width * specs.bottomRatio;
         const x =
           index * (specs.width + specs.widthThreshold * 1.5) +
-          xOffset +
+          offsetBox.leftX +
           specs.widthThreshold * 4;
-        const y = yOffset + 20;
+        const y = offsetBox.bottomY + 20;
         return {
           x,
           y,
@@ -96,13 +97,12 @@ export class PlinkoPhysxService {
     };
   }
 
-  // FIXME: revise types
   simulateDropping(
     gameRule: PlinkoRules,
     { coords: bucketCoords, specs: bucketSpecs }: BucketsDataType,
     pegs: PegCoordinationsType[],
     ball: PlinkoBallType,
-    timeout: number = 5000, // in mili-seconds
+    timeout: number = 5000, // in milliseconds
   ) {
     const startedAt = Date.now(),
       destinationY = bucketCoords[0].y + bucketSpecs.heightThreshold;

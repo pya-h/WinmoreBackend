@@ -37,7 +37,7 @@ export class GamesController {
   @Get('ongoing')
   async getUsersOngoingGame(@Query() paginationOptions?: PaginationOptionsDto) {
     return (
-      await this.dreamMineService.getAllOngoingGames(paginationOptions, {
+      await this.dreamMineService.getOngoingGames(paginationOptions, {
         user: {
           select: {
             name: true,

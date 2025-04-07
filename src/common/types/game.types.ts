@@ -27,3 +27,5 @@ export enum ExtraGameStatusEnum {
 }
 
 export type GeneralGameStatus = GameStatusEnum | ExtraGameStatusEnum;
+
+export type GeneralPlinkoGameStatus = PlinkoGameStatus | ExtraGameStatusEnum;

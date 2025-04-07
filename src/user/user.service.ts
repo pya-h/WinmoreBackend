@@ -190,7 +190,7 @@ export class UserService {
   }
 
   async getMyOngoingGames(userId: number) {
-    const dreamMine = await this.dreamMineService.getOnesOngoingGame(userId);
+    const dreamMine = await this.dreamMineService.getOnesLatestOngoingGame(userId);
 
     return { dreamMine };
   }

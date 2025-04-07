@@ -22,13 +22,16 @@ import {
   WinmoreGameTypes,
   ExtraGameStatusEnum,
 } from '../common/types/game.types';
-import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
 import { SortModeEnum } from '../games/types/sort-enum.dto';
 import { PaginationOptionsDto } from '../common/dtos/pagination-options.dto';
 import { SortOrderEnum } from '../common/types/sort-orders.enum';
-import { approximate } from 'src/common/tools';
+import { approximate } from '../common/tools';
 import { PlinkoPhysxService } from './physx.service';
-import { DeterministicPlinkoBallType } from './types/physx.types';
+import {
+  DeterministicPlinkoBallType,
+  PlinkoBallType,
+} from './types/physx.types';
+import { PlinkoGameStatusFilterQuery } from './dtos/plinko-game-status-filter-query.dto';
 
 @Injectable()
 export class PlinkoService {
@@ -136,14 +139,10 @@ export class PlinkoService {
         rule.rows,
         PlinkoPhysxService.bucketSpecs.width,
       ),
-      buckets = this.plinkoPhysxService.getBuckets(
-        rule,
-        pegs.borders.leftX,
-        pegs.borders.bottomY,
-        PlinkoPhysxService.bucketSpecs,
-      );
+      buckets = this.plinkoPhysxService.getBuckets(rule, pegs.borders);
 
     for (let i = 0; i < game.ballsCount; i++) {
+      // TODO/Decide: This way no game will remain undetermined; But we could implement this to determine on user drop click too
       const userChance = approximate(Math.random() * 100, 'ceil', 0);
       let targetBucket = (multipliers.length / 2) | 0;
       for (let i = 0; i < possibilities.length; i++) {
@@ -232,7 +231,10 @@ export class PlinkoService {
       data: game,
     });
 
-    return this.finalizeGame(game, rule);
+    return (await this.finalizeGame(game, rule)).map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      ({ bucketIndex, ...ball }) => ball as PlinkoBallType,
+    );
   }
 
   async getRules() {
@@ -264,7 +266,6 @@ export class PlinkoService {
     if (!difficultyMultipliers?.length) {
       return { easy: multipliers };
     }
-    // TODO: Check this out for conflicts
     if (difficultyMultipliers.length === 1) {
       const [easy, hard] = [1, difficultyMultipliers[0]].map(
         (diffCoef: number) =>
@@ -289,10 +290,9 @@ export class PlinkoService {
     include = {},
   }: {
     userId?: number;
-    filter?: GameStatusFilterQuery;
+    filter?: PlinkoGameStatusFilterQuery;
     include?: Record<string, object>;
   }) {
-    // TODO: Check this out for conflicts
     const sortParams: Record<string, Record<string, string> | number> = {};
     switch (filter?.sort) {
       case SortModeEnum.LUCKY:
@@ -301,7 +301,7 @@ export class PlinkoService {
             "Lucky-bets sort doesn't accept any status filter",
           );
         sortParams.orderBy = {
-          stake: (filter?.order || SortOrderEnum.DESC).toString(),
+          prize: (filter?.order || SortOrderEnum.DESC).toString(),
         };
         break;
     }
@@ -350,23 +350,49 @@ export class PlinkoService {
     });
   }
 
-  getOnesOngoingGame(userId: number) {
+  getOnesLatestOngoingGame(userId: number) {
     return this.prisma.plinkoGame.findFirst({
-      where: { userId, status: PlinkoGameStatus.DROPPING },
+      where: { userId, status: { not: PlinkoGameStatus.FINISHED } },
       orderBy: { createdAt: 'desc' },
+      include: {
+        plinkoBalls: {
+          select: { dropSpecs: true, id: true },
+        },
+      },
     });
   }
 
-  getAllOngoingGames(
+  getOngoingGames(
     { take, skip }: PaginationOptionsDto,
-    include?: Record<string, object>,
+    include?: Record<string, object | boolean>,
   ) {
     return this.prisma.plinkoGame.findMany({
-      where: { status: PlinkoGameStatus.DROPPING },
+      where: { status: { not: PlinkoGameStatus.FINISHED } },
       orderBy: { createdAt: 'desc' },
       ...(take ? { take } : {}),
       ...(skip != null ? { skip } : {}),
       ...(include ? { include } : {}),
+    });
+  }
+
+  async getRulesAndBoard() {
+    return (await this.getRules()).map((rule) => {
+      const pegs = this.plinkoPhysxService.getPegs(
+        rule.rows,
+        PlinkoPhysxService.bucketSpecs.width,
+      );
+      return {
+        rows: rule.rows,
+        multipliers: this.populateMultipliers(
+          rule.multipliers,
+          rule.difficultyMultipliers,
+        ),
+        minBetAmount: rule.minBetAmount,
+        maxBetAmount: rule.maxBetAmount,
+        board: this.plinkoPhysxService.getBoardSpecs(rule.rows),
+        pegs,
+        buckets: this.plinkoPhysxService.getBuckets(rule, pegs.borders),
+      };
     });
   }
 }

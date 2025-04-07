@@ -410,14 +410,14 @@ export class DreamMineService {
     });
   }
 
-  getOnesOngoingGame(userId: number) {
+  getOnesLatestOngoingGame(userId: number) {
     return this.prisma.dreamMineGame.findFirst({
       where: { userId, status: GameStatusEnum.ONGOING },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  getAllOngoingGames(
+  getOngoingGames(
     { take, skip }: PaginationOptionsDto,
     include?: Record<string, object>,
   ) {
