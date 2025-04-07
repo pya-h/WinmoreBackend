@@ -1,9 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional } from 'class-validator';
-import {
-  ExtraGameStatusEnum,
-  GeneralGameStatus,
-} from '../../common/types/game.types';
+import { ExtraGameStatusEnum, GeneralGameStatus } from '../types/game.types';
 import { GameStatusEnum } from '@prisma/client';
 import { SortModeEnum } from '../types/sort-enum.dto';
 import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';

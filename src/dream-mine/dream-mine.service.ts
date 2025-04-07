@@ -21,7 +21,7 @@ import { UserPopulated } from '../user/types/user-populated.type';
 import {
   WinmoreGameTypes,
   ExtraGameStatusEnum,
-} from '../common/types/game.types';
+} from '../games/types/game.types';
 import { DM_COLUMNS_COUNT } from '../configs/constants';
 import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
 import { SortModeEnum } from '../games/types/sort-enum.dto';
@@ -363,7 +363,7 @@ export class DreamMineService {
 
     const filters: Record<string, object | string | number> = {};
 
-    if (filter && filter.status !== ExtraGameStatusEnum.ALL) {
+    if (filter?.status && filter.status !== ExtraGameStatusEnum.ALL) {
       switch (filter?.status) {
         case ExtraGameStatusEnum.FINISHED:
           filters.status = {

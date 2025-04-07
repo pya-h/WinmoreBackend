@@ -43,6 +43,18 @@ export class DreamMineController {
   }
 
   @ApiOperation({
+    description: "Returns the list of user's dream mine games.",
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('my-history')
+  getMyDreamMines(
+    @CurrentUser() user: UserPopulated,
+    @Query() filter?: GameStatusFilterQuery,
+  ) {
+    return this.dreamMineService.findGames({ userId: user.id, filter });
+  }
+
+  @ApiOperation({
     description: 'Returns the list of all ongoing games by all users.',
   })
   @Get('ongoing')

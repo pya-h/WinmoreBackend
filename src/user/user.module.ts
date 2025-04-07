@@ -4,10 +4,9 @@ import { UserController } from './user.controller';
 import { WalletModule } from '../wallet/wallet.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { BlockchainModule } from '../blockchain/blockchain.module';
-import { DreamMineModule } from '../dream-mine/dream-mine.module';
 
 @Module({
-  imports: [WalletModule, PrismaModule, BlockchainModule, DreamMineModule],
+  imports: [WalletModule, PrismaModule, BlockchainModule],
   providers: [UserService],
   controllers: [UserController],
   exports: [UserService],

@@ -19,7 +19,6 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
-import { GameStatusFilterQuery } from 'src/games/dtos/game-status-filter.query';
 import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
 
 @ApiTags('User')
@@ -122,39 +121,6 @@ export class UserController {
   ) {
     // TODO: discuss the verification method & implementation
     return this.userService.requestWithdrawal(user, updateUserData);
-  }
-
-  @ApiOperation({
-    description: "Returns user's ongoing games in both games.",
-  })
-  @UseGuards(JwtAuthGuard)
-  @Get('is-playing')
-  async getUsersOngoingGame(@CurrentUser() user: UserPopulated) {
-    return this.userService.getMyOngoingGames(user.id);
-  }
-
-  @ApiOperation({
-    description: "Returns the list of user's all games.",
-  })
-  @UseGuards(JwtAuthGuard)
-  @Get('games')
-  getMyAllGames(
-    @CurrentUser() user: UserPopulated,
-    @Query() filter?: GameStatusFilterQuery,
-  ) {
-    return this.userService.getMyDreamMineGames(user.id, filter); // FIXME: For now there is only dream mine game; This should change after adding the second game, and must use the GamesService
-  }
-
-  @ApiOperation({
-    description: "Returns the list of user's dream mine games.",
-  })
-  @UseGuards(JwtAuthGuard)
-  @Get('games/dream-mine')
-  getMyDreamMines(
-    @CurrentUser() user: UserPopulated,
-    @Query() filter?: GameStatusFilterQuery,
-  ) {
-    return this.userService.getMyDreamMineGames(user.id, filter);
   }
 
   // TODO: Implement the serialize user data INTERCEPTOR.

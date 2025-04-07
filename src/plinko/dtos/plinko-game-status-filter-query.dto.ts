@@ -3,7 +3,7 @@ import { IsIn, IsOptional } from 'class-validator';
 import { GameStatusFilterQuery } from '../../games/dtos/game-status-filter.query';
 import { GeneralPlinkoGameStatus } from '../types/general-plinko-status.type';
 import { PlinkoGameStatus } from '@prisma/client';
-import { ExtraGameStatusEnum } from '../../common/types/game.types';
+import { ExtraGameStatusEnum } from '../../games/types/game.types';
 
 const supportedGameStatusOptions = [
   ...Object.values(PlinkoGameStatus),

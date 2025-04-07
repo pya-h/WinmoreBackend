@@ -21,7 +21,7 @@ import { UserPopulated } from '../user/types/user-populated.type';
 import {
   WinmoreGameTypes,
   ExtraGameStatusEnum,
-} from '../common/types/game.types';
+} from '../games/types/game.types';
 import { SortModeEnum } from '../games/types/sort-enum.dto';
 import { PaginationOptionsDto } from '../common/dtos/pagination-options.dto';
 import { SortOrderEnum } from '../common/types/sort-orders.enum';
@@ -316,7 +316,7 @@ export class PlinkoService {
 
     const filters: Record<string, object | string | number> = {};
 
-    if (filter && filter.status !== ExtraGameStatusEnum.ALL) {
+    if (filter?.status && filter.status !== ExtraGameStatusEnum.ALL) {
       switch (filter?.status) {
         case ExtraGameStatusEnum.GAINED:
           useRawQuery = true;

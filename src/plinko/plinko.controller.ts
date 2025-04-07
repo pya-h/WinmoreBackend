@@ -31,8 +31,7 @@ export class PlinkoController {
   }
 
   @ApiOperation({
-    description:
-      "Returns the list of user's dream mine [specific] games by all users.",
+    description: "Returns user's plinko game history.",
   })
   @Get()
   findGames(@Query() filter?: PlinkoGameStatusFilterQuery) {
@@ -50,7 +49,7 @@ export class PlinkoController {
   }
 
   @ApiOperation({
-    description: 'Returns the list of all ongoing games by all users.',
+    description: 'Returns the list of all ongoing plinko games by all users.',
   })
   @Get('ongoing')
   async getUsersOngoingGame(@Query() paginationOptions?: PaginationOptionsDto) {

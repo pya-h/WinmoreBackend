@@ -17,7 +17,7 @@ import {
   Wallet,
 } from '@prisma/client';
 import { ChainHistory } from '../blockchain/types/chain-history.type';
-import { WinmoreGameTypes } from '../common/types/game.types';
+import { WinmoreGameTypes } from '../games/types/game.types';
 import { BUSINESSMAN_ID, SHARE_MANAGER_ID } from '../configs/constants';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserPopulated } from '../user/types/user-populated.type';
