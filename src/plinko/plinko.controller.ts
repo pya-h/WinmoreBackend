@@ -49,6 +49,18 @@ export class PlinkoController {
   }
 
   @ApiOperation({
+    description: "Returns user's plinko game history.",
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('my-history')
+  getMyPlinkoHistory(
+    @CurrentUser() user: UserPopulated,
+    @Query() filter?: PlinkoGameStatusFilterQuery,
+  ) {
+    return this.plinkoService.findGames({ userId: user.id, filter });
+  }
+
+  @ApiOperation({
     description: 'Returns the list of all ongoing plinko games by all users.',
   })
   @Get('ongoing')

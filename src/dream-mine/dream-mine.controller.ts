@@ -47,7 +47,7 @@ export class DreamMineController {
   })
   @UseGuards(JwtAuthGuard)
   @Get('my-history')
-  getMyDreamMines(
+  getMyDreamMineHistory(
     @CurrentUser() user: UserPopulated,
     @Query() filter?: GameStatusFilterQuery,
   ) {
