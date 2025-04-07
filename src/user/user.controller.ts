@@ -164,7 +164,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getUser(
-    @CurrentUser() currentUser,
+    @CurrentUser() currentUser: UserPopulated,
     @Param('id', ParseIntPipe) id: string,
   ) {
     // TODO: Implement the user data serialization for current user ad other users.
