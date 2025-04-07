@@ -27,6 +27,7 @@ import { GameStatusFilterQuery } from '../games/dtos/game-status-filter.query';
 import { SortModeEnum } from '../games/types/sort-enum.dto';
 import { PaginationOptionsDto } from '../common/dtos/pagination-options.dto';
 import { SortOrderEnum } from '../common/types/sort-orders.enum';
+import { DreamMineGameResultType } from './types/mine-result.type';
 
 @Injectable()
 export class DreamMineService {
@@ -176,7 +177,10 @@ export class DreamMineService {
     return null;
   }
 
-  async mine(game: DreamMineGame, choice: number) {
+  async mine(
+    game: DreamMineGame,
+    choice: number,
+  ): Promise<DreamMineGameResultType> {
     const rule = await this.getRulesByRows(game.rowsCount);
     if (!rule)
       throw new MethodNotAllowedException(
@@ -190,7 +194,7 @@ export class DreamMineService {
         `Invalid selection! There are only ${columnsCount} stones.`,
       );
     const playerChance = Math.random() * 100.0;
-    let result: Record<string, unknown>;
+    let result: DreamMineGameResultType;
     game.lastChoice = choice;
 
     if (playerChance <= probability) {
