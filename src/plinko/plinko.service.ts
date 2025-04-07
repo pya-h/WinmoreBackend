@@ -294,6 +294,8 @@ export class PlinkoService {
     include?: Record<string, object>;
   }) {
     const sortParams: Record<string, Record<string, string> | number> = {};
+    let useRawQuery = false;
+
     switch (filter?.sort) {
       case SortModeEnum.LUCKY:
         if (filter.status)
@@ -317,7 +319,7 @@ export class PlinkoService {
     if (filter && filter.status !== ExtraGameStatusEnum.ALL) {
       switch (filter?.status) {
         case ExtraGameStatusEnum.GAINED:
-          // TODO: Games with prize > initialBet
+          useRawQuery = true;
           break;
         default:
           filters.status = filter.status;
@@ -330,17 +332,30 @@ export class PlinkoService {
     }
 
     if (filter.take != null) sortParams.take = +filter.take;
-
     if (filter.skip != null) sortParams.skip = +filter.skip;
 
-    const games: PlinkoGame[] = await this.prisma.plinkoGame.findMany({
-      where: { ...filters },
-      ...sortParams,
-      include,
-    });
+    let games: PlinkoGame[];
+
+    if (useRawQuery) {
+      const orderEntries = Object.entries(sortParams.orderBy ?? {})?.[0];
+      const limit = filter.take != null ? `LIMIT ${+filter.take}` : '';
+      const offset = filter.skip != null ? `OFFSET ${+filter.skip}` : '';
+
+      const query = `SELECT * FROM "PlinkoGame"
+        WHERE "prize" > "initialBet" ${userId != null ? `AND "userId" = ${userId}` : ''}
+        ORDER BY ${orderEntries?.length ? `"${orderEntries[0]}" ${orderEntries[1].toUpperCase()}` : 'createdAt DESC'} ${limit} ${offset}`;
+
+      games = await this.prisma.$queryRawUnsafe<PlinkoGame[]>(query); // TODO: Check this options output...
+    } else {
+      games = await this.prisma.plinkoGame.findMany({
+        where: { ...filters },
+        ...sortParams,
+        include,
+      });
+    }
 
     return games.map((game) => {
-      // FIXME: Transfer this logic to frontend
+      // FIXME: Remove this code and do this in frontend instead.
       game['time'] = Math.ceil(
         ((game.finishedAt?.getTime() || Date.now()) -
           game.createdAt.getTime()) /
