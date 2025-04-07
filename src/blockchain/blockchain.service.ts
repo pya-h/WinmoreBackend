@@ -19,6 +19,7 @@ import {
 } from './types/blockchain-log.type';
 import { PrismaService } from '../prisma/prisma.service';
 
+// FIXME: Add tx follower, to see if a tx is reverted to update winmore tx history too.
 @Injectable()
 export class BlockchainService {
   private readonly logger = new Logger(BlockchainService.name);

@@ -37,6 +37,7 @@ import * as crypto from 'crypto-js';
 // TODO: add Mint & burn methods
 // TODO: Transactions from admin, must never throw insufficient balance error; Write a method to always mint to admin wallet the sufficient amount,
 // when the balance of admin on specific chain & token is lower than a transaction amount
+// TODO: Update withdrawal to apply withdraw rules (12-hour withdraw rule & revert on tx revert)
 @Injectable()
 export class WalletService {
   private readonly logger = new Logger(WalletService.name);
