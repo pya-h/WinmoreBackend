@@ -379,7 +379,7 @@ export class PlinkoService {
       orderBy: { createdAt: 'desc' },
       include: {
         plinkoBalls: {
-          select: { dropSpecs: true, id: true },
+          select: { dropSpecs: true, id: true, gameId: true },
         },
       },
     });
