@@ -272,9 +272,13 @@ export class DreamMineService {
   populateMultipliers(
     multipliers: number[],
     difficultyMultipliers: number[],
-  ): { easy: number[]; medium?: number[]; hard?: number[] } {
+  ): {
+    [GameModesEnum.EASY]: number[];
+    [GameModesEnum.MEDIUM]?: number[];
+    [GameModesEnum.HARD]?: number[];
+  } {
     if (!difficultyMultipliers?.length) {
-      return { easy: multipliers };
+      return { [GameModesEnum.EASY]: multipliers };
     }
 
     if (difficultyMultipliers.length === 1) {
@@ -283,7 +287,10 @@ export class DreamMineService {
           multipliers.map((rowCoef: number) => rowCoef * diffCoef),
       );
 
-      return { easy, hard };
+      return {
+        [GameModesEnum.EASY]: easy,
+        [GameModesEnum.HARD]: hard,
+      };
     }
 
     const [mediumCoef, hardCoef] = difficultyMultipliers;
@@ -292,8 +299,11 @@ export class DreamMineService {
         multipliers.map((rowCoef: number) => rowCoef * diffCoef),
     );
 
-    return { easy, medium, hard };
-    // TODO: Link result fields with GameModesEnum (just like plinko service), after modifying dream mine rules frontend...
+    return {
+      [GameModesEnum.EASY]: easy,
+      [GameModesEnum.MEDIUM]: medium,
+      [GameModesEnum.HARD]: hard,
+    };
   }
 
   async determineRemainingNulls(
