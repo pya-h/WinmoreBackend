@@ -81,7 +81,7 @@ export class PlinkoController {
       "Returns the last ongoing game (if there's any) of current user.",
   })
   @UseGuards(JwtAuthGuard)
-  @Get('current')
+  @Get('me-playing')
   async getCurrentOngoingGame(@CurrentUser() user: UserPopulated) {
     return this.plinkoService.getOnesLatestOngoingGame(user.id);
   }
