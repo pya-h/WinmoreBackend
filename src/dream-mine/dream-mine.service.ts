@@ -293,6 +293,7 @@ export class DreamMineService {
     );
 
     return { easy, medium, hard };
+    // TODO: Link result fields with GameModesEnum (just like plinko service), after modifying dream mine rules frontend...
   }
 
   async determineRemainingNulls(

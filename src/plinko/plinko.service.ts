@@ -262,9 +262,13 @@ export class PlinkoService {
   populateMultipliers(
     multipliers: number[],
     difficultyMultipliers: number[],
-  ): { easy: number[]; medium?: number[]; hard?: number[] } {
+  ): {
+    [GameModesEnum.EASY]: number[];
+    [GameModesEnum.MEDIUM]?: number[];
+    [GameModesEnum.HARD]?: number[];
+  } {
     if (!difficultyMultipliers?.length) {
-      return { easy: multipliers };
+      return { [GameModesEnum.EASY]: multipliers };
     }
     if (difficultyMultipliers.length === 1) {
       const [easy, hard] = [1, difficultyMultipliers[0]].map(
@@ -272,7 +276,7 @@ export class PlinkoService {
           multipliers.map((rowCoef: number) => rowCoef * diffCoef),
       );
 
-      return { easy, hard };
+      return { [GameModesEnum.EASY]: easy, [GameModesEnum.HARD]: hard };
     }
 
     const [mediumCoef, hardCoef] = difficultyMultipliers;
@@ -281,7 +285,11 @@ export class PlinkoService {
         multipliers.map((rowCoef: number) => rowCoef * diffCoef),
     );
 
-    return { easy, medium, hard };
+    return {
+      [GameModesEnum.EASY]: easy,
+      [GameModesEnum.MEDIUM]: medium,
+      [GameModesEnum.HARD]: hard,
+    };
   }
 
   async findGames({

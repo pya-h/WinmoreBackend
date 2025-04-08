@@ -115,10 +115,10 @@ export class DreamMineController {
     return (await this.dreamMineService.getRules()).map((rule) => ({
       rows: rule.rows,
       minBetAmount: rule.minBetAmount,
-      coefficients: this.dreamMineService.populateMultipliers(
+      multipliers: this.dreamMineService.populateMultipliers(
         rule.multipliers,
         rule.difficultyMultipliers,
-      ), // TODO: Rename this field to 'multipliers', after checking out its usage in front
+      ),
     }));
   }
 }
