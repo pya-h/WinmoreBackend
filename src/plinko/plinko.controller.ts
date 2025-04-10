@@ -31,7 +31,7 @@ export class PlinkoController {
   }
 
   @ApiOperation({
-    description: "Returns user's plinko game history.",
+    description: 'Returns all users plinko games history.',
   })
   @Get()
   findGames(@Query() filter?: PlinkoGameStatusFilterQuery) {

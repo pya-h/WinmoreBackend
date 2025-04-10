@@ -89,16 +89,24 @@ Content-Type: application/json
 ### Get current all users dream mine game history
 GET {{host}}/games
 
-### Get current all users dream mine ongoings
+### Get current all users dream mine ongoings (usually a one-item list, since we don't allow users play more than one dream mine game at the time.)
 GET {{host}}/dream-mine/ongoing
 
-
-### Get current user's dream mine game history
-GET {{host}}/user/is-playing
+### Get current user's ongoing games
+GET {{host}}/games/me-playing
 Authorization: Bearer {{token}}
 
-### Get current current user's games
-GET {{host}}/user/games/dream-mine?status=LOST&take=2
+### Get current user's ongoing dream mine game
+GET {{host}}/dream-mine/me-playing
+Authorization: Bearer {{token}}
+
+### Get Get all dream mine games played so far by all users
+GET {{host}}/user/dream-mine?status=LOST&take=2
+Authorization: Bearer {{token2}}
+
+
+### Get current user's dream mine games so far.
+GET {{host}}/user/plinko/my-history?status=LOST&take=2
 Authorization: Bearer {{token2}}
 
 ### Get users
@@ -110,7 +118,6 @@ GET {{host}}/user/wallet
 Authorization: Bearer {{token}}
 
 ### Get user transactions
-
 GET {{host}}/user/transactions?sort=date&take=5&skip=2&order=asc
 Authorization: Bearer {{token}}
 
@@ -124,3 +131,43 @@ Authorization: Bearer {{token}}
     "amount": 100,
     "chain": 11155111
 }
+
+
+### Get dream mine game rules
+GET {{host}}/plinko/rules
+
+### Get current user's ongoing plinko game
+GET {{host}}/plinko/me-playing
+Authorization: Bearer {{token}}
+
+### Get current user's ongoing plinko games (usually a one-item list, since we don't allow users play more than one plinko game at the time.)
+GET {{host}}/plinko/ongoing
+Authorization: Bearer {{token}}
+
+
+### Place bet on a plinko game; This starts a new plinko game and then user can call drop endpoint.
+POST {{host}}/plinko/bet
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "betAmount": 100,
+    "mode": "HARD",
+    "rows": 12,
+    "token": "WUSDC",
+    "chainId": 11155111,
+    "ballsCount": 1
+}
+
+### Generate balls for plinko game based on user chance.
+POST {{host}}/plinko/drop/52
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+### Get all plinko games played so far by all users
+GET {{host}}/user/plinko?status=LOST&take=2
+Authorization: Bearer {{token2}}
+
+### Get current user's plinko games so far.
+GET {{host}}/user/plinko/my-history?status=LOST&take=2
+Authorization: Bearer {{token2}}

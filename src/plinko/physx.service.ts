@@ -44,12 +44,12 @@ export class PlinkoPhysxService {
     firstRowPegsCount: number = 3,
   ): PegsDataType {
     const pegs: { x: number; y: number; radius: number }[] = [];
-    const halfBoardWidth = this.getBoardSpecs(rows).width / 2,
-      halfRows = rows / 2;
+    const halfBoardWidth = this.getBoardSpecs(rows).width / 2;
     let leastLeft = Infinity;
     for (let row = 0; row < rows; row++) {
+      const halfRow = row / 2;
       for (let i = 0; i < row + firstRowPegsCount; i++) {
-        const x = halfBoardWidth + (i - halfRows) * spacing - bucketWidth;
+        const x = halfBoardWidth + (i - halfRow) * spacing - bucketWidth;
         if (x < leastLeft) {
           leastLeft = x;
         }

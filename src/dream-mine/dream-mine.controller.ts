@@ -25,7 +25,7 @@ export class DreamMineController {
 
   @ApiOperation({
     description:
-      "Returns the list of user's dream mine [specific] games by all users.",
+      'Returns the list of dream mine [specific] games by all users.',
   })
   @Get()
   findGames(@Query() filter?: GameStatusFilterQuery) {
