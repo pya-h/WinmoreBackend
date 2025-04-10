@@ -423,6 +423,10 @@ export class PlinkoService {
         board: this.plinkoPhysxService.getBoardSpecs(rule.rows),
         pegs,
         buckets: this.plinkoPhysxService.getBuckets(rule, pegs.borders),
+        verticalSpeedFactor: rule.verticalSpeedFactor,
+        horizontalSpeedFactor: rule.horizontalSpeedFactor,
+        gravity: rule.gravity,
+        friction: rule.friction,
       };
     });
   }
