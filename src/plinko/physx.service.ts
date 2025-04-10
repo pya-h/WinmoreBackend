@@ -90,7 +90,6 @@ export class PlinkoPhysxService {
           bottomLeftX: x - bottomWidth / 2,
           bottomRightX: x + bottomWidth / 2,
           bottomY: y + specs.height,
-          multiplier,
         };
       }),
       specs,
