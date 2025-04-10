@@ -144,6 +144,7 @@ export class PlinkoService {
     for (let i = 0; i < game.ballsCount; i++) {
       // TODO/Decide: This way no game will remain undetermined; But we could implement this to determine on user drop click too
       const userChance = approximate(Math.random() * 100, 'ceil', 0);
+      // TODO: Enhance probability matching
       let targetBucket = (multipliers.length / 2) | 0;
       for (let i = 0; i < possibilities.length; i++) {
         if (userChance <= possibilities[i] && i !== targetBucket) {
@@ -151,7 +152,7 @@ export class PlinkoService {
             targetBucket = i;
           } else if (
             possibilities[i] === possibilities[targetBucket] &&
-            Math.random() > 0.5
+            Math.random() >= 0.5
           ) {
             // If two buckets have the same possibility, then select randomly.
             targetBucket = i;

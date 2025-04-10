@@ -84,6 +84,7 @@ async function main() {
   }
 
   // 2 INSERT GAME RULES
+  // 2-1: Dream Mine:
   try {
     await Promise.all(
       [
@@ -156,6 +157,75 @@ async function main() {
       }),
     );
     console.info('Game rules inserted.');
+  } catch (ex) {
+    console.error('Failed importing game rules', ex);
+  }
+
+  // 2-2 Plinko:
+  try {
+    await Promise.all(
+      [
+        {
+          rows: 8,
+          multipliers: [2.5, 1.2, 0.7, 0.5, 0.7, 1.2, 2.5],
+          probabilities: [5, 10, 40, 100, 40, 10, 5],
+          difficultyMultipliers: [2, 4],
+        },
+        {
+          rows: 9,
+          multipliers: [1.7, 1.2, 0.9, 0.6, 0.6, 0.9, 1.2, 1.7],
+          probabilities: [4, 10, 70, 100, 100, 70, 10, 4],
+          difficultyMultipliers: [2, 5],
+        },
+        {
+          rows: 10,
+          multipliers: [2.8, 1.7, 1.6, 1.3, 1.0, 1.3, 1.6, 1.7, 2.8],
+          probabilities: [4, 15, 45, 75, 100, 75, 45, 15, 4],
+          difficultyMultipliers: [2.5, 5],
+        },
+        {
+          rows: 11,
+          multipliers: [3, 1.9, 1.75, 1.4, 1.0, 1.75, 1.6, 1.9, 3],
+          probabilities: [3, 10, 40, 65, 100, 65, 40, 10, 3],
+          difficultyMultipliers: [2.5, 6],
+        },
+        {
+          rows: 12,
+          multipliers: [3.5, 2.25, 1.85, 1.45, 1.0, 1.0, 1.45, 1.85, 2.25, 3.5],
+          probabilities: [3, 9, 30, 65, 100, 100, 65, 30, 9, 3],
+          difficultyMultipliers: [3, 6],
+        },
+      ].map(({ rows, multipliers, probabilities, difficultyMultipliers }) => {
+        if (multipliers?.length !== probabilities?.length) {
+          console.warn(
+            `Rules for Rows:${rows} have different probability and multipliers length.`,
+          );
+          return null;
+        }
+        if (difficultyMultipliers.length !== 2) {
+          console.warn(
+            `Rules for ${rows} rows game failed insertion: difficultyMultipliers must have 2 items indicating medium and hard difficulties.`,
+          );
+          return null;
+        }
+        return prisma.plinkoRules.create({
+          data: {
+            rows,
+            multipliers,
+            probabilities,
+            difficultyMultipliers,
+            minBetAmount: 1,
+            companyShare: 0.04,
+            maxBetAmount: 2,
+            verticalSpeedFactor: 2.5,
+            horizontalSpeedFactor: 1.25,
+            gravity: 0.1,
+            friction: 0.9,
+          },
+        });
+      }),
+    );
+    console.info('Plinko Game rules inserted.');
   } catch (ex) {
     console.error('Failed importing game rules', ex);
   }
