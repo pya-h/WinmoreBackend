@@ -1,5 +1,5 @@
 @host  = http://localhost:8000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3Mzc4NDkzMzUsImV4cCI6MTczNzkzNTczNX0.-Q8L6MHf9dH0-CwVd7b2NZgaY4NWY5aqoLs0-90hWgI
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDUyMjBmZDVkOGMxMDc0NDk4QWQxMWNhMTY2MjZBM2RjN0ZmNGNjRDIiLCJpYXQiOjE3NDQzMDQ3MjQsImV4cCI6MTc0NDM5MTEyNH0.DE_jfp56ONwiTyIMGlqrUJUhYgk4j9_BoNohRC_3vYQ
 @token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFh4NGxmNTdwMHAzZDY1eGI1aHpoMzM2NzVjN3JpM3Y1NWNyZDBpbGQiLCJpYXQiOjE3Mjk5NzgxMTksImV4cCI6MTczMDA2NDUxOX0.5s_SPBqyBJ9gg_x1z8Wt7C_OeAfDZDObMnwrweEw_a0
 ### main route
 GET {{host}}/
@@ -151,16 +151,16 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-    "betAmount": 100,
+    "betAmount": 1,
     "mode": "HARD",
     "rows": 12,
     "token": "WUSDC",
     "chainId": 11155111,
-    "ballsCount": 1
+    "ballsCount": 3
 }
 
 ### Generate balls for plinko game based on user chance.
-POST {{host}}/plinko/drop/52
+POST {{host}}/plinko/drop/3
 Authorization: Bearer {{token}}
 Content-Type: application/json
 

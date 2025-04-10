@@ -220,6 +220,13 @@ export class PlinkoService {
         'Not allowed to play this game since its not yours!',
       );
 
+    if (game.status !== PlinkoGameStatus.NOT_DROPPED_YET) {
+      throw new ForbiddenException(
+        game.status === PlinkoGameStatus.FINISHED
+          ? 'The game is finished!'
+          : 'Balls already dropped!',
+      );
+    }
     const rule = await this.getRulesByRows(game.rowsCount);
     if (!rule)
       throw new MethodNotAllowedException(
