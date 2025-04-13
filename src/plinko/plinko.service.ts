@@ -166,7 +166,7 @@ export class PlinkoService {
           buckets,
           pegs,
           targetBucket,
-          { y0: 50, radius: 7.5 },
+          { y0: 50, radius: 7 },
         ),
       ); // TODO: Revise this
     }
