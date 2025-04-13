@@ -126,14 +126,14 @@ export class PlinkoService {
     };
   }
 
-  async finalizeGame(game: PlinkoGame, rule: PlinkoRules) {
+  async decide(game: PlinkoGame, rule: PlinkoRules) {
     if (!rule) {
       rule = await this.getRulesByRows(game.rowsCount);
     }
 
     const { multipliers, possibilities } =
       this.getActualMultipliersAndPossibilities(rule, game.mode);
-    let totalPrize = 0;
+
     const balls: DeterministicPlinkoBallType[] = [];
     const pegs = this.plinkoPhysxService.getPegs(
         rule.rows,
@@ -169,44 +169,31 @@ export class PlinkoService {
           { y0: 50, radius: 7.5 },
         ),
       ); // TODO: Revise this
-      totalPrize += multipliers[targetBucket] * game.initialBet;
     }
 
     await Promise.all(
-      balls.map(
-        (
-          { bucketIndex, ...ball }, // TODO/Check: Is it possible for a ball to not fell in any bucket?
-        ) =>
-          this.prisma.plinkoBalls.create({
-            data: {
-              bucketIndex,
-              scoredMultiplier: multipliers[bucketIndex],
-              gameId: game.id,
-              userId: game.userId,
-              dropSpecs: ball,
-            },
-          }),
+      balls.map(({ bucketIndex, ...ball }) =>
+        this.prisma.plinkoBalls.create({
+          data: {
+            bucketIndex,
+            scoredMultiplier: multipliers[bucketIndex],
+            gameId: game.id,
+            userId: game.userId,
+            dropSpecs: ball,
+          },
+        }),
       ),
     );
-
-    game.prize = totalPrize;
-    game.status = PlinkoGameStatus.FINISHED;
-    game.finishedAt = new Date(); // TODO: Find a way to obtain this date from front; (without any misleading info.)
 
     game = await this.prisma.plinkoGame.update({
       data: game,
       where: { id: game.id },
     });
 
-    await this.walletService.rewardTheWinner(game.userId, game.prize, {
-      ...game,
-      rule,
-      name: 'Plinko',
-    } as WinmoreGameTypes);
     return balls;
   }
 
-  async decide(user: UserPopulated, gameId: number) {
+  async startDropping(user: UserPopulated, gameId: number) {
     let game = await this.prisma.plinkoGame.findUnique({
       where: { id: gameId },
     });
@@ -221,10 +208,10 @@ export class PlinkoService {
       );
 
     if (game.status !== PlinkoGameStatus.NOT_DROPPED_YET) {
-      throw new ForbiddenException(
+      throw new BadRequestException(
         game.status === PlinkoGameStatus.FINISHED
           ? 'The game is finished!'
-          : 'Balls already dropped!',
+          : 'Balls already dropped, but You can replay the drop(s).',
       );
     }
     const rule = await this.getRulesByRows(game.rowsCount);
@@ -239,10 +226,67 @@ export class PlinkoService {
       data: game,
     });
 
-    return (await this.finalizeGame(game, rule)).map(
+    return (await this.decide(game, rule)).map(
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ bucketIndex, ...ball }) => ball as PlinkoBallType,
     );
+  }
+
+  async finalizeGame(user: UserPopulated, gameId: number) {
+    const game = await this.prisma.plinkoGame.findUnique({
+      where: { id: gameId },
+      include: { plinkoBalls: true },
+    });
+
+    if (!game) {
+      throw new NotFoundException('No such game!');
+    }
+
+    if (user.id !== game.userId)
+      throw new ForbiddenException("You're not allowed to do this!");
+
+    if (game.status !== PlinkoGameStatus.DROPPING) {
+      throw new BadRequestException(
+        game.status === PlinkoGameStatus.FINISHED
+          ? 'The game is finished!'
+          : 'You must drop balls first!',
+      );
+    }
+    if (
+      !game.plinkoBalls.length ||
+      game.plinkoBalls.length !== game.ballsCount
+    ) {
+      throw new BadRequestException('You must drop balls first!'); // TODO: Maybe take another course of action? (like automatically dropping)
+    }
+    const rule = await this.getRulesByRows(game.rowsCount);
+    if (!rule)
+      throw new MethodNotAllowedException(
+        'It seems that site is not ready for your next mine; wait a little bit.',
+      );
+
+    game.prize = 0;
+    for (const ball of game.plinkoBalls) {
+      game.prize += ball.scoredMultiplier * game.initialBet;
+    }
+
+    game.status = PlinkoGameStatus.FINISHED;
+    game.finishedAt = new Date();
+
+    await this.prisma.plinkoGame.update({
+      where: { id: game.id },
+      data: {
+        prize: game.prize,
+        status: game.status,
+        finishedAt: game.finishedAt,
+      },
+    });
+
+    await this.walletService.rewardTheWinner(game.userId, game.prize, {
+      ...game,
+      rule,
+      name: 'Plinko',
+    } as WinmoreGameTypes);
+    return game;
   }
 
   async getRules() {

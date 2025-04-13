@@ -108,6 +108,19 @@ export class PlinkoController {
     @CurrentUser() user: UserPopulated,
     @Param('id', ParseIntPipe) id: string,
   ) {
-    return this.plinkoService.decide(user, +id);
+    return this.plinkoService.startDropping(user, +id);
+  }
+
+  @ApiOperation({
+    description:
+      'After users have dropped all their balls, they call this endpoint to finalize their game and receive rewards.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Post('finish/:id')
+  finishGame(
+    @CurrentUser() user: UserPopulated,
+    @Param('id', ParseIntPipe) id: string,
+  ) {
+    return this.plinkoService.finalizeGame(user, +id);
   }
 }

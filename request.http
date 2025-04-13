@@ -94,8 +94,7 @@ GET {{host}}/dream-mine/ongoing
 
 ### Get current user's ongoing games
 GET {{host}}/games/me-playing
-Authorization: Bearer {{token}}
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDUyMjBmZDVkOGMxMDc0NDk4QWQxMWNhMTY2MjZBM2RjN0ZmNGNjRDIiLCJpYXQiOjE3NDQ0OTg1MjksImV4cCI6MTc0NDU4NDkyOX0.gggepFUtSC_V6yRyuj1SrHYGPJ1uaGhX4403TfB19wE
 ### Get current user's ongoing dream mine game
 GET {{host}}/dream-mine/me-playing
 Authorization: Bearer {{token}}
@@ -103,7 +102,6 @@ Authorization: Bearer {{token}}
 ### Get Get all dream mine games played so far by all users
 GET {{host}}/user/dream-mine?status=LOST&take=2
 Authorization: Bearer {{token2}}
-
 
 ### Get current user's dream mine games so far.
 GET {{host}}/user/plinko/my-history?status=LOST&take=2
