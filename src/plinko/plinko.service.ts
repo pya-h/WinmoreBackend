@@ -58,6 +58,7 @@ export class PlinkoService {
       token,
       chainId,
     );
+
     if (placeBetTrx.status !== TransactionStatusEnum.SUCCESSFUL)
       // for caution:
       throw new BadRequestException(

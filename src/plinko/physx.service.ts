@@ -138,29 +138,27 @@ export class PlinkoPhysxService {
       });
 
       if (ball.y >= destinationY) {
-        // Find the closest bucket
-        if (
-          ball.x >= bucketCoords[0].topLeftX - bucketSpecs.widthThreshold &&
-          ball.x <=
-            bucketCoords[bucketCoords.length - 1].topRightX +
-              bucketSpecs.widthThreshold
-        ) {
-          for (let i = 0; i < bucketCoords.length - 1; i++) {
-            if (
-              ball.x >= bucketCoords[i].topLeftX &&
-              ball.x < bucketCoords[i + 1].topLeftX
-            ) {
-              return i;
-            }
-          }
-          return ball.x >= bucketCoords[bucketCoords.length - 1].topLeftX &&
+        let bucketInContactIndex = bucketCoords.findIndex(
+          (b) => ball.x >= b.topLeftX && ball.x <= b.topRightX,
+        );
+
+        if (bucketInContactIndex === -1) {
+          // Considering the most left and right buckets with a little threshold as landing targets
+          if (
+            ball.x >= bucketCoords[0].topLeftX - bucketSpecs.widthThreshold &&
+            ball.x <= bucketCoords[0].topRightX
+          ) {
+            bucketInContactIndex = 0;
+          } else if (
             ball.x <=
               bucketCoords[bucketCoords.length - 1].topRightX +
-                bucketSpecs.widthThreshold
-            ? bucketCoords.length - 1
-            : 0;
+                bucketSpecs.widthThreshold &&
+            ball.x >= bucketCoords[bucketCoords.length - 1].topLeftX
+          ) {
+            bucketInContactIndex = bucketCoords.length - 1;
+          }
         }
-        return -1;
+        return bucketInContactIndex;
       }
     }
     return -1;
@@ -180,7 +178,7 @@ export class PlinkoPhysxService {
 
     if (!v0) {
       v0 = {
-        vx: Math.random() * 6 - 3,
+        vx: Math.random() * 4 - 2,
         vy: 0, // TODO: test it with random too
       };
     }
