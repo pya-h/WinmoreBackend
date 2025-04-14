@@ -17,7 +17,7 @@ export class PlinkoPhysxService {
     width: 600,
     height: 200,
   };
-
+  public static readonly bucketOffsetRequiringRows = { 10: -10, 11: 10 };
   public static readonly bucketSpecs: BucketSpecsType = {
     width: 60,
     height: 80,
@@ -80,7 +80,8 @@ export class PlinkoPhysxService {
         const x =
           index * (specs.width + specs.widthThreshold * 1.5) +
           offsetBox.leftX +
-          specs.widthThreshold * 4;
+          specs.widthThreshold * 4 +
+          (PlinkoPhysxService.bucketOffsetRequiringRows[rule.rows] ?? 0);
         const y = offsetBox.bottomY + 20;
         return {
           x,
@@ -178,7 +179,7 @@ export class PlinkoPhysxService {
 
     if (!v0) {
       v0 = {
-        vx: Math.random() * 4 - 2,
+        vx: Math.random() * 3 - 3,
         vy: 0, // TODO: test it with random too
       };
     }
@@ -199,6 +200,7 @@ export class PlinkoPhysxService {
 
     console.log('Simulation took', (Date.now() - startTime) / 1000, 'sec');
     console.log(`found ${correctos.length} results.`);
+
     return {
       x: correctos[(Math.random() * correctos.length) | 0],
       y: y0,
