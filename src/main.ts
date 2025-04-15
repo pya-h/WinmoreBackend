@@ -12,7 +12,7 @@ async function bootstrap() {
 
   app.enableCors(); // TODO: Temp
   setupSwagger(app);
-
+  // FIXME: Add jwt issuer
   const configService = app.get(ConfigService);
   const appPort = configService.getOrThrow<number>('general.appPort'),
     appIsInDebugMode = configService.get<boolean>('general.debug');

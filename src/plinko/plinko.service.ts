@@ -114,17 +114,32 @@ export class PlinkoService {
 
   getActualMultipliersAndPossibilities(
     rule: PlinkoRules,
-    gameMode: GameModesEnum,
+    gameMode: GameModesEnum | number,
   ) {
-    const difficulty = this.matchDifficultyWithMultiplier(
-      gameMode,
-      rule.difficultyMultipliers,
-    );
+    const difficulty =
+      typeof gameMode !== 'number'
+        ? this.matchDifficultyWithMultiplier(
+            gameMode,
+            rule.difficultyMultipliers,
+          )
+        : gameMode;
+    const multipliers = Array(rule.multipliers.length),
+      possibilities = Array(rule.probabilities.length);
 
-    return {
-      multipliers: rule.multipliers.map((x) => difficulty * x),
-      possibilities: rule.probabilities.map((x) => x / difficulty),
-    };
+    const exceptions = [(rule.multipliers.length / 2) | 0];
+    if (rule.multipliers.length % 2 === 0) {
+      exceptions.push(exceptions[0] + 1);
+    }
+    for (let i = 0; i < rule.multipliers.length; i++) {
+      if (!exceptions.includes(i)) {
+        multipliers[i] = rule.multipliers[i] * difficulty;
+        possibilities[i] = rule.probabilities[i] / difficulty;
+      } else {
+        multipliers[i] = rule.multipliers[i];
+        possibilities[i] = rule.probabilities[i];
+      }
+    }
+    return { multipliers, possibilities };
   }
 
   async decide(game: PlinkoGame, rule: PlinkoRules) {
@@ -312,30 +327,27 @@ export class PlinkoService {
     return this.prisma.plinkoRules.findFirst({ where: { rows } });
   }
 
-  populateMultipliers(
-    multipliers: number[],
-    difficultyMultipliers: number[],
-  ): {
+  populateMultipliers(rule: PlinkoRules): {
     [GameModesEnum.EASY]: number[];
     [GameModesEnum.MEDIUM]?: number[];
     [GameModesEnum.HARD]?: number[];
   } {
-    if (!difficultyMultipliers?.length) {
-      return { [GameModesEnum.EASY]: multipliers };
+    if (!rule.difficultyMultipliers?.length) {
+      return { [GameModesEnum.EASY]: rule.multipliers };
     }
-    if (difficultyMultipliers.length === 1) {
-      const [easy, hard] = [1, difficultyMultipliers[0]].map(
+    if (rule.difficultyMultipliers.length === 1) {
+      const [easy, hard] = [1, rule.difficultyMultipliers[0]].map(
         (diffCoef: number) =>
-          multipliers.map((rowCoef: number) => rowCoef * diffCoef),
+          this.getActualMultipliersAndPossibilities(rule, diffCoef).multipliers,
       );
 
       return { [GameModesEnum.EASY]: easy, [GameModesEnum.HARD]: hard };
     }
 
-    const [mediumCoef, hardCoef] = difficultyMultipliers;
+    const [mediumCoef, hardCoef] = rule.difficultyMultipliers;
     const [easy, medium, hard] = [1, mediumCoef, hardCoef].map(
       (diffCoef: number) =>
-        multipliers.map((rowCoef: number) => rowCoef * diffCoef),
+        this.getActualMultipliersAndPossibilities(rule, diffCoef).multipliers,
     );
 
     return {
@@ -459,10 +471,7 @@ export class PlinkoService {
       );
       return {
         rows: rule.rows,
-        multipliers: this.populateMultipliers(
-          rule.multipliers,
-          rule.difficultyMultipliers,
-        ),
+        multipliers: this.populateMultipliers(rule),
         minBetAmount: rule.minBetAmount,
         maxBetAmount: rule.maxBetAmount,
         board: this.plinkoPhysxService.getBoardSpecs(rule.rows),
