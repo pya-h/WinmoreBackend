@@ -8,7 +8,7 @@ describe('DreamMineService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [DreamMineService],
-      imports: [WalletService]
+      imports: [WalletService],
     }).compile();
 
     service = module.get<DreamMineService>(DreamMineService);
