@@ -167,7 +167,7 @@ export class DreamMineService {
       }
       return {
         columnsCount,
-        multiplier: rule.multipliers[game.currentRow] * difficultyValue,
+        multiplier: rule.multipliers[game.currentRow] * difficultyValue, // FIXME: Better to define a scored multiplier, in case rules are changed in future.
         probability:
           (rule.probabilities[game.currentRow] || 0) / difficultyValue,
       };
@@ -369,7 +369,9 @@ export class DreamMineService {
     if (sortParams?.orderBy) {
       filter.status = ExtraGameStatusEnum.GAINED;
     } else {
-      sortParams.orderBy = { createdAt: SortOrderEnum.DESC.toString() };
+      sortParams.orderBy = {
+        createdAt: (filter?.order || SortOrderEnum.DESC).toString(),
+      };
     }
 
     const filters: Record<string, object | string | number> = {};

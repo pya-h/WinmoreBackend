@@ -384,7 +384,9 @@ export class PlinkoService {
     if (sortParams?.orderBy) {
       filter.status = ExtraGameStatusEnum.GAINED;
     } else {
-      sortParams.orderBy = { createdAt: SortOrderEnum.DESC.toString() };
+      sortParams.orderBy = {
+        createdAt: (filter?.order || SortOrderEnum.DESC).toString(),
+      };
     }
 
     const filters: Record<string, object | string | number> = {};

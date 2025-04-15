@@ -51,7 +51,18 @@ export class DreamMineController {
     @CurrentUser() user: UserPopulated,
     @Query() filter?: GameStatusFilterQuery,
   ) {
-    return this.dreamMineService.findGames({ userId: user.id, filter });
+    return this.dreamMineService.findGames({
+      userId: user.id,
+      filter,
+      include: {
+        user: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+      },
+    });
   }
 
   @ApiOperation({
