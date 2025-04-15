@@ -382,7 +382,8 @@ export class PlinkoService {
     }
 
     if (sortParams?.orderBy) {
-      filter.status = ExtraGameStatusEnum.GAINED;
+      // FIXME: Think about this
+      // filter.status = ExtraGameStatusEnum.GAINED;
     } else {
       sortParams.orderBy = {
         createdAt: (filter?.order || SortOrderEnum.DESC).toString(),
@@ -429,15 +430,13 @@ export class PlinkoService {
       });
     }
 
-    return games.map((game) => {
-      // FIXME: Remove this code and do this in frontend instead.
-      game['time'] = Math.ceil(
-        ((game.finishedAt?.getTime() || Date.now()) -
-          game.createdAt.getTime()) /
-          6000,
-      );
-      return game;
-    });
+    if (!include?.plinkoBalls) {
+      return games;
+    }
+    return games.map((game) => ({
+      ...game,
+      plinkoBalls: game.status !== 'FINISHED' ? [] : game['plinkoBalls'],
+    }));
   }
 
   getOnesLatestOngoingGame(userId: number) {

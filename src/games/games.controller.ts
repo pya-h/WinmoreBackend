@@ -97,12 +97,37 @@ export class GamesController {
     @Query() filter?: GameStatusFilterQuery,
   ) {
     const [dreamMines, plinkos] = await Promise.all([
-      this.dreamMineService.findGames({ userId: user.id, filter }),
+      this.dreamMineService.findGames({
+        userId: user.id,
+        filter,
+        include: {
+          user: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      }),
       this.plinkoService.findGames({
         userId: user.id,
         filter: {
           ...filter,
           status: generalStatusToPlinkoStatus(filter.status), // TODO: Maybe do sth else?
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+          plinkoBalls: {
+            select: {
+              scoredMultiplier: true,
+              bucketIndex: true,
+            },
+          },
         },
       }),
     ]);

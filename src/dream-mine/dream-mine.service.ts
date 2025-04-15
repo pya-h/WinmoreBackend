@@ -167,7 +167,7 @@ export class DreamMineService {
       }
       return {
         columnsCount,
-        multiplier: rule.multipliers[game.currentRow] * difficultyValue, // FIXME: Better to define a scored multiplier, in case rules are changed in future.
+        multiplier: rule.multipliers[game.currentRow] * difficultyValue,
         probability:
           (rule.probabilities[game.currentRow] || 0) / difficultyValue,
       };
@@ -413,16 +413,10 @@ export class DreamMineService {
 
     const rules = await this.getRulesMapped();
     return games.map((game) => {
-      // FIXME: Transfer this logic to frontend
+      // FIXME: Better to define a scored multiplier, in case rules are changed in future
       const { multiplier } =
         this.getRowCharacteristics(rules[game.rowsCount], game, false) || {};
-
       game['multiplier'] = multiplier;
-      game['time'] = Math.ceil(
-        ((game.finishedAt?.getTime() || Date.now()) -
-          game.createdAt.getTime()) /
-          6000,
-      );
       return game;
     });
   }

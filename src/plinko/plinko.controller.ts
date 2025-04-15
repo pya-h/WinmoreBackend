@@ -44,6 +44,12 @@ export class PlinkoController {
             id: true,
           },
         },
+        plinkoBalls: {
+          select: {
+            scoredMultiplier: true,
+            bucketIndex: true,
+          },
+        },
       },
     });
   }
@@ -57,7 +63,24 @@ export class PlinkoController {
     @CurrentUser() user: UserPopulated,
     @Query() filter?: PlinkoGameStatusFilterQuery,
   ) {
-    return this.plinkoService.findGames({ userId: user.id, filter });
+    return this.plinkoService.findGames({
+      userId: user.id,
+      filter,
+      include: {
+        user: {
+          select: {
+            name: true,
+            id: true,
+          },
+        },
+        plinkoBalls: {
+          select: {
+            scoredMultiplier: true,
+            bucketIndex: true,
+          },
+        },
+      },
+    });
   }
 
   @ApiOperation({
