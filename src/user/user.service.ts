@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -154,9 +155,17 @@ export class UserService {
     const { avatar, referrerCode, ...userData } = updateUserData;
 
     if (referrerCode?.length) {
+      if (!(await this.referralService.isUserAllowedToSetReferrerCode(id))) {
+        throw new ForbiddenException(
+          'Specifying Referral code is only allowed for new users!',
+        );
+      }
       await this.referralService.linkUserToReferrers(id, referrerCode, true);
     }
-    return this.prisma.user.update({
+    if (!avatar?.length && !Object.keys(userData)?.length) {
+      return;
+    }
+    await this.prisma.user.update({
       where: { id },
       data: {
         ...userData,

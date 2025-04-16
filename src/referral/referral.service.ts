@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -23,6 +24,22 @@ export class ReferralService {
       where: { referralCode: code },
       include: { user: loadUser },
     });
+  }
+
+  async isUserAllowedToSetReferrerCode(userId: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const deadlineInMinutes =
+      this.configService.get<number>('referral.inputDeadline') ?? 60;
+
+    if (
+      Date.now() - new Date(user.createdAt).getTime() >=
+      deadlineInMinutes * 60000
+    ) {
+      return false;
+    }
+    return !(await this.prisma.referral.findFirst({
+      where: { OR: [{ userId }, { referrerId: userId }] },
+    }));
   }
 
   async findDirectReferralRelations(options?: {
