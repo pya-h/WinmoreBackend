@@ -203,6 +203,7 @@ model PlinkoGame {
   mode        GameModesEnum    @default(EASY)
   rowsCount   Int              @default(8)
   prize       Float            @default(0.0)
+  profit      Float?
   status      PlinkoGameStatus @default(NOT_DROPPED_YET)
   finishedAt  DateTime?
   plinkoBalls PlinkoBalls[]

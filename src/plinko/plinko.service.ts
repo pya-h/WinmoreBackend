@@ -287,13 +287,14 @@ export class PlinkoService {
 
     game.status = PlinkoGameStatus.FINISHED;
     game.finishedAt = new Date();
-
+    game.profit = game.prize / (game.initialBet * game.ballsCount);
     await this.prisma.plinkoGame.update({
       where: { id: game.id },
       data: {
         prize: game.prize,
         status: game.status,
         finishedAt: game.finishedAt,
+        profit: game.profit,
       },
     });
 
@@ -367,7 +368,6 @@ export class PlinkoService {
     include?: Record<string, object>;
   }) {
     const sortParams: Record<string, Record<string, string> | number> = {};
-    let useRawQuery = false;
 
     switch (filter?.sort) {
       case SortModeEnum.LUCKY:
@@ -382,8 +382,7 @@ export class PlinkoService {
     }
 
     if (sortParams?.orderBy) {
-      // FIXME: Think about this
-      // filter.status = ExtraGameStatusEnum.GAINED;
+      filter.status = ExtraGameStatusEnum.GAINED;
     } else {
       sortParams.orderBy = {
         createdAt: (filter?.order || SortOrderEnum.DESC).toString(),
@@ -393,9 +392,9 @@ export class PlinkoService {
     const filters: Record<string, object | string | number> = {};
 
     if (filter?.status && filter.status !== ExtraGameStatusEnum.ALL) {
-      switch (filter?.status) {
+      switch (filter.status) {
         case ExtraGameStatusEnum.GAINED:
-          useRawQuery = true;
+          filters.profit = { gt: 1, not: null };
           break;
         default:
           filters.status = filter.status;
@@ -410,33 +409,19 @@ export class PlinkoService {
     if (filter.take != null) sortParams.take = +filter.take;
     if (filter.skip != null) sortParams.skip = +filter.skip;
 
-    let games: PlinkoGame[];
+    const games = await this.prisma.plinkoGame.findMany({
+      where: { ...filters },
+      ...sortParams,
+      include,
+    });
 
-    if (useRawQuery) {
-      const orderEntries = Object.entries(sortParams.orderBy ?? {})?.[0];
-      const limit = filter.take != null ? `LIMIT ${+filter.take}` : '';
-      const offset = filter.skip != null ? `OFFSET ${+filter.skip}` : '';
-
-      const query = `SELECT * FROM "PlinkoGame"
-        WHERE "prize" > "initialBet" ${userId != null ? `AND "userId" = ${userId}` : ''}
-        ORDER BY ${orderEntries?.length ? `"${orderEntries[0]}" ${orderEntries[1].toUpperCase()}` : 'createdAt DESC'} ${limit} ${offset}`;
-
-      games = await this.prisma.$queryRawUnsafe<PlinkoGame[]>(query); // TODO: Check this options output...
-    } else {
-      games = await this.prisma.plinkoGame.findMany({
-        where: { ...filters },
-        ...sortParams,
-        include,
-      });
+    if (include?.plinkoBalls) {
+      return games.map((game) => ({
+        ...game,
+        plinkoBalls: game.status !== 'FINISHED' ? [] : game['plinkoBalls'],
+      }));
     }
-
-    if (!include?.plinkoBalls) {
-      return games;
-    }
-    return games.map((game) => ({
-      ...game,
-      plinkoBalls: game.status !== 'FINISHED' ? [] : game['plinkoBalls'],
-    }));
+    return games;
   }
 
   getOnesLatestOngoingGame(userId: number) {

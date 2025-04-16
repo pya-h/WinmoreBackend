@@ -44,12 +44,6 @@ export class PlinkoController {
             id: true,
           },
         },
-        plinkoBalls: {
-          select: {
-            scoredMultiplier: true,
-            bucketIndex: true,
-          },
-        },
       },
     });
   }
@@ -71,12 +65,6 @@ export class PlinkoController {
           select: {
             name: true,
             id: true,
-          },
-        },
-        plinkoBalls: {
-          select: {
-            scoredMultiplier: true,
-            bucketIndex: true,
           },
         },
       },
