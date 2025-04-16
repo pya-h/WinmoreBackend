@@ -2,6 +2,7 @@ export default () => ({
   auth: {
     jwtSecret: process.env.JWT_SECRET,
     jwtExpiry: process.env.JWT_EXPIRY,
+    jwtIssuer: process.env.JWT_ISSUER,
     nonceExpiry: +process.env.NONCE_EXPIRY,
     siweStatement: process.env.SIWE_STATEMENT,
     siweMsgVersion: process.env.SIWE_MESSAGE_VERSION,

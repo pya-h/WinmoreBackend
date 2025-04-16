@@ -11,14 +11,21 @@ import { BlockchainModule } from './blockchain/blockchain.module';
 import appGeneralConfigs from './configs/general';
 import authConfigs from './configs/auth';
 import credentialsConfigs from './configs/credentials';
+import referralConfigs from './configs/referral';
 import { ScheduleModule } from '@nestjs/schedule';
 import { GamesModule } from './games/games.module';
 import { PlinkoModule } from './plinko/plinko.module';
+import { ReferralModule } from './referral/referral.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [appGeneralConfigs, authConfigs, credentialsConfigs],
+      load: [
+        appGeneralConfigs,
+        authConfigs,
+        credentialsConfigs,
+        referralConfigs,
+      ],
     }),
     UserModule,
     AuthModule,
@@ -29,6 +36,7 @@ import { PlinkoModule } from './plinko/plinko.module';
     ScheduleModule.forRoot(),
     GamesModule,
     PlinkoModule,
+    ReferralModule,
   ],
   controllers: [AppController],
   providers: [AppService],

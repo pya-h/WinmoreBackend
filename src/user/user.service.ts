@@ -13,6 +13,7 @@ import { UserPopulated } from './types/user-populated.type';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
+import { ReferralService } from '../referral/referral.service';
 
 @Injectable()
 export class UserService {
@@ -20,6 +21,7 @@ export class UserService {
     private readonly prisma: PrismaService,
     private readonly walletService: WalletService,
     private readonly blockchainService: BlockchainService,
+    private readonly referralService: ReferralService,
   ) {}
 
   get userPopulatedIncludeConfig() {
@@ -107,7 +109,7 @@ export class UserService {
     throw new BadRequestException('Invalid arguments for finding a user');
   }
 
-  createUser(walletAddress: string, userData?: Prisma.UserCreateInput) {
+  async createUser(walletAddress: string, userData?: Prisma.UserCreateInput) {
     return this.prisma.user.create({
       data: {
         wallet: {
@@ -121,6 +123,7 @@ export class UserService {
         profile: {
           create: {
             avatar: null,
+            referralCode: await this.referralService.generateNewCode(),
           },
         },
       },
