@@ -150,7 +150,7 @@ model Transaction {
 }
 
 model DreamMineGame {
-  id        Int      @id @default(autoincrement()) // TODO: What to do with id type? Int or BigInt?
+  id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   createdAt DateTime @default(now())
@@ -192,7 +192,7 @@ enum PlinkoGameStatus {
 }
 
 model PlinkoGame {
-  id        Int      @id @default(autoincrement()) // TODO: What to do with id type? Int or BigInt?
+  id        Int      @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
   userId    Int
   createdAt DateTime @default(now())
@@ -213,7 +213,7 @@ model PlinkoGame {
 }
 
 model PlinkoBalls {
-  id        BigInt   @id @default(autoincrement()) // TODO: What to do with id type? Int or BigInt?
+  id        BigInt   @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
