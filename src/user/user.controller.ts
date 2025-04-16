@@ -110,6 +110,7 @@ export class UserController {
     @CurrentUser() user: UserPopulated,
     @Body() completeUserData: CompleteRegistrationDto,
   ) {
+    console.warn(completeUserData);
     await this.userService.completeUserData(user, completeUserData);
   }
 
@@ -122,7 +123,7 @@ export class UserController {
     @CurrentUser() user: UserPopulated,
     @Body() updateUserData: UpdateUserDto,
   ) {
-    return this.userService.updateUser(user.id, updateUserData);
+    return this.userService.updateUser(user, updateUserData);
   }
 
   @ApiOperation({

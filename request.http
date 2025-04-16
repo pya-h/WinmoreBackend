@@ -49,10 +49,10 @@ Authorization: Bearer {{token2}}
 ### Update user
 PATCH {{host}}/user/profile
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjgsImFkZHJlc3MiOiItMFg0d2R2b2hmdjJ0eXY4ejFmNDI1amhldHg2c2U0ZjRhMXoxZm11dmQiLCJpYXQiOjE3NDQ4MjU2MzAsImV4cCI6MTc0NDkxMjAzMCwiaXNzIjoiV2luTW9yZUd1eXMifQ.fKsW89DLipNgFwAZ8WYNha1XYmWab5e50s_zmcvEp-U
 
 {
-    "referrerCode": "new name"
+    "name": "new name"
 }
 
 

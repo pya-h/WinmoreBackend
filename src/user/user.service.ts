@@ -141,7 +141,14 @@ export class UserService {
     return user;
   }
 
-  async updateUser(userId: number, updateUserData: UpdateUserDto) {
+  async updateUser(
+    user: UserPopulated,
+    updateUserData: UpdateUserDto,
+    {
+      referrerCode = null,
+      checkDate = true,
+    }: { referrerCode?: string; checkDate?: boolean } = {},
+  ) {
     if (!Object.keys(updateUserData)?.length)
       throw new BadRequestException(
         'Provide some new data to continue modifying user data.',
@@ -155,8 +162,15 @@ export class UserService {
 
     const { avatar, ...userData } = updateUserData;
 
+    if (referrerCode?.length) {
+      await this.referralService.validateUserAllowanceToSetReferrerCode(
+        user,
+        checkDate,
+      );
+      await this.referralService.linkUserToReferrers(user, referrerCode, true);
+    }
     return this.prisma.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: {
         ...userData,
         ...(avatar?.length ? { profile: { update: { avatar } } } : {}),
@@ -175,11 +189,12 @@ export class UserService {
     if (!email?.length || !name.length) {
       throw new BadRequestException('Email & Name are both required!');
     }
-    await this.updateUser(user.id, { email, name });
-    if (referrerCode?.length) {
-      await this.referralService.validateUserAllowanceToSetReferrerCode(user);
-      await this.referralService.linkUserToReferrers(user, referrerCode, true);
-    }
+
+    await this.updateUser(
+      user,
+      { email, name },
+      { referrerCode, checkDate: false },
+    );
   }
 
   getUsers() {
