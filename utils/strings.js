@@ -8,7 +8,7 @@ export const generateRandomString = (
 
   let code;
   do {
-    code = containsAlpha ? alpha[(Math.random() * characters.length) | 0] : '';
+    code = containsAlpha ? alpha[(Math.random() * alpha.length) | 0] : '';
     for (let i = code.length; i < length; i++) {
       code += characters[(Math.random() * characters.length) | 0];
     }

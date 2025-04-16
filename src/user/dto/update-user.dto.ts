@@ -27,6 +27,6 @@ export class UpdateUserDto {
     description: 'The referral code of the referrer user (if any).',
   })
   @IsOptional()
-  @IsAlphanumeric(null, { message: 'Invalid referral code provided!' })
+  @IsAlphanumeric('en-US', { message: 'Invalid referral code provided!' })
   referrerCode?: string;
 }

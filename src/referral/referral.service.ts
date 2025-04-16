@@ -143,7 +143,7 @@ export class ReferralService {
     let code: string;
     do {
       code = containsAlpha
-        ? alpha[(Math.random() * characters.length) | 0]
+        ? alpha[(Math.random() * alpha.length) | 0]
         : '';
       for (let i = code.length; i < codeLength; i++) {
         code += characters[(Math.random() * characters.length) | 0];
