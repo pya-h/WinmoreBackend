@@ -1,5 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+// const { PrismaClient, TokensEnum } = require('@prisma/client');
+// const { generateRandomString } = require('../utils/strings');
+// const { config } = require('dotenv');
+
 import { PrismaClient, TokensEnum } from '@prisma/client';
+import { generateRandomString } from '../utils/strings';
 import { config } from 'dotenv';
 
 config();
@@ -233,6 +238,10 @@ async function main() {
   // 3 CREATE BUSINESS MAN USER
   if (!process.env.WMA_ADDRESS?.length)
     throw new Error('Admin wallet address not specified!');
+  const adminReferralCode = generateRandomString(
+    +(process.env.REFERRAL_CODE_LENGTH ?? 8),
+    process.env.REFERRAL_CONTAINS_ALPHA?.toLowerCase() === 'true',
+  );
   try {
     await prisma.user.create({
       data: {
@@ -243,6 +252,7 @@ async function main() {
         profile: {
           create: {
             avatar: null,
+            referralCode: adminReferralCode,
           },
         },
         wallet: {
@@ -257,6 +267,7 @@ async function main() {
 
     if (!process.env.SHAREMAN_ADDRESS?.length)
       throw new Error('ShareManager wallet address not specified!');
+
     await prisma.user.create({
       data: {
         admin: false,
@@ -266,6 +277,11 @@ async function main() {
         profile: {
           create: {
             avatar: null,
+            referralCode: generateRandomString(
+              +(process.env.REFERRAL_CODE_LENGTH ?? 8),
+              process.env.REFERRAL_CONTAINS_ALPHA?.toLowerCase() === 'true',
+              [adminReferralCode],
+            ),
           },
         },
         wallet: {

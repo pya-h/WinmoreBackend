@@ -19,3 +19,21 @@ function decrypt() {
 }
 
 console.log(decrypt());
+
+
+export function generateRandomString(length: number, containsAlpha = true, exceptions: string[] = []) {
+  const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const characters = (containsAlpha ? alpha : '') + '01234567890123456789';
+
+  let code: string;
+  do {
+    code = containsAlpha
+      ? alpha[(Math.random() * characters.length) | 0]
+      : '';
+    for (let i = code.length; i < length; i++) {
+      code += characters[(Math.random() * characters.length) | 0];
+    }
+  } while (exceptions.includes(code));
+  return code;
+
+}
