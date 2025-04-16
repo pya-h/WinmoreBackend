@@ -32,6 +32,9 @@ export type GeneralGameStatus = GameStatusEnum | ExtraGameStatusEnum;
 export type GeneralPlinkoGameStatus = PlinkoGameStatus | ExtraGameStatusEnum;
 
 export function generalStatusToPlinkoStatus(status: GeneralGameStatus) {
+  if (!status) {
+    return null;
+  }
   switch (status) {
     case GameStatusEnum.NOT_STARTED:
       return PlinkoGameStatus.NOT_DROPPED_YET;

@@ -24,7 +24,7 @@ export class GamesController {
   async findGames(@Query() filter?: GameStatusFilterQuery) {
     const [dreamMines, plinkos] = await Promise.all([
       this.dreamMineService.findGames({
-        filter,
+        filter: { ...filter }, // to prevent modification of actual filters for plinko
         include: {
           user: {
             select: {
@@ -120,7 +120,7 @@ export class GamesController {
     const [dreamMines, plinkos] = await Promise.all([
       this.dreamMineService.findGames({
         userId: user.id,
-        filter,
+        filter: { ...filter },
         include: {
           user: {
             select: {
