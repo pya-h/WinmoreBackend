@@ -19,6 +19,7 @@ import { JwtAuthStrategy } from './strategies/jwt.strategy';
         secret: configService.getOrThrow<string>('auth.jwtSecret'),
         signOptions: {
           expiresIn: configService.getOrThrow<string>('auth.jwtExpiry'),
+          issuer: configService.get<string>('auth.jwtIssuer'),
         },
       }),
       inject: [ConfigService],
