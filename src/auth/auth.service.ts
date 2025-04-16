@@ -142,7 +142,11 @@ export class AuthService {
         length: 39,
       }); // - is for not conflicting with real addresses
 
-    const user = await this.userService.createUser(randomWalletAddress, null, referrerCode);
+    const user = await this.userService.createUser(
+      randomWalletAddress,
+      null,
+      referrerCode,
+    );
     return {
       token: this.getJwtToken(user),
       statusCode: HttpStatus.CREATED,

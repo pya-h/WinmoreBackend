@@ -1,6 +1,8 @@
 @host  = http://localhost:8000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDUyMjBmZDVkOGMxMDc0NDk4QWQxMWNhMTY2MjZBM2RjN0ZmNGNjRDIiLCJpYXQiOjE3NDQzMDQ3MjQsImV4cCI6MTc0NDM5MTEyNH0.DE_jfp56ONwiTyIMGlqrUJUhYgk4j9_BoNohRC_3vYQ
-@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImFkZHJlc3MiOiItMFh4NGxmNTdwMHAzZDY1eGI1aHpoMzM2NzVjN3JpM3Y1NWNyZDBpbGQiLCJpYXQiOjE3Mjk5NzgxMTksImV4cCI6MTczMDA2NDUxOX0.5s_SPBqyBJ9gg_x1z8Wt7C_OeAfDZDObMnwrweEw_a0
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3NDQ4MTU2NTUsImV4cCI6MTc0NDkwMjA1NSwiaXNzIjoiV2luTW9yZUd1eXMifQ.pndSCbRBqcGuatfRk-WJZg6YuOU5E0qtdGz_0lRnYHE
+@token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImFkZHJlc3MiOiItMFhrZ3c3bjkzZjFnOWRvbGpmYTIxcm9lOGphbzMyYW5iNGdic2s0ODYiLCJpYXQiOjE3NDQ4MTk3NzYsImV4cCI6MTc0NDkwNjE3NiwiaXNzIjoiV2luTW9yZUd1eXMifQ.O9U3HuaULP-n1HGGk79jvJ0_Mneq-LMM88k9ULD36Eo
+@tokensu = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjAsImFkZHJlc3MiOiIweGJCMUEzOEIyNTU2QkZFNjcyYzcxOEQ3QmY5YzhhM2MyNUFGRUUzMTEiLCJpYXQiOjE3NDQ4MTYzOTQsImV4cCI6MTc0NDkwMjc5NCwiaXNzIjoiV2luTW9yZUd1eXMifQ.YHEkIHU099LjvZokEukItAe9_bnFvBOxUq7Ou6-m_u0
+
 ### main route
 GET {{host}}/
 
@@ -10,7 +12,7 @@ POST {{host}}/auth/test
 Content-Type: application/json
 
 {
-    "address": "0x808F086E7cd9e344b4397518067c543A6aF195C1"
+    
 }
 
 
@@ -36,11 +38,12 @@ Content-Type: application/json
 ### Complete registeration
 POST {{host}}/user/register
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{token2}}
 
 {
-    "email": "myemasil@gmail.com",
-    "name": "Whasr"
+    "email": "myemasil3@gmail.com",
+    "name": "Whasr3",
+    "referrerCode": "BXJGA2TQ"
 }
 
 ### Update user
@@ -49,9 +52,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-    "email": "myemsasil@gmail.com",
-    "name": "Whasr",
-    "avatar": "https://whatever.com"
+    "referrerCode": "new name"
 }
 
 
@@ -169,3 +170,7 @@ Authorization: Bearer {{token2}}
 ### Get current user's plinko games so far.
 GET {{host}}/user/plinko/my-history?status=LOST&take=2
 Authorization: Bearer {{token2}}
+
+### Get user's referral report
+GET {{host}}/user/0/referral-report
+Authorization: Bearer {{tokensu}}

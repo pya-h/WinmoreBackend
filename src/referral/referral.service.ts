@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 import { ConfigService } from '@nestjs/config';
+import { UserPopulated } from 'src/user/types/user-populated.type';
 
 @Injectable()
 export class ReferralService {
@@ -26,20 +27,34 @@ export class ReferralService {
     });
   }
 
-  async isUserAllowedToSetReferrerCode(userId: number) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    const deadlineInMinutes =
-      this.configService.get<number>('referral.inputDeadline') ?? 60;
+  async validateUserAllowanceToSetReferrerCode(
+    user: UserPopulated,
+    checkDate: boolean = false,
+  ) {
+    if (checkDate) {
+      // In case this is called from some endpoint other than register!
+      const deadlineInMinutes =
+        this.configService.get<number>('referral.inputDeadline') ?? 60;
 
-    if (
-      Date.now() - new Date(user.createdAt).getTime() >=
-      deadlineInMinutes * 60000
-    ) {
-      return false;
+      if (
+        Date.now() - new Date(user.createdAt).getTime() >=
+        deadlineInMinutes * 60000
+      ) {
+        throw new ForbiddenException(
+          'Specifying Referral code is only allowed for new users!',
+        );
+      }
     }
-    return !(await this.prisma.referral.findFirst({
-      where: { OR: [{ userId }, { referrerId: userId }] },
-    }));
+    if (
+      await this.prisma.referral.findFirst({
+        where: { OR: [{ userId: user.id }, { referrerId: user.id }] },
+      })
+    ) {
+      throw new ForbiddenException(
+        "You're not allowed to set referrer code, since you already have referral hierarchy!",
+      );
+    }
+    return user;
   }
 
   async findDirectReferralRelations(options?: {
@@ -100,7 +115,7 @@ export class ReferralService {
       const referrals = await this.prisma.referral.findMany({
         where: {
           referrerId,
-          ...(referralType.layer ? { layer: referralType.layer } : {}),
+          ...(referralType.layer != null ? { layer: referralType.layer } : {}),
         },
         include: { user: true },
       });
@@ -117,8 +132,8 @@ export class ReferralService {
           ...(referralType.layer ? { layer: referralType.layer } : {}),
         },
         include: { user: true },
-        ...(paginationOptions?.take ? { take: paginationOptions.take } : {}),
-        ...(paginationOptions?.skip ? { skip: paginationOptions.skip } : {}),
+        ...(paginationOptions?.take ? { take: +paginationOptions.take } : {}),
+        ...(paginationOptions?.skip ? { skip: +paginationOptions.skip } : {}),
       }),
       this.prisma.referral.count({
         where: {
@@ -142,9 +157,7 @@ export class ReferralService {
 
     let code: string;
     do {
-      code = containsAlpha
-        ? alpha[(Math.random() * alpha.length) | 0]
-        : '';
+      code = containsAlpha ? alpha[(Math.random() * alpha.length) | 0] : '';
       for (let i = code.length; i < codeLength; i++) {
         code += characters[(Math.random() * characters.length) | 0];
       }
@@ -179,13 +192,15 @@ export class ReferralService {
   }
 
   async linkUserToReferrers(
-    userId: number,
+    user: UserPopulated,
     referrerCode: string,
     shouldThrow: boolean = true,
   ) {
+    referrerCode = referrerCode.toUpperCase();
+
     const referrerProfile = await this.findUserByReferralCode(referrerCode);
 
-    if (!referrerProfile) {
+    if (!referrerProfile || referrerCode === user.profile.referralCode) {
       if (shouldThrow) {
         throw new BadRequestException('Invalid referral code!');
       }
@@ -198,10 +213,10 @@ export class ReferralService {
       );
       return this.prisma.referral.createMany({
         data: [
-          { referrerId: referrerProfile.userId, userId, layer: 0 },
+          { referrerId: referrerProfile.userId, userId: user.id, layer: 0 },
           ...referrerRelations.map((parentRef) => ({
             referrerId: parentRef.referrerId,
-            userId,
+            userId: user.id,
             layer: parentRef.layer + 1,
           })),
         ],
@@ -209,7 +224,7 @@ export class ReferralService {
     } catch (ex) {
       this.logger.error('Linking user to referrers interrupted!', ex as Error, {
         data: {
-          userId,
+          userId: user.id,
           ...(referrerProfile
             ? {
                 referrer: {

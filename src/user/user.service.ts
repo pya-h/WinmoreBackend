@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -137,36 +136,27 @@ export class UserService {
     });
 
     if (referrerCode?.length) {
-      await this.referralService.linkUserToReferrers(user.id, referrerCode);
+      await this.referralService.linkUserToReferrers(user, referrerCode);
     }
     return user;
   }
 
-  async updateUser(id: number, updateUserData: UpdateUserDto) {
-    if (!updateUserData.email && !updateUserData.name)
+  async updateUser(userId: number, updateUserData: UpdateUserDto) {
+    if (!Object.keys(updateUserData)?.length)
       throw new BadRequestException(
         'Provide some new data to continue modifying user data.',
       );
-    if (updateUserData.email) {
-      const user = await this.getBy({ email: updateUserData.email.toString() });
-      if (user) throw new ConflictException('This email is used before.');
+    if (
+      updateUserData.email &&
+      (await this.getBy({ email: updateUserData.email.toString() }))
+    ) {
+      throw new ConflictException('This email is used before.');
     }
 
-    const { avatar, referrerCode, ...userData } = updateUserData;
+    const { avatar, ...userData } = updateUserData;
 
-    if (referrerCode?.length) {
-      if (!(await this.referralService.isUserAllowedToSetReferrerCode(id))) {
-        throw new ForbiddenException(
-          'Specifying Referral code is only allowed for new users!',
-        );
-      }
-      await this.referralService.linkUserToReferrers(id, referrerCode, true);
-    }
-    if (!avatar?.length && !Object.keys(userData)?.length) {
-      return;
-    }
-    await this.prisma.user.update({
-      where: { id },
+    return this.prisma.user.update({
+      where: { id: userId },
       data: {
         ...userData,
         ...(avatar?.length ? { profile: { update: { avatar } } } : {}),
@@ -174,10 +164,22 @@ export class UserService {
     });
   }
 
-  async completeUserData(userId: number, userData: CompleteRegistrationDto) {
-    const { email, name } = userData;
-    await this.updateUser(userId, { email, name });
-    // TODO: Update user data if everything is right on its place.
+  async completeUserData(
+    user: UserPopulated,
+    userData: CompleteRegistrationDto,
+  ) {
+    if (user.email?.length || user.name?.length) {
+      throw new ConflictException('User is already registered!');
+    }
+    const { email, name, referrerCode } = userData;
+    if (!email?.length || !name.length) {
+      throw new BadRequestException('Email & Name are both required!');
+    }
+    await this.updateUser(user.id, { email, name });
+    if (referrerCode?.length) {
+      await this.referralService.validateUserAllowanceToSetReferrerCode(user);
+      await this.referralService.linkUserToReferrers(user, referrerCode, true);
+    }
   }
 
   getUsers() {

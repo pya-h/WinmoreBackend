@@ -21,6 +21,7 @@ import { TokensEnum } from '@prisma/client';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
 import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
+import { AdminGuard } from 'src/auth/guards/admin.guard';
 
 @ApiTags('User')
 @Controller('user')
@@ -90,16 +91,14 @@ export class UserController {
   @ApiOperation({
     description: 'Returns all user transactions.',
   })
-  @UseGuards(JwtAuthGuard)
-  @Get('referral-report')
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Get(':id/referral-report')
   getMyReferralsReport(
-    @CurrentUser() user: UserPopulated,
+    @Param('id', ParseIntPipe) id: string,
     @Query() paginationOptionsDto: PaginationOptionsDto,
   ) {
-    return this.userService.getMyReferralsReport(
-      user.id,
-      paginationOptionsDto,
-    );
+    // TODO: Make this endpoint public, After defining PublicUserData transformer to prevent leaking credentials.
+    return this.userService.getMyReferralsReport(+id, paginationOptionsDto);
   }
 
   @ApiOperation({
@@ -107,11 +106,11 @@ export class UserController {
   })
   @UseGuards(JwtAuthGuard)
   @Post('register')
-  completeRegistration(
+  async completeRegistration(
     @CurrentUser() user: UserPopulated,
     @Body() completeUserData: CompleteRegistrationDto,
   ) {
-    return this.userService.completeUserData(user.id, completeUserData);
+    await this.userService.completeUserData(user, completeUserData);
   }
 
   @ApiOperation({
@@ -119,7 +118,7 @@ export class UserController {
   })
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
-  updateUserData(
+  async updateUserData(
     @CurrentUser() user: UserPopulated,
     @Body() updateUserData: UpdateUserDto,
   ) {
