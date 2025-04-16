@@ -22,8 +22,8 @@ export class GamesController {
   })
   @Get()
   async findGames(@Query() filter?: GameStatusFilterQuery) {
-    return (
-      await this.dreamMineService.findGames({
+    const [dreamMines, plinkos] = await Promise.all([
+      this.dreamMineService.findGames({
         filter,
         include: {
           user: {
@@ -33,11 +33,32 @@ export class GamesController {
             },
           },
         },
-      })
-    ).map((game) => ({
-      ...game,
-      name: WinmoreGamesEnum.DREAM_MINE,
-    })); // FIXME: add plinko games too, but since frontend is using this endpoint too, u must update frontend too; Also don't remember the sort issue.
+      }),
+      this.plinkoService.findGames({
+        filter: {
+          ...filter,
+          status: generalStatusToPlinkoStatus(filter.status),
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+          plinkoBalls: {
+            select: {
+              scoredMultiplier: true,
+              bucketIndex: true,
+            },
+          },
+        },
+      }),
+    ]);
+    return {
+      dreamMines,
+      plinkos,
+    };
   }
 
   @ApiOperation({
