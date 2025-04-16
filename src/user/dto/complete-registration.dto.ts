@@ -10,7 +10,7 @@ import {
 export class CompleteRegistrationDto {
   @ApiProperty({ description: 'User email' })
   @IsNotEmpty({ message: 'Please provide your email.' })
-  @IsEmail()
+  @IsEmail({}, { message: 'Email field must be a valid email address!' })
   email: string;
 
   @ApiProperty({ description: 'The displaying name of the user' })
