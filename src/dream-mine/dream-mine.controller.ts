@@ -126,6 +126,7 @@ export class DreamMineController {
     return (await this.dreamMineService.getRules()).map((rule) => ({
       rows: rule.rows,
       minBetAmount: rule.minBetAmount,
+      maxBetAmount: rule.maxBetAmount,
       multipliers: this.dreamMineService.populateMultipliers(
         rule.multipliers,
         rule.difficultyMultipliers,
