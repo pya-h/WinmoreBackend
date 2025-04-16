@@ -143,7 +143,7 @@ export class UserController {
   @ApiOperation({
     description: 'Get the current user data.',
   })
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   @Get(':id')
   async getUser(
     @CurrentUser() currentUser: UserPopulated,

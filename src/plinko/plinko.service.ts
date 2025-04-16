@@ -4,8 +4,8 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
-  MethodNotAllowedException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -238,8 +238,8 @@ export class PlinkoService {
     }
     const rule = await this.getRulesByRows(game.rowsCount);
     if (!rule)
-      throw new MethodNotAllowedException(
-        'It seems that site is not ready for your next mine; wait a little bit.',
+      throw new ServiceUnavailableException(
+        'It seems game with such configs is not available right now.',
       );
 
     game.status = PlinkoGameStatus.DROPPING;
@@ -290,8 +290,8 @@ export class PlinkoService {
     }
     const rule = await this.getRulesByRows(game.rowsCount);
     if (!rule)
-      throw new MethodNotAllowedException(
-        'It seems that site is not ready for your next mine; wait a little bit.',
+      throw new ServiceUnavailableException(
+        'It seems game with such configs is not available right now.',
       );
 
     game.prize = 0;
