@@ -14,6 +14,7 @@ import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
 import { ReferralService } from '../referral/referral.service';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
 @Injectable()
 export class UserService {
@@ -141,13 +142,16 @@ export class UserService {
       if (user) throw new ConflictException('This email is used before.');
     }
 
-    const { avatar, ...userData } = updateUserData;
+    const { avatar, referrerCode, ...userData } = updateUserData;
 
+    if (referrerCode?.length) {
+      await this.referralService.linkUserToReferrers(id, referrerCode, true);
+    }
     return this.prisma.user.update({
       where: { id },
       data: {
         ...userData,
-        profile: { update: { ...(avatar ? { avatar } : {}) } },
+        ...(avatar?.length ? { profile: { update: { avatar } } } : {}),
       },
     });
   }
@@ -163,6 +167,10 @@ export class UserService {
       where: { admin: false },
       include: this.userPopulatedIncludeConfig,
     });
+  }
+
+  getMyReferralsReport(userId: number, paginationDto?: PaginationOptionsDto) {
+    return this.referralService.getUserReferralsReport(userId, paginationDto);
   }
 
   async updateUserSettings(

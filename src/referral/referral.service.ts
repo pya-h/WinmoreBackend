@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
@@ -203,8 +204,10 @@ export class ReferralService {
             : {}),
         },
       });
-      if(shouldThrow) {
-        throw ex;
+      if (shouldThrow) {
+        throw new ServiceUnavailableException(
+          'It seems that our referral service is not available.',
+        );
       }
     }
     return null;

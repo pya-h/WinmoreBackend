@@ -20,6 +20,7 @@ import { UserPopulated } from './types/user-populated.type';
 import { TokensEnum } from '@prisma/client';
 import { RequestWithdrawalDto } from './dto/request-withdraw.dto';
 import { TransactionHistoryFilterDto } from '../wallet/dtos/transaction-history-dto';
+import { PaginationOptionsDto } from 'src/common/dtos/pagination-options.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -83,6 +84,21 @@ export class UserController {
     return this.userService.getMyTransactions(
       user.id,
       transactionHistoryFilter,
+    );
+  }
+
+  @ApiOperation({
+    description: 'Returns all user transactions.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('referral-report')
+  getMyReferralsReport(
+    @CurrentUser() user: UserPopulated,
+    @Query() paginationOptionsDto: PaginationOptionsDto,
+  ) {
+    return this.userService.getMyReferralsReport(
+      user.id,
+      paginationOptionsDto,
     );
   }
 
