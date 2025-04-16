@@ -257,7 +257,15 @@ export class PlinkoService {
   async finalizeGame(user: UserPopulated, gameId: number) {
     const game = await this.prisma.plinkoGame.findUnique({
       where: { id: gameId },
-      include: { plinkoBalls: true },
+      include: {
+        plinkoBalls: {
+          select: {
+            scoredMultiplier: true,
+            bucketIndex: true,
+            dropSpecs: true,
+          },
+        },
+      },
     });
 
     if (!game) {
