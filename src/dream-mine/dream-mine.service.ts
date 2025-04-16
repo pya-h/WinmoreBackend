@@ -40,6 +40,22 @@ export class DreamMineService {
     user: UserPopulated,
     { betAmount, token, chainId, mode, rows }: CommonGamePreferencesDto,
   ) {
+    const rules = await this.getRulesByRows(rows);
+    if (!rules)
+      throw new BadRequestException(
+        `Winmore doesn't support ${rows} rows game.`,
+      );
+
+    if (rules.maxBetAmount && betAmount > rules.maxBetAmount)
+      throw new BadRequestException(
+        `Bet must not exceed ${rules.maxBetAmount}$ for now!`,
+      );
+    if (betAmount < (rules.minBetAmount ?? 0)) {
+      throw new BadRequestException(
+        `Can not bet below ${rules.minBetAmount}$ in this game!`,
+      );
+    }
+
     const placeBetTrx = await this.walletService.placeBet(
       user,
       betAmount,
@@ -51,16 +67,7 @@ export class DreamMineService {
       throw new BadRequestException(
         'Could not place bet due to some reason! Please try again.',
       );
-    const rules = await this.getRulesByRows(rows);
-    if (!rules)
-      throw new BadRequestException(
-        `Winmore doesn't support ${rows} rows game.`,
-      );
 
-    if (betAmount > rules.maxBetAmount)
-      throw new BadRequestException(
-        `Bet must not exceed ${rules.maxBetAmount}$ for now!`,
-      );
     const game = await this.prisma.dreamMineGame.create({
       data: {
         userId: user.id,

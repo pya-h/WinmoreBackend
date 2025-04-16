@@ -280,6 +280,11 @@ export class WalletService {
       include?: { [field: string]: unknown };
     },
   ) {
+    if (!amount || amount < 0) {
+      throw new BadRequestException(
+        'Invalid transaction amount! Can not transact non-positive amounts!',
+      );
+    }
     if (!(await this.isChainSupported(chainId)))
       throw new BadRequestException(
         "Unfortunately we don't support this chain for now.",
