@@ -33,6 +33,6 @@ export class AuthController {
   })
   @Post('test')
   devAuth(@Body() optionalWalletAddress: TestAuthWalletAddressDto) {
-    return this.authService.testAuth(optionalWalletAddress?.address);
+    return this.authService.testAuth(optionalWalletAddress?.address, optionalWalletAddress?.referrerCode);
   }
 }

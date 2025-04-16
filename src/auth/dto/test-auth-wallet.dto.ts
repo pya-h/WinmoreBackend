@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEthereumAddress, IsOptional } from 'class-validator';
+import { IsAlphanumeric, IsEthereumAddress, IsOptional } from 'class-validator';
 
 export class TestAuthWalletAddressDto {
   @ApiProperty({
@@ -10,4 +10,11 @@ export class TestAuthWalletAddressDto {
   })
   @IsOptional()
   address?: string;
+
+  @ApiProperty({
+    description: 'The referral code of the referrer user (if any).',
+  })
+  @IsOptional()
+  @IsAlphanumeric(null, { message: 'Invalid referral code provided!' })
+  referrerCode?: string;
 }

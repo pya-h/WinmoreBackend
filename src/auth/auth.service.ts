@@ -121,7 +121,7 @@ export class AuthService {
     return { token: this.getJwtToken(user), statusCode: HttpStatus.OK };
   }
 
-  async testAuth(optionalWalletAddress?: string) {
+  async testAuth(optionalWalletAddress?: string, referrerCode?: string) {
     if (!this.configService.get<boolean>('general.debug'))
       throw new NotFoundException('No such route.');
 
@@ -142,7 +142,7 @@ export class AuthService {
         length: 39,
       }); // - is for not conflicting with real addresses
 
-    const user = await this.userService.createUser(randomWalletAddress);
+    const user = await this.userService.createUser(randomWalletAddress, null, referrerCode);
     return {
       token: this.getJwtToken(user),
       statusCode: HttpStatus.CREATED,

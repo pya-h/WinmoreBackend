@@ -110,8 +110,12 @@ export class UserService {
     throw new BadRequestException('Invalid arguments for finding a user');
   }
 
-  async createUser(walletAddress: string, userData?: Prisma.UserCreateInput) {
-    return this.prisma.user.create({
+  async createUser(
+    walletAddress: string,
+    userData?: Prisma.UserCreateInput,
+    referrerCode?: string,
+  ) {
+    const user = await this.prisma.user.create({
       data: {
         wallet: {
           create: {
@@ -130,6 +134,11 @@ export class UserService {
       },
       include: this.userPopulatedIncludeConfig,
     });
+
+    if (referrerCode?.length) {
+      await this.referralService.linkUserToReferrers(user.id, referrerCode);
+    }
+    return user;
   }
 
   async updateUser(id: number, updateUserData: UpdateUserDto) {
