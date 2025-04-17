@@ -180,7 +180,7 @@ export class PlinkoPhysxService {
     if (!v0) {
       v0 = {
         vx: Math.random() * 3 - 3,
-        vy: Math.random() * 3 - 3, // TODO: test it with random too
+        vy: Math.random() * 3 - 3,
       };
     }
 

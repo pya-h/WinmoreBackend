@@ -23,30 +23,37 @@ async function main() {
           id: 1,
           name: 'Ethereum Mainnet',
           providerUrl: 'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
-          blockProcessRange: 50,
+          blockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 137,
           name: 'Polygon Mainnet',
           providerUrl: 'https://polygon-rpc.com',
-          blockProcessRange: 50,
+          blockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 8453,
           name: 'Base Mainnet',
-          providerUrl: 'https://rpc.ankr.com/base',
-          // providerUrl: 'https://mainnet.base.org',
-          blockProcessRange: 50,
+          // providerUrl: 'https://rpc.ankr.com/base',
+          providerUrl: 'https://mainnet.base.org',
+          blockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 11155111,
-          name: 'Sepolia',
+          name: 'Sepolia Testnet',
           providerUrl: 'https://rpc2.sepolia.org',
           // providerUrl: 'https://rpc.ankr.com/eth_sepolia',
-          blockProcessRange: 50,
+          blockProcessRange: 5,
+          acceptedBlockStatus: 'latest',
+        },
+        {
+          id: 10143,
+          name: 'Monad Testnet',
+          providerUrl: 'https://testnet-rpc.monad.xyz',
+          blockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         // MAYBE LATER CHAINS:
@@ -62,6 +69,20 @@ async function main() {
         //   name: 'Arbitrum One',
         //   providerUrl: 'https://arb1.arbitrum.io/rpc',
         //   blockProcessRange: 50,
+        //   acceptedBlockStatus: 'latest',
+        // },
+        // {
+        //   id: 143,
+        //   name: 'Monad Mainnet',
+        //   providerUrl: 'https://rpc.monad.xyz',
+        //   blockProcessRange: 5,
+        //   acceptedBlockStatus: 'latest',
+        // },
+        // {
+        //   id: 20143,
+        //   name: 'Monad Devnet',
+        //   providerUrl: 'https://devnet-rpc.monad.xyz',
+        //   blockProcessRange: 5,
         //   acceptedBlockStatus: 'latest',
         // },
       ].map(
@@ -358,6 +379,19 @@ async function main() {
           token: TokensEnum.WUSDC,
           address: '0x9dfb350c3253386de5e2fec4dcb959b18f6ee2a1',
           chainId: 11155111,
+        },
+        // MONAD TESTNET:
+        {
+          title: 'USD Tether',
+          token: TokensEnum.USDT,
+          address: '0x88b8E2161DEDC77EF4ab7585569D2415a1C1055D',
+          chainId: 10143,
+        },
+        {
+          title: 'USD Coin',
+          token: TokensEnum.USDC,
+          address: '0xf817257fed379853cDe0fa4F97AB987181B1E5Ea',
+          chainId: 10143,
         },
         // MAYBE LATER CHAINS:
         // OPTIMISM
