@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { WalletService } from '../wallet/wallet.service';
 import Web3, { DecodedParams } from 'web3';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { ChainHistory } from './types/chain-history.type';
 import {
   BlockchainLog,
@@ -42,6 +42,9 @@ export class BlockchainService {
           lastProcessedBlockNumber: chain.lastProcessedBlock,
           chainId: chain.id,
           blockProcessRange: BigInt(chain.blockProcessRange),
+          maxBlockProcessRange: chain.maxBlockProcessRange
+            ? BigInt(chain.maxBlockProcessRange)
+            : null,
           acceptedBlockStatus: chain.acceptedBlockStatus,
           contracts: chain.contracts,
         };
@@ -109,6 +112,8 @@ export class BlockchainService {
       this.chainHistory[chainId].blockProcessRange = BigInt(
         chain.blockProcessRange,
       );
+      this.chainHistory[chainId].maxBlockProcessRange =
+        chain.maxBlockProcessRange ? BigInt(chain.maxBlockProcessRange) : null;
       this.logger.log(`Reconnected to provider for chain#${chainId}`);
       return true;
     } catch (error) {
@@ -407,14 +412,16 @@ export class BlockchainService {
 
   endBlock = (a: bigint, b: bigint) => (a <= b ? a : b);
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron('*/20 * * * * *')
   async checkoutLatestBlocks() {
     const processLogTasks: Promise<void>[] = [];
 
     for (const chainId in this.chainHistory) {
       try {
         if (
+          chainId !== '10143' && // Monad does not have isListening it seems
           !(await this.isProviderConnected(
+            // TODO: Is this checking even required?
             this.chainHistory[chainId].provider,
           )) &&
           !(await this.reconnectProvider(+chainId))
@@ -426,6 +433,7 @@ export class BlockchainService {
           lastProcessedBlockNumber,
           provider,
           blockProcessRange,
+          maxBlockProcessRange = null,
           contracts,
           acceptedBlockStatus,
         } = this.chainHistory[chainId];
@@ -433,25 +441,37 @@ export class BlockchainService {
         const latestFinalizedBlock =
           await provider.eth.getBlock(acceptedBlockStatus);
         if (
+          maxBlockProcessRange &&
+          lastProcessedBlockNumber &&
+          latestFinalizedBlock.number - lastProcessedBlockNumber >
+            maxBlockProcessRange
+        ) {
+        }
+
+        if (
           lastProcessedBlockNumber &&
           lastProcessedBlockNumber >= latestFinalizedBlock.number
         )
           continue;
 
+        const thisRoundsFinishBlock =
+          maxBlockProcessRange &&
+          lastProcessedBlockNumber &&
+          latestFinalizedBlock.number - lastProcessedBlockNumber >
+            maxBlockProcessRange
+            ? lastProcessedBlockNumber + maxBlockProcessRange
+            : latestFinalizedBlock.number;
+
+        let i: bigint =
+          lastProcessedBlockNumber != null
+            ? lastProcessedBlockNumber + 1n
+            : thisRoundsFinishBlock;
         this.logger.debug(
-          `Processing chain#${chainId} blocks: #${lastProcessedBlockNumber ? lastProcessedBlockNumber + 1n : latestFinalizedBlock.number} to ${latestFinalizedBlock.number}`,
+          `Processing chain#${chainId} blocks: #${i} to ${thisRoundsFinishBlock}`,
         );
 
-        let i: bigint;
         try {
-          for (
-            i =
-              lastProcessedBlockNumber != null
-                ? lastProcessedBlockNumber + 1n
-                : latestFinalizedBlock.number;
-            i <= latestFinalizedBlock.number;
-            i += blockProcessRange
-          ) {
+          for (; i < thisRoundsFinishBlock; i += blockProcessRange) {
             for (const contract of contracts) {
               processLogTasks.push(
                 this.processLogsInRange(
@@ -459,7 +479,7 @@ export class BlockchainService {
                   i,
                   this.endBlock(
                     i + blockProcessRange - 1n,
-                    latestFinalizedBlock.number,
+                    thisRoundsFinishBlock,
                   ),
                   contract,
                   acceptedBlockStatus,
@@ -469,7 +489,7 @@ export class BlockchainService {
           }
           await Promise.all(processLogTasks); // Process logs for all contracts in parallel
           this.chainHistory[chainId].lastProcessedBlockNumber =
-            latestFinalizedBlock.number;
+            thisRoundsFinishBlock;
         } catch (ex) {
           this.logger.error(
             `Something crashed while processing range with the start block as block#${i}; next time the process will continue from crashed block.`,

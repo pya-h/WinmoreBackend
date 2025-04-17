@@ -6,6 +6,7 @@ export type ChainHistory = {
   lastProcessedBlockNumber: bigint | undefined;
   chainId: number;
   blockProcessRange: bigint;
+  maxBlockProcessRange?: bigint;
   contracts: Contract[];
   acceptedBlockStatus: BlockStatus;
 };

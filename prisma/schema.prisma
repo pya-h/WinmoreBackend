@@ -102,11 +102,12 @@ model Chain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name                String      @db.VarChar(64)
-  providerUrl         String      @db.VarChar(256)
-  lastProcessedBlock  BigInt?
-  blockProcessRange   Int         @default(5)
-  acceptedBlockStatus BlockStatus @default(finalized)
+  name                 String      @db.VarChar(64)
+  providerUrl          String      @db.VarChar(256)
+  lastProcessedBlock   BigInt?
+  blockProcessRange    Int         @default(5)
+  maxBlockProcessRange Int?
+  acceptedBlockStatus  BlockStatus @default(finalized)
 
   transactions   Transaction[]
   dreamMineGames DreamMineGame[]

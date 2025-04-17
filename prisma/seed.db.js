@@ -4,7 +4,7 @@
 // const { config } = require('dotenv');
 
 import { PrismaClient, TokensEnum } from '@prisma/client';
-import { generateRandomString } from '../utils/strings';
+import { generateRandomString } from '../utils/strings.js';
 import { config } from 'dotenv';
 
 config();
@@ -22,38 +22,48 @@ async function main() {
         {
           id: 1,
           name: 'Ethereum Mainnet',
-          providerUrl: 'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
+          providerUrl:
+            'https://ultra-black-tab.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
           blockProcessRange: 5,
+          maxBlockProcessRange: 90,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 137,
           name: 'Polygon Mainnet',
-          providerUrl: 'https://polygon-rpc.com',
+          providerUrl:
+            'https://ultra-black-tab.matic.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://polygon-rpc.com',
           blockProcessRange: 5,
+          maxBlockProcessRange: 90,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 8453,
           name: 'Base Mainnet',
           // providerUrl: 'https://rpc.ankr.com/base',
-          providerUrl: 'https://mainnet.base.org',
+          providerUrl:
+            'https://ultra-black-tab.base-mainnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://mainnet.base.org',
           blockProcessRange: 5,
+          maxBlockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 11155111,
           name: 'Sepolia Testnet',
-          providerUrl: 'https://rpc2.sepolia.org',
+          providerUrl:
+            'https://ultra-black-tab.ethereum-sepolia.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc2.sepolia.org',
           // providerUrl: 'https://rpc.ankr.com/eth_sepolia',
           blockProcessRange: 5,
+          maxBlockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         {
           id: 10143,
           name: 'Monad Testnet',
-          providerUrl: 'https://testnet-rpc.monad.xyz',
+          providerUrl:
+            'https://ultra-black-tab.monad-testnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', // 'https://testnet-rpc.monad.xyz',
           blockProcessRange: 5,
+          maxBlockProcessRange: 5,
           acceptedBlockStatus: 'latest',
         },
         // MAYBE LATER CHAINS:
@@ -76,6 +86,7 @@ async function main() {
         //   name: 'Monad Mainnet',
         //   providerUrl: 'https://rpc.monad.xyz',
         //   blockProcessRange: 5,
+        //    maxBlockProcessRange: 100,
         //   acceptedBlockStatus: 'latest',
         // },
         // {
@@ -83,6 +94,7 @@ async function main() {
         //   name: 'Monad Devnet',
         //   providerUrl: 'https://devnet-rpc.monad.xyz',
         //   blockProcessRange: 5,
+        //   maxBlockProcessRange: 100,
         //   acceptedBlockStatus: 'latest',
         // },
       ].map(
