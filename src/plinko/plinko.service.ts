@@ -136,10 +136,11 @@ export class PlinkoService {
     if (rule.multipliers.length % 2 === 0) {
       exceptions.push(exceptions[0] + 1);
     }
+    const diff2 = difficulty ** 2;
     for (let i = 0; i < rule.multipliers.length; i++) {
       if (!exceptions.includes(i)) {
         multipliers[i] = rule.multipliers[i] * difficulty;
-        possibilities[i] = rule.probabilities[i] / difficulty;
+        possibilities[i] = rule.probabilities[i] / diff2;
       } else {
         multipliers[i] = rule.multipliers[i];
         possibilities[i] = rule.probabilities[i];

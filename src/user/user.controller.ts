@@ -110,7 +110,6 @@ export class UserController {
     @CurrentUser() user: UserPopulated,
     @Body() completeUserData: CompleteRegistrationDto,
   ) {
-    console.warn(completeUserData);
     await this.userService.completeUserData(user, completeUserData);
   }
 
