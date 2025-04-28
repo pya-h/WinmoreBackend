@@ -172,11 +172,11 @@ export class PlinkoPhysxService {
     targetBucketIndex: number,
     { y0, v0 = null, radius }: InitialBallStateType,
     dx: number = 5,
+    xOffset = 30,
+    dVx: number = 1,
   ): DeterministicPlinkoBallType {
-    const board = this.getBoardSpecs(gameRule.rows);
     const startTime = Date.now();
     const correctos = [];
-
     if (!v0) {
       v0 = {
         vx: Math.random() * 3 - 3,
@@ -184,27 +184,37 @@ export class PlinkoPhysxService {
       };
     }
 
-    for (let x0 = pegs.borders.leftX - dx; x0 <= board.width; x0 += dx) {
-      if (
-        this.simulateDropping(gameRule, buckets, pegs.coords, {
-          x: x0,
-          y: y0,
-          ...v0,
-          radius,
-          rapidImpacts: [],
-        }) === targetBucketIndex
+    for (
+      dVx = targetBucketIndex > ((buckets.coords.length / 2) | 0) ? dVx : -dVx;
+      !correctos.length;
+      v0.vx += dVx
+    ) {
+      for (
+        let x0 = pegs.coords[0].x - xOffset, endX = pegs.coords[2].x + xOffset;
+        x0 <= endX; // the drop x must be on top of first row pegs
+        x0 += dx
       ) {
-        correctos.push(x0);
+        if (
+          this.simulateDropping(gameRule, buckets, pegs.coords, {
+            x: x0,
+            y: y0,
+            ...v0,
+            radius,
+            rapidImpacts: [],
+          }) === targetBucketIndex
+        ) {
+          correctos.push({ x: x0, ...v0 });
+        }
       }
     }
-
     console.log('Simulation took', (Date.now() - startTime) / 1000, 'sec');
     console.log(`found ${correctos.length} results.`);
 
     return {
-      x: correctos[(Math.random() * correctos.length) | 0],
+      ...(correctos.length > 1
+        ? correctos[(Math.random() * correctos.length) | 0]
+        : correctos[0]),
       y: y0,
-      ...v0,
       radius,
       rapidImpacts: [],
       bucketIndex: targetBucketIndex,
