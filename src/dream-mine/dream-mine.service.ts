@@ -109,6 +109,9 @@ export class DreamMineService {
       rule = await this.getRulesByRows(game.rowsCount);
     }
 
+    if (backedOff) {
+      game.currentRow--;
+    }
     game = await this.prisma.dreamMineGame.update({
       data: game,
       where: { id: game.id },
