@@ -17,14 +17,12 @@ export class PlinkoPhysxService {
     width: 600,
     height: 200,
   };
-  public static readonly bucketOffsetRequiringRows = { 10: -10, 11: 10 };
+  public static readonly bucketOffsetRequiringRows = { 10: -10, 11: 10 }; // fixme: this can be removed after size refactor
   public static readonly bucketSpecs: BucketSpecsType = {
-    width: 60,
-    height: 80,
+    height: 55,
     widthThreshold: 5,
     heightThreshold: 30,
     cornerRadius: 10,
-    topRatio: 1.1,
     bottomRatio: 0.7,
   };
 
@@ -32,24 +30,25 @@ export class PlinkoPhysxService {
     return {
       height: PlinkoPhysxService.boardOffsets.height + (rows - 1) * 50,
       width: PlinkoPhysxService.boardOffsets.width + Math.max(0, rows - 9) * 40,
+      pegsOffset: 40,
     };
   }
 
   getPegs(
     rows: number,
-    bucketWidth: number,
     radius: number = 9,
     spacing: number = 50,
     firstRowY: number = 100,
     firstRowPegsCount: number = 3,
   ): PegsDataType {
     const pegs: { x: number; y: number; radius: number }[] = [];
-    const halfBoardWidth = this.getBoardSpecs(rows).width / 2;
+    const { width, pegsOffset } = this.getBoardSpecs(rows);
+    const halfBoardWidth = width / 2;
     let leastLeft = Infinity;
     for (let row = 0; row < rows; row++) {
       const halfRow = row / 2;
       for (let i = 0; i < row + firstRowPegsCount; i++) {
-        const x = halfBoardWidth + (i - halfRow) * spacing - bucketWidth;
+        const x = halfBoardWidth + (i - halfRow) * spacing - pegsOffset;
         if (x < leastLeft) {
           leastLeft = x;
         }
@@ -71,29 +70,29 @@ export class PlinkoPhysxService {
   getBuckets(
     rule: PlinkoRules,
     offsetBox: BoxBordersType,
-    specs = PlinkoPhysxService.bucketSpecs,
+    pegs: PegCoordinationsType[],
+    bucketSpecs = PlinkoPhysxService.bucketSpecs,
   ): BucketsDataType {
+    const y = offsetBox.bottomY + 20,
+      pegsRadius = pegs[0].radius;
     return {
       coords: rule.multipliers.map((multiplier, index) => {
-        const topWidth = specs.width * specs.topRatio;
-        const bottomWidth = specs.width * specs.bottomRatio;
-        const x =
-          index * (specs.width + specs.widthThreshold * 1.5) +
-          offsetBox.leftX +
-          specs.widthThreshold * 4 +
-          (PlinkoPhysxService.bucketOffsetRequiringRows[rule.rows] ?? 0);
-        const y = offsetBox.bottomY + 20;
+        const topLeftX = pegs[pegs.length - index - 2].x + pegsRadius / 3,
+          topRightX = pegs[pegs.length - index - 1].x - pegsRadius / 3;
+        const topWidth = topRightX - topLeftX,
+          bottomWidth = topWidth * bucketSpecs.bottomRatio;
+        const x = topLeftX + topWidth / 2;
         return {
-          x,
+          x: topLeftX + topWidth / 2,
           y,
-          topLeftX: x - topWidth / 2,
-          topRightX: x + topWidth / 2,
+          topLeftX,
+          topRightX,
           bottomLeftX: x - bottomWidth / 2,
           bottomRightX: x + bottomWidth / 2,
-          bottomY: y + specs.height,
+          bottomY: y + bucketSpecs.height,
         };
       }),
-      specs,
+      specs: bucketSpecs,
     };
   }
 

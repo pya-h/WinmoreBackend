@@ -158,11 +158,12 @@ export class PlinkoService {
       this.getActualMultipliersAndPossibilities(rule, game.mode);
 
     const balls: DeterministicPlinkoBallType[] = [];
-    const pegs = this.plinkoPhysxService.getPegs(
-        rule.rows,
-        PlinkoPhysxService.bucketSpecs.width,
-      ),
-      buckets = this.plinkoPhysxService.getBuckets(rule, pegs.borders);
+    const pegs = this.plinkoPhysxService.getPegs(rule.rows),
+      buckets = this.plinkoPhysxService.getBuckets(
+        rule,
+        pegs.borders,
+        pegs.coords,
+      );
 
     for (let i = 0; i < game.ballsCount; i++) {
       // TODO/Decide: This way no game will remain undetermined; But we could implement this to determine on user drop click too
@@ -466,10 +467,7 @@ export class PlinkoService {
 
   async getRulesAndBoard() {
     return (await this.getRules()).map((rule) => {
-      const pegs = this.plinkoPhysxService.getPegs(
-        rule.rows,
-        PlinkoPhysxService.bucketSpecs.width,
-      );
+      const pegs = this.plinkoPhysxService.getPegs(rule.rows);
       return {
         rows: rule.rows,
         multipliers: this.populateMultipliers(rule),
@@ -477,7 +475,11 @@ export class PlinkoService {
         maxBetAmount: rule.maxBetAmount,
         board: this.plinkoPhysxService.getBoardSpecs(rule.rows),
         pegs,
-        buckets: this.plinkoPhysxService.getBuckets(rule, pegs.borders),
+        buckets: this.plinkoPhysxService.getBuckets(
+          rule,
+          pegs.borders,
+          pegs.coords,
+        ),
         verticalSpeedFactor: rule.verticalSpeedFactor,
         horizontalSpeedFactor: rule.horizontalSpeedFactor,
         gravity: rule.gravity,

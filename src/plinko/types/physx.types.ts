@@ -46,12 +46,10 @@ export type BucketCoordinationsType = {
 };
 
 export type BucketSpecsType = {
-  width: number;
   height: number;
   widthThreshold: number;
   heightThreshold: number;
   cornerRadius: number;
-  topRatio: number;
   bottomRatio: number;
 };
 
