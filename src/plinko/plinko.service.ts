@@ -190,7 +190,7 @@ export class PlinkoService {
           buckets,
           pegs,
           targetBucket,
-          { y0: (20 + Math.random() * 30) | 0, radius: 7 },
+          { y0: (30 + Math.random() * 30) | 0, radius: 7 },
         ),
       ); // TODO: Revise this
     }

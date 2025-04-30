@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, MethodNotAllowedException } from '@nestjs/common';
 import { PlinkoRules } from '@prisma/client';
 import {
   BoxBordersType,
@@ -101,7 +101,7 @@ export class PlinkoPhysxService {
     { coords: bucketCoords, specs: bucketSpecs }: BucketsDataType,
     pegs: PegCoordinationsType[],
     ball: PlinkoBallType,
-    timeout: number = 5000, // in milliseconds
+    timeout: number = 3000, // in milliseconds
   ) {
     const startedAt = Date.now(),
       destinationY = bucketCoords[0].y + bucketSpecs.heightThreshold;
@@ -193,16 +193,24 @@ export class PlinkoPhysxService {
         x0 <= endX; // the drop x must be on top of first row pegs
         x0 += dx
       ) {
-        if (
-          this.simulateDropping(gameRule, buckets, pegs.coords, {
+        const decidedBucketIndex = this.simulateDropping(
+          gameRule,
+          buckets,
+          pegs.coords,
+          {
             x: x0,
             y: y0,
             ...v0,
             radius,
             rapidImpacts: [],
-          }) === targetBucketIndex
-        ) {
+          },
+        );
+        if (decidedBucketIndex === targetBucketIndex) {
           correctos.push({ x: x0, ...v0 });
+        } else if (decidedBucketIndex === -1) {
+          throw new MethodNotAllowedException(
+            'Failed simulating due to large number of bets; Feel free to try again by reloading!',
+          );
         }
       }
     }

@@ -22,8 +22,8 @@ async function main() {
         {
           id: 1,
           name: 'Ethereum Mainnet',
-          providerUrl:
-            'https://ultra-black-tab.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
+          providerUrl: 'https://rpc.ankr.com/eth',
+          // 'https://ultra-black-tab.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
           blockProcessRange: 5,
           maxBlockProcessRange: 90,
           acceptedBlockStatus: 'latest',
@@ -31,8 +31,8 @@ async function main() {
         {
           id: 137,
           name: 'Polygon Mainnet',
-          providerUrl:
-            'https://ultra-black-tab.matic.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://polygon-rpc.com',
+          providerUrl: 'https://polygon-rpc.com',
+          // 'https://ultra-black-tab.matic.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://polygon-rpc.com',
           blockProcessRange: 5,
           maxBlockProcessRange: 90,
           acceptedBlockStatus: 'latest',
@@ -41,8 +41,8 @@ async function main() {
           id: 8453,
           name: 'Base Mainnet',
           // providerUrl: 'https://rpc.ankr.com/base',
-          providerUrl:
-            'https://ultra-black-tab.base-mainnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://mainnet.base.org',
+          providerUrl: 'https://mainnet.base.org',
+          // 'https://ultra-black-tab.base-mainnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://mainnet.base.org',
           blockProcessRange: 5,
           maxBlockProcessRange: 5,
           acceptedBlockStatus: 'latest',
@@ -50,8 +50,8 @@ async function main() {
         {
           id: 11155111,
           name: 'Sepolia Testnet',
-          providerUrl:
-            'https://ultra-black-tab.ethereum-sepolia.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc2.sepolia.org',
+          providerUrl: 'https://rpc2.sepolia.org',
+          // 'https://ultra-black-tab.ethereum-sepolia.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc2.sepolia.org',
           // providerUrl: 'https://rpc.ankr.com/eth_sepolia',
           blockProcessRange: 5,
           maxBlockProcessRange: 5,
@@ -60,8 +60,8 @@ async function main() {
         {
           id: 10143,
           name: 'Monad Testnet',
-          providerUrl:
-            'https://ultra-black-tab.monad-testnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', // 'https://testnet-rpc.monad.xyz',
+          providerUrl: 'https://testnet-rpc.monad.xyz',
+          // 'https://ultra-black-tab.monad-testnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', // 'https://testnet-rpc.monad.xyz',
           blockProcessRange: 5,
           maxBlockProcessRange: 5,
           acceptedBlockStatus: 'latest',
@@ -205,33 +205,37 @@ async function main() {
       [
         {
           rows: 8,
-          multipliers: [2.0, 1.3, 1.1, 0.6, 1.1, 1.3, 2.0],
-          probabilities: [5, 20, 40, 100, 40, 20, 5],
-          difficultyMultipliers: [1.5, 2.1],
+          multipliers: [5.7, 2.2, 1.2, 1.1, 0.6, 1.1, 1.2, 2.2, 5.7],
+          probabilities: [1, 5, 10, 40, 100, 40, 10, 5, 1],
+          difficultyMultipliers: [1.2, 1.5],
         },
         {
           rows: 9,
-          multipliers: [3, 1.4, 1.2, 0.6, 0.6, 1.2, 1.4, 3],
-          probabilities: [4, 15, 35, 100, 100, 35, 15, 4],
-          difficultyMultipliers: [1.7, 2.4],
+          multipliers: [5.7, 2.1, 1.7, 1.2, 0.6, 0.6, 1.2, 1.7, 2.1, 5.7],
+          probabilities: [1, 4, 8, 35, 100, 100, 35, 8, 4, 1],
+          difficultyMultipliers: [1.3, 1.6],
         },
         {
           rows: 10,
-          multipliers: [3.75, 2.8, 1.75, 1.3, 0.6, 1.3, 1.75, 2.8, 3.75],
-          probabilities: [1, 3, 12, 28, 100, 28, 12, 3, 1],
-          difficultyMultipliers: [2.0, 3.2],
+          multipliers: [9, 3.1, 1.5, 1.2, 1.1, 0.6, 1.1, 1.2, 1.5, 3.1, 9],
+          probabilities: [0.25, 1, 3, 7, 28, 100, 28, 7, 3, 1, 0.25],
+          difficultyMultipliers: [1.5, 1.9],
         },
         {
           rows: 11,
-          multipliers: [4.5, 3.25, 1.75, 0.6, 0.6, 1.75, 1.6, 3.25, 4.5],
-          probabilities: [0.5, 3, 12, 100, 100, 12, 40, 3, 0.5],
-          difficultyMultipliers: [2.5, 3.75],
+          multipliers: [8.5, 3.1, 2, 1.4, 1.2, 0.6, 0.6, 1.2, 1.4, 2, 3.1, 8.5],
+          probabilities: [0.1, 0.2, 3, 8, 15, 100, 100, 15, 8, 3, 0.2, 0.1],
+          difficultyMultipliers: [1.7, 2.2],
         },
         {
           rows: 12,
-          multipliers: [5.0, 3.9, 3.0, 2.0, 0.6, 0.6, 2.0, 3.0, 3.9, 5.0],
-          probabilities: [0.5, 2, 5, 9, 100, 100, 9, 5, 2, 0.5],
-          difficultyMultipliers: [3, 4.5],
+          multipliers: [
+            10.1, 3.1, 1.7, 1.5, 1.2, 1.1, 0.5, 1.1, 1.2, 1.5, 1.7, 3.1, 10.1,
+          ],
+          probabilities: [
+            0.05, 0.15, 1, 4, 9, 14, 100, 14, 9, 4, 1, 0.15, 0.05,
+          ],
+          difficultyMultipliers: [2, 3],
         },
       ].map(({ rows, multipliers, probabilities, difficultyMultipliers }) => {
         if (multipliers?.length !== probabilities?.length) {
