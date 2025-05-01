@@ -1,7 +1,7 @@
 @host  = http://localhost:8000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDgwOEYwODZFN2NkOWUzNDRiNDM5NzUxODA2N2M1NDNBNmFGMTk1QzEiLCJpYXQiOjE3NDQ4MTU2NTUsImV4cCI6MTc0NDkwMjA1NSwiaXNzIjoiV2luTW9yZUd1eXMifQ.pndSCbRBqcGuatfRk-WJZg6YuOU5E0qtdGz_0lRnYHE
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDdkN0VhYzAxMmRCYUZEZjI1REJhYjAyMDc0NjhENWEzYzRGYWM0NWIiLCJpYXQiOjE3NDYxMzQxODQsImV4cCI6MTc0NjIyMDU4NCwiaXNzIjoiV2luTW9yZUd1eXMifQ.mQKVAja6DXmKV9i6yfQ7HVPh__7wknv9UhE3I_l-2Vc
 @token2 = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsImFkZHJlc3MiOiItMFhrZ3c3bjkzZjFnOWRvbGpmYTIxcm9lOGphbzMyYW5iNGdic2s0ODYiLCJpYXQiOjE3NDQ4MTk3NzYsImV4cCI6MTc0NDkwNjE3NiwiaXNzIjoiV2luTW9yZUd1eXMifQ.O9U3HuaULP-n1HGGk79jvJ0_Mneq-LMM88k9ULD36Eo
-@tokensu = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjAsImFkZHJlc3MiOiIweGJCMUEzOEIyNTU2QkZFNjcyYzcxOEQ3QmY5YzhhM2MyNUFGRUUzMTEiLCJpYXQiOjE3NDQ4MTYzOTQsImV4cCI6MTc0NDkwMjc5NCwiaXNzIjoiV2luTW9yZUd1eXMifQ.YHEkIHU099LjvZokEukItAe9_bnFvBOxUq7Ou6-m_u0
+@tokensu = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjAsImFkZHJlc3MiOiIweGJCMUEzOEIyNTU2QkZFNjcyYzcxOEQ3QmY5YzhhM2MyNUFGRUUzMTEiLCJpYXQiOjE3NDYxMzQwMjksImV4cCI6MTc0NjIyMDQyOSwiaXNzIjoiV2luTW9yZUd1eXMifQ.bf4knZ8UKe5PkYMm_fb14wMaWA_YgD4IVGmVd8zCX98
 
 ### main route
 GET {{host}}/
@@ -12,7 +12,7 @@ POST {{host}}/auth/test
 Content-Type: application/json
 
 {
-    
+    "address": "0xAddressOrEmpty"
 }
 
 
@@ -174,3 +174,7 @@ Authorization: Bearer {{token2}}
 ### Get user's referral report
 GET {{host}}/user/0/referral-report
 Authorization: Bearer {{tokensu}}
+
+### [ADMIN] upgrade user to admin
+POST {{host}}/user/1/upgrade
+Authorization: Bearer {{token}}

@@ -126,6 +126,20 @@ export class UserController {
   }
 
   @ApiOperation({
+    description: 'Upgrade a user to have specific privileges.',
+  }) // for now only upgrades to admin
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Post(':id/upgrade')
+  async upgradeUserMode(
+    @CurrentUser() operator: UserPopulated,
+    @Param('id', ParseIntPipe) targetId: string,
+  ) {
+    return this.userService.updateUserMode(operator, +targetId, {
+      admin: true,
+    });
+  }
+
+  @ApiOperation({
     description: 'Request a withdraw',
   })
   @UseGuards(JwtAuthGuard)

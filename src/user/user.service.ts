@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -90,6 +91,10 @@ export class UserService {
       where: { id },
       include: this.userPopulatedIncludeConfig,
     });
+  }
+
+  async userExists(userId: number): Promise<boolean> {
+    return Boolean(await this.getById(userId));
   }
 
   getBy(identifier: { id?: number; email?: string }) {
@@ -230,5 +235,31 @@ export class UserService {
     { chain, amount, token }: RequestWithdrawalDto,
   ) {
     return this.blockchainService.withdraw(user.wallet, chain, token, amount);
+  }
+
+  async updateUserMode(
+    operator: UserPopulated,
+    userId: number,
+    modes: { admin?: boolean } = {}, // This can have other modes in future such as VIP, etc.
+  ) {
+    const changes: Record<string, unknown> = {};
+    if (modes?.admin != null) {
+      if (operator.id !== this.walletService.businessWallet.ownerId) {
+        throw new ForbiddenException(
+          'Only primary admin is allowed to do this.',
+        );
+      }
+      changes.admin = modes.admin;
+    }
+    if (!Object.keys(changes)?.length) {
+      throw new BadRequestException('No changes requested!');
+    }
+    if (!this.userExists(userId)) {
+      throw new NotFoundException('No such user!');
+    }
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: changes,
+    });
   }
 }

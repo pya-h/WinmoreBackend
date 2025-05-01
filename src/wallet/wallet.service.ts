@@ -314,7 +314,7 @@ export class WalletService {
 
     if (
       !this.configService.get<boolean>('general.debug') &&
-      source.id !== this.businessWallet.id
+      sourceWallet.owner?.admin // TODO: [REVISE] source.id !== this.businessWallet.id
     ) {
       const sourceBalance = await this.getBalance(
         transaction.sourceId,
