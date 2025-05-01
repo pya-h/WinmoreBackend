@@ -190,7 +190,7 @@ export class PlinkoService {
           buckets,
           pegs,
           targetBucket,
-          { y0: (30 + Math.random() * 30) | 0, radius: 7 },
+          { y0: (30 + Math.random() * 30) | 0, radius: 8 },
         ),
       ); // TODO: Revise this
     }
@@ -250,10 +250,19 @@ export class PlinkoService {
       data: game,
     });
 
-    return (await this.decide(game, rule)).map(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ bucketIndex, ...ball }) => ball as PlinkoBallType,
-    );
+    try {
+      return (await this.decide(game, rule)).map(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ({ bucketIndex, ...ball }) => ball as PlinkoBallType,
+      );
+    } catch (ex) {
+      game.status = PlinkoGameStatus.NOT_DROPPED_YET;
+      await this.prisma.plinkoGame.update({
+        where: { id: game.id },
+        data: game,
+      });
+      throw ex;
+    }
   }
 
   async finalizeGame(user: UserPopulated, gameId: number) {

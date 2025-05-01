@@ -1,4 +1,4 @@
-import { Injectable, MethodNotAllowedException } from '@nestjs/common';
+import { Injectable, Logger, MethodNotAllowedException } from '@nestjs/common';
 import { PlinkoRules } from '@prisma/client';
 import {
   BoxBordersType,
@@ -13,15 +13,16 @@ import {
 
 @Injectable()
 export class PlinkoPhysxService {
+  private readonly logger = new Logger(PlinkoPhysxService.name);
+
   public static readonly boardOffsets = {
     width: 600,
     height: 200,
   };
-  public static readonly bucketOffsetRequiringRows = { 10: -10, 11: 10 }; // fixme: this can be removed after size refactor
   public static readonly bucketSpecs: BucketSpecsType = {
-    height: 55,
+    height: 50,
     widthThreshold: 5,
-    heightThreshold: 30,
+    heightThreshold: 20,
     cornerRadius: 10,
     bottomRatio: 0.7,
   };
@@ -29,9 +30,16 @@ export class PlinkoPhysxService {
   getBoardSpecs(rows: number) {
     return {
       height: PlinkoPhysxService.boardOffsets.height + (rows - 1) * 50,
-      width: PlinkoPhysxService.boardOffsets.width + Math.max(0, rows - 9) * 40,
+      width: PlinkoPhysxService.boardOffsets.width,
       pegsOffset: 40,
     };
+  }
+
+  scale(rows: number, value: number, thresholdRow: number = 10) {
+    if (rows > thresholdRow) {
+      return value / (rows / thresholdRow);
+    }
+    return value;
   }
 
   getPegs(
@@ -41,6 +49,7 @@ export class PlinkoPhysxService {
     firstRowY: number = 100,
     firstRowPegsCount: number = 3,
   ): PegsDataType {
+    spacing = this.scale(rows, spacing);
     const pegs: { x: number; y: number; radius: number }[] = [];
     const { width, pegsOffset } = this.getBoardSpecs(rows);
     const halfBoardWidth = width / 2;
@@ -176,6 +185,7 @@ export class PlinkoPhysxService {
   ): DeterministicPlinkoBallType {
     const startTime = Date.now();
     const correctos = [];
+    radius = this.scale(gameRule.rows, radius);
     if (!v0) {
       v0 = {
         vx: Math.random() * 3 - 3,
@@ -209,13 +219,17 @@ export class PlinkoPhysxService {
           correctos.push({ x: x0, ...v0 });
         } else if (decidedBucketIndex === -1) {
           throw new MethodNotAllowedException(
-            'Failed simulating due to large number of bets; Feel free to try again by reloading!',
+            "Simulation failed! Don't worry you can retry anytime by reloading!",
           );
         }
       }
     }
-    console.log('Simulation took', (Date.now() - startTime) / 1000, 'sec');
-    console.log(`found ${correctos.length} results.`);
+    this.logger.debug(
+      'Simulation took',
+      (Date.now() - startTime) / 1000,
+      'sec',
+    );
+    this.logger.debug(`found ${correctos.length} results.`);
 
     return {
       ...(correctos.length > 1

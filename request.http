@@ -159,7 +159,7 @@ Content-Type: application/json
 }
 
 ### Generate balls for plinko game based on user chance.
-POST {{host}}/plinko/drop/3
+POST {{host}}/plinko/drop/14
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImFkZHJlc3MiOiIweDdkN0VhYzAxMmRCYUZEZjI1REJhYjAyMDc0NjhENWEzYzRGYWM0NWIiLCJpYXQiOjE3NDYwNTQ1NDYsImV4cCI6MTc0NjE0MDk0NiwiaXNzIjoiV2luTW9yZUd1eXMifQ.WZfZImd46C1WwhIT4yiqoOijljvj1od2Qi6gJ0CcnGw
 Content-Type: application/json
 
