@@ -87,22 +87,24 @@ export class PlinkoPhysxService {
     const y = offsetBox.bottomY + 20,
       pegsRadius = pegs[0].radius;
     return {
-      coords: rule.multipliers.map((multiplier, index) => {
-        const topLeftX = pegs[pegs.length - index - 2].x + pegsRadius / 3,
-          topRightX = pegs[pegs.length - index - 1].x - pegsRadius / 3;
-        const topWidth = topRightX - topLeftX,
-          bottomWidth = topWidth * bucketSpecs.bottomRatio;
-        const x = topLeftX + topWidth / 2;
-        return {
-          x: topLeftX + topWidth / 2,
-          y,
-          topLeftX,
-          topRightX,
-          bottomLeftX: x - bottomWidth / 2,
-          bottomRightX: x + bottomWidth / 2,
-          bottomY: y + bucketSpecs.height,
-        };
-      }),
+      coords: rule.multipliers
+        .map((multiplier, index) => {
+          const topLeftX = pegs[pegs.length - index - 2].x + pegsRadius / 3,
+            topRightX = pegs[pegs.length - index - 1].x - pegsRadius / 3;
+          const topWidth = topRightX - topLeftX,
+            bottomWidth = topWidth * bucketSpecs.bottomRatio;
+          const x = topLeftX + topWidth / 2;
+          return {
+            x: topLeftX + topWidth / 2,
+            y,
+            topLeftX,
+            topRightX,
+            bottomLeftX: x - bottomWidth / 2,
+            bottomRightX: x + bottomWidth / 2,
+            bottomY: y + bucketSpecs.height,
+          };
+        })
+        .reverse(),
       specs: bucketSpecs,
     };
   }
