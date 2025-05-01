@@ -29,7 +29,8 @@ export class PlinkoPhysxService {
 
   getBoardSpecs(rows: number) {
     return {
-      height: PlinkoPhysxService.boardOffsets.height + (rows - 1) * 50,
+      height:
+        PlinkoPhysxService.boardOffsets.height + Math.min(rows - 1, 9) * 50,
       width: PlinkoPhysxService.boardOffsets.width,
       pegsOffset: 40,
     };
@@ -50,6 +51,7 @@ export class PlinkoPhysxService {
     firstRowPegsCount: number = 3,
   ): PegsDataType {
     spacing = this.scale(rows, spacing);
+    radius = this.scale(rows, radius);
     const pegs: { x: number; y: number; radius: number }[] = [];
     const { width, pegsOffset } = this.getBoardSpecs(rows);
     const halfBoardWidth = width / 2;
