@@ -24,7 +24,7 @@ export class PlinkoPhysxService {
     widthThreshold: 5,
     heightThreshold: 20,
     cornerRadius: 10,
-    bottomRatio: 0.7,
+    bottomRatio: 0.8,
   };
 
   getBoardSpecs(rows: number) {
