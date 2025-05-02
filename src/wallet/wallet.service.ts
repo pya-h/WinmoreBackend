@@ -125,7 +125,9 @@ export class WalletService {
   }
 
   async isChainSupported(chainId: number) {
-    return Boolean(await this.prisma.chain.count({ where: { id: chainId } }));
+    return Boolean(
+      await this.prisma.chain.findUnique({ where: { id: chainId } }),
+    );
   }
 
   findChains(

@@ -18,6 +18,7 @@ import {
   InitialWithdrawLog,
 } from './types/blockchain-log.type';
 import { PrismaService } from '../prisma/prisma.service';
+import { Web3GetBlockResponseType } from './types/web3-get-block-response.type';
 
 // FIXME: Add tx follower, to see if a tx is reverted to update winmore tx history too.
 @Injectable()
@@ -95,11 +96,18 @@ export class BlockchainService {
     return BigInt(await contract.methods.decimals().call());
   }
 
-  async isProviderConnected(provider: Web3): Promise<boolean> {
+  async isProviderConnected(chain: ChainHistory): Promise<boolean> {
     try {
-      return await provider.eth.net.isListening();
+      return await chain.provider.eth.net.isListening();
     } catch (err) {
       this.logger.error('Provider connection error: ', err);
+      const message = (err as Error).message?.toLowerCase();
+      if (
+        message.includes('method not found') ||
+        message.includes('method is unsupported')
+      ) {
+        return true;
+      }
       return false;
     }
   }
@@ -412,23 +420,12 @@ export class BlockchainService {
 
   endBlock = (a: bigint, b: bigint) => (a <= b ? a : b);
 
-  @Cron('*/20 * * * * *')
+  @Cron('*/10 * * * * *')
   async checkoutLatestBlocks() {
     const processLogTasks: Promise<void>[] = [];
 
     for (const chainId in this.chainHistory) {
       try {
-        if (
-          chainId !== '10143' && // Monad does not have isListening it seems
-          !(await this.isProviderConnected(
-            // TODO: Is this checking even required?
-            this.chainHistory[chainId].provider,
-          )) &&
-          !(await this.reconnectProvider(+chainId))
-        ) {
-          continue;
-        }
-
         const {
           lastProcessedBlockNumber,
           provider,
@@ -438,8 +435,21 @@ export class BlockchainService {
           acceptedBlockStatus,
         } = this.chainHistory[chainId];
 
-        const latestFinalizedBlock =
-          await provider.eth.getBlock(acceptedBlockStatus);
+        let latestFinalizedBlock: Web3GetBlockResponseType | null = null;
+        try {
+          latestFinalizedBlock =
+            await provider.eth.getBlock(acceptedBlockStatus);
+        } catch (ex) {
+          if (await this.reconnectProvider(+chainId)) {
+            latestFinalizedBlock =
+              await provider.eth.getBlock(acceptedBlockStatus);
+          }
+        } finally {
+          if (!latestFinalizedBlock) {
+            continue;
+          }
+        }
+
         if (
           maxBlockProcessRange &&
           lastProcessedBlockNumber &&

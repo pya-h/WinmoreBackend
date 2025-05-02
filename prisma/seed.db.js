@@ -22,11 +22,11 @@ async function main() {
         {
           id: 1,
           name: 'Ethereum Mainnet',
-          providerUrl: 'https://rpc.ankr.com/eth',
+          providerUrl: 'https://ethereum.publicnode.com',
           // 'https://ultra-black-tab.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc.ankr.com/eth', //https://cloudflare-eth.com
           blockProcessRange: 5,
-          maxBlockProcessRange: 90,
-          acceptedBlockStatus: 'latest',
+          maxBlockProcessRange: 5,
+          acceptedBlockStatus: 'finalized',
         },
         {
           id: 137,
@@ -34,8 +34,8 @@ async function main() {
           providerUrl: 'https://polygon-rpc.com',
           // 'https://ultra-black-tab.matic.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://polygon-rpc.com',
           blockProcessRange: 5,
-          maxBlockProcessRange: 90,
-          acceptedBlockStatus: 'latest',
+          maxBlockProcessRange: 5,
+          acceptedBlockStatus: 'finalized',
         },
         {
           id: 8453,
@@ -45,26 +45,27 @@ async function main() {
           // 'https://ultra-black-tab.base-mainnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://mainnet.base.org',
           blockProcessRange: 5,
           maxBlockProcessRange: 5,
-          acceptedBlockStatus: 'latest',
+          acceptedBlockStatus: 'finalized',
         },
         {
           id: 11155111,
           name: 'Sepolia Testnet',
-          providerUrl: 'https://rpc2.sepolia.org',
+          providerUrl:
+            'https://ultra-black-tab.ethereum-sepolia.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b',
           // 'https://ultra-black-tab.ethereum-sepolia.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', //'https://rpc2.sepolia.org',
           // providerUrl: 'https://rpc.ankr.com/eth_sepolia',
           blockProcessRange: 5,
           maxBlockProcessRange: 5,
-          acceptedBlockStatus: 'latest',
+          acceptedBlockStatus: 'finalized',
         },
         {
           id: 10143,
           name: 'Monad Testnet',
           providerUrl: 'https://testnet-rpc.monad.xyz',
-          // 'https://ultra-black-tab.monad-testnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', // 'https://testnet-rpc.monad.xyz',
+          // 'https://ultra-black-tab.monad-testnet.quiknode.pro/82ccb7a304990b72b78bbce8890c9ae0a033c67b', // 'https://monad-testnet.drpc.org', 'https://monad-testnet.rpc.hypersync.xyz'
           blockProcessRange: 5,
           maxBlockProcessRange: 5,
-          acceptedBlockStatus: 'latest',
+          acceptedBlockStatus: 'finalized',
         },
         // MAYBE LATER CHAINS:
         // {
@@ -104,6 +105,7 @@ async function main() {
           providerUrl,
           blockProcessRange,
           acceptedBlockStatus,
+          maxBlockProcessRange,
         }) =>
           prisma.chain.create({
             data: {
@@ -112,6 +114,7 @@ async function main() {
               providerUrl,
               blockProcessRange,
               acceptedBlockStatus,
+              maxBlockProcessRange,
             },
           }),
       ),
