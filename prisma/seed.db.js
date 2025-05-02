@@ -264,7 +264,7 @@ async function main() {
             maxBetAmount: 2,
             verticalSpeedFactor: 2.5,
             horizontalSpeedFactor: 1.25,
-            gravity: rows <= 10 ? 0.25 : rows === 11 ? 0.22 : 0.2,
+            gravity: 0.2, //rows <= 10 ? 0.25 : rows === 11 ? 0.22 : 0.2,
             friction: 0.9,
           },
         });
