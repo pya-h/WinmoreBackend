@@ -1,73 +1,59 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# WinmoreBackend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+WinmoreBackend is a server-side application built with NestJS, designed to support blockchain-based games. The current implementation provides backend services for two games: **Plinko** and **Dream Mine**. The platform is focused on scalability, code effectiveness, and performance, ensuring a robust foundation for future game integrations.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **Game Support**: Plinko and Dream Mine, with extensible architecture for additional games.
+- **Referral System**: Enables user referrals to promote organic growth.
+- **Centralized Wallet Management**: Secure and efficient handling of user wallets.
+- **Point System**: Planned feature for rewarding user engagement (soon).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Code Quality & Performance
 
-## Installation
+The codebase is structured for maintainability and clarity, leveraging NestJS best practices. Performance optimizations are in place for handling concurrent game sessions and wallet operations. The modular design facilitates easy updates and feature additions.
 
-```bash
-$ npm install
-```
+## Plinko Game Simulation
 
-## Running the app
+The Plinko game logic is implemented with efficient, precise, and fast algorithms to simulate game results. The code ensures accurate outcome generation and high performance, supporting real-time gameplay and seamless user experience.
 
-```bash
-# development
-$ npm run start
+## Chain Support & Token Integration
 
-# watch mode
-$ npm run start:dev
+The indexer is designed to be fully configurable, allowing seamless support for any blockchain and token. To support a new chain and token, simply provide the desired chain data, RPC, and token contract addresses in seed script. No code changes required.
 
-# production mode
-$ npm run start:prod
-```
+** Admin endpoints will soon be added.
 
-## Test
+## Getting Started
 
-```bash
-# unit tests
-$ npm run test
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/WinmoreBackend.git
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Configure environment variables as needed.
 
-# e2e tests
-$ npm run test:e2e
+4. Run prisma migrations.
 
-# test coverage
-$ npm run test:cov
-```
+   ```bash
+   npm run migrate[:dev]
+   ```
 
-## Support
+5. Run seed script to provide basic required data; You can modify values & rules in prisma/seed.db.js
+   ```bash
+   npm run seed
+   ```
+6. Start the server:
+   ```bash
+   npm run start
+   ```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Contributing
 
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Contributions are welcome. Please follow the established code style and submit pull requests for review.
 
 ## License
 
-Nest is [MIT licensed](LICENSE).
+This project is licensed under the MIT License.
