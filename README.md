@@ -23,11 +23,16 @@ The indexer is designed to be fully configurable, allowing seamless support for 
 
 ** Admin endpoints will soon be added.
 
+## Frontend
+   I've also collaberated in project's Frontend development; Checkout this repo in my second git account:
+      https://github.com/pydea-rs/WinMore-Frontend
+   Which is developed using NextJS.
+
 ## Getting Started
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/WinmoreBackend.git
+   git clone https://github.com/pya-h/WinmoreBackend.git
    ```
 2. Install dependencies:
    ```bash
